@@ -24,7 +24,7 @@ $ npm run build
 $ npm start
 ```
 
-5. Local dev:
+5. Local dev (no need to build):
 
 ```console
 $ npm run start:dev
