@@ -5,7 +5,7 @@ import bodyParser from 'body-parser';
 import { connectDB } from './database';
 
 const app = express();
-app.use(cors);
+app.use(cors());
 app.use(bodyParser.json());
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -13,7 +13,7 @@ const PORT = Number(process.env.PORT) || 3000;
 app.get('/', (req, res) => res.send('Hello squirrel!'));
 
 const startServer = async () => {
-    await app.listen(PORT, () => {
+    app.listen(PORT, () => {
         console.log(`Server is running on port ${PORT}`);
     });
 };
