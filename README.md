@@ -23,3 +23,9 @@ $ npm run build
 ```console
 $ npm start
 ```
+
+5. Local dev:
+
+```console
+$ npm run start:dev
+```
