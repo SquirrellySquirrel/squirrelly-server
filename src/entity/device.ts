@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./user";
 
 @Entity(({ name: 'devices' }))
@@ -7,6 +7,7 @@ export class Device {
     id!: string;
 
     @ManyToOne(type => User, owner => owner.devices, { nullable: false })
+    @JoinColumn({ name: 'user_id' })
     owner!: User;
 
     @Column({

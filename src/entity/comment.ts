@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Post } from "./post";
 import { User } from "./user";
 
@@ -16,8 +16,10 @@ export class Comment {
     created!: Date;
 
     @ManyToOne(type => User, creator => creator.posts, { nullable: false })
+    @JoinColumn({ name: 'user_id' })
     creator!: User;
 
     @ManyToOne(type => Post, { nullable: false })
+    @JoinColumn({ name: 'post_id' })
     post!: Post;
 }

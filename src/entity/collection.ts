@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Post } from "./post";
 import { User } from "./user";
 
@@ -14,8 +14,10 @@ export class Collection {
     description?: string;
 
     @ManyToOne(type => User, creator => creator.posts, { nullable: false })
+    @JoinColumn({ name: 'user_id' })
     creator!: User;
 
     @OneToMany(type => Post, post => post.location)
+    @JoinColumn({ name: 'post_id' })
     posts!: Post[];
 }

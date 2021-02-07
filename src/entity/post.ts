@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Comment } from "./comment";
 import { Location } from "./location";
 import { User } from "./user";
@@ -9,9 +9,11 @@ export class Post {
     id!: string;
 
     @ManyToOne(type => User, creator => creator.posts, { nullable: false })
+    @JoinColumn({ name: 'user_id' })
     creator!: User;
 
     @ManyToOne(type => Location, location => location.posts, { nullable: false })
+    @JoinColumn({ name: 'location_id' })
     location!: Location;
 
     @Column('timestamp')

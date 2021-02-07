@@ -9,14 +9,14 @@ export class User {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column({ nullable: true })
+    @Column({ nullable: true, unique: true })
     email?: string;
 
     @Column({ nullable: true })
     password?: string;
 
-    @Column({ length: 50, nullable: true })
-    display_name?: string;
+    @Column({ length: 50, nullable: true, unique: true })
+    displayName?: string;
 
     @OneToMany(type => Device, device => device.owner)
     devices!: Device[];
