@@ -1,4 +1,11 @@
+# Dependency
 node_modules/
+
+# Build
 dist/
 
+# IDE
+.vscode
+
+# Config
 .env
