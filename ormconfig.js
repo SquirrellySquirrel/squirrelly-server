@@ -9,6 +9,7 @@ module.exports = {
   database: process.env.DB_DATABASE,
   synchronize: true,
   logging: true,
-  migrations: ["dist/migration/*.ts"],
-  entities: ["dist/entity/*.ts"]
+  migrationsRun: true,
+  migrations: ["dist/migration/*.js"],
+  entities: ["dist/entity/*.js"]
 };
