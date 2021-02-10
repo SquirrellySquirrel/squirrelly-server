@@ -15,7 +15,7 @@ export class User {
     @Column({ nullable: true })
     password?: string;
 
-    @Column({ length: 50, nullable: true, unique: true })
+    @Column({ name: 'display_name', length: 50, nullable: true, unique: true })
     displayName?: string;
 
     @OneToMany(type => Device, device => device.owner)

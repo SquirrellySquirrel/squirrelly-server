@@ -15,4 +15,7 @@ export class Device {
         enum: ['android', 'ios']
     })
     type!: string;
+
+    @Column({ name: 'device_id', length: 50, nullable: false, unique: true })
+    deviceId!: string;
 }
