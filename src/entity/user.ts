@@ -18,7 +18,7 @@ export class User {
     @Column({ name: 'display_name', length: 50, nullable: true, unique: true })
     displayName?: string;
 
-    @OneToMany(type => Device, device => device.owner, { cascade: ["insert", "update"] })
+    @OneToMany(type => Device, device => device.owner, { cascade: ["insert"] })
     devices!: Device[];
 
     @OneToMany(type => Post, post => post.creator)
