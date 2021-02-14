@@ -1,6 +1,7 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { Comment } from "./comment";
 import { Location } from "./location";
+import { Photo } from "./photo";
 import { User } from "./user";
 
 @Entity(({ name: 'posts' }))
@@ -8,7 +9,7 @@ export class Post {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @ManyToOne(type => User, creator => creator.posts, { nullable: false })
+    @ManyToOne(type => User, creator => creator.posts, { nullable: false, onDelete: "CASCADE" })
     @JoinColumn({ name: 'user_id' })
     creator!: User;
 
@@ -25,6 +26,10 @@ export class Post {
     @Column()
     public!: boolean;
 
-    @OneToMany(type => Comment, comment => comment.post)
+    @OneToMany(type => Photo, photo => photo.id, { cascade: ["insert", "update"], onDelete: "CASCADE" })
+    photos?: Photo[];
+
+    @OneToMany(type => Comment, comment => comment.post, { onDelete: "CASCADE" })
     comments?: Comment[];
+
 }

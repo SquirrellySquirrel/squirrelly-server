@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Post } from "./post";
 
 @Entity(({ name: 'photos' }))
 export class Photo {
@@ -19,4 +20,9 @@ export class Photo {
 
     @Column()
     orientation!: string;
+
+    @ManyToOne(type => Post, { nullable: false, onDelete: "CASCADE" })
+    @JoinColumn({ name: 'post_id' })
+    post!: Post;
+
 }
