@@ -1,7 +1,8 @@
-import { Column, Double, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Double, Entity, OneToMany, PrimaryGeneratedColumn, Unique } from "typeorm";
 import { Post } from "./post";
 
 @Entity(({ name: 'locations' }))
+@Unique('UQ', ['latitude', 'longitude'])
 export class Location {
     @PrimaryGeneratedColumn('uuid')
     id!: string;

@@ -26,7 +26,7 @@ export class Post {
     @Column()
     public!: boolean;
 
-    @OneToMany(type => Photo, photo => photo.id, { cascade: ["insert", "update"], onDelete: "CASCADE" })
+    @OneToMany(type => Photo, photo => photo.post, { cascade: ["insert", "update"], onDelete: "CASCADE" })
     photos?: Photo[];
 
     @OneToMany(type => Comment, comment => comment.post, { onDelete: "CASCADE" })
