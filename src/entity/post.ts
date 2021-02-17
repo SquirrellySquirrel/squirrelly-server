@@ -32,4 +32,5 @@ export class Post {
     @OneToMany(type => Comment, comment => comment.post, { onDelete: "CASCADE" })
     comments?: Comment[];
 
+    likes: number = 0;
 }

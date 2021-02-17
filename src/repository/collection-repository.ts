@@ -3,5 +3,4 @@ import { Collection } from "../entity/collection";
 
 @EntityRepository(Collection)
 export class CollectionRepository extends Repository<Collection> {
-
 }
