@@ -1,13 +1,37 @@
-import { getCustomRepository } from "typeorm";
+import { DeleteResult, getCustomRepository } from "typeorm";
 import { Location } from "../entity/location";
 import { Photo } from "../entity/photo";
 import { Post } from "../entity/post";
 import { PostRepository } from "../repository/post-repository";
 import { PostLikeService } from "../service/post-like-service";
+import { PhotoService } from "./photo-service";
 
 export class PostService {
     postRepository = getCustomRepository(PostRepository);
+    photoService = new PhotoService();
     postLikeService = new PostLikeService();
+
+    async getPosts(count: number): Promise<Post[] | undefined> {
+        const posts = await this.postRepository.find({ take: count });
+        for (const post of posts) {
+            const cover = await this.photoService.getPostCover(post.id);
+            if (cover) {
+                post.cover = cover;
+            }
+        }
+        return posts;
+    }
+
+    async getPostsByUser(userId: string): Promise<Post[] | undefined> {
+        const posts = await this.postRepository.find({ where: { creator: { id: userId } } });
+        for (const post of posts) {
+            const cover = await this.photoService.getPostCover(post.id);
+            if (cover) {
+                post.cover = cover;
+            }
+        }
+        return posts;
+    }
 
     async getPost(postId: string): Promise<Post | undefined> {
         const post = await this.postRepository.findOne({ where: { id: postId }, relations: ["creator", "location", "photos", "comments"] });
@@ -19,7 +43,7 @@ export class PostService {
         return post;
     }
 
-    savePost(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post | undefined> {
+    savePost(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
         return this.postRepository.save({
             location: location,
             creator: { id: userId },
@@ -28,5 +52,20 @@ export class PostService {
             updated: new Date(),
             photos: photos
         });
+    }
+
+    updatePost(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+        return this.postRepository.save({
+            id: postId,
+            location: location,
+            public: isPublic,
+            created: created,
+            updated: new Date(),
+            photos: photos
+        });
+    }
+
+    deletePost(postId: string): Promise<DeleteResult> {
+        return this.postRepository.delete(postId);
     }
 }

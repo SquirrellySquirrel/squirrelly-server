@@ -1,4 +1,4 @@
-import { getCustomRepository } from "typeorm";
+import { DeleteResult, getCustomRepository } from "typeorm";
 import { PostLike } from "../entity/post-like";
 import { PostLikeRepository } from "../repository/post-like-repository";
 
@@ -9,14 +9,14 @@ export class PostLikeService {
         return this.postLikeRepository.find({ where: { post: { id: postId } }, relations: ["post"] });
     }
 
-    addPostLike(postId: string, userId: string) {
+    addPostLike(postId: string, userId: string): Promise<PostLike> {
         return this.postLikeRepository.save({
             user: { id: userId },
             post: { id: postId }
         });
     }
 
-    deletePostLike(postId: string, userId: string) {
+    deletePostLike(postId: string, userId: string): Promise<DeleteResult> {
         return this.postLikeRepository.delete({
             user: { id: userId },
             post: { id: postId }

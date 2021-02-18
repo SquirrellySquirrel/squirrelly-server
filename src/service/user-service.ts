@@ -10,7 +10,7 @@ export class UserService {
         return this.userRepository.findOne(userId);
     }
 
-    createGhostUser(deviceId: string, deviceType: string): Promise<User | undefined> {
+    createGhostUser(deviceId: string, deviceType: string): Promise<User> {
         const device = new Device();
         device.type = deviceType;
         device.deviceId = deviceId;
@@ -20,7 +20,7 @@ export class UserService {
         return this.userRepository.save(user);
     }
 
-    upgradeGhostUser(userId: string, email: string, password: string, displayName: string): Promise<User | undefined> {
+    upgradeGhostUser(userId: string, email: string, password: string, displayName: string): Promise<User> {
         return this.userRepository.save({
             id: userId,
             email: email,
@@ -29,7 +29,7 @@ export class UserService {
         });
     }
 
-    updateUser(userId: string, displayName: string): Promise<User | undefined> {
+    updateUser(userId: string, displayName: string): Promise<User> {
         return this.userRepository.save({
             id: userId,
             displayName: displayName
