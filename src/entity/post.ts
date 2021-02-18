@@ -33,4 +33,6 @@ export class Post {
     comments?: Comment[];
 
     likes: number = 0;
+
+    cover!: Photo;
 }
