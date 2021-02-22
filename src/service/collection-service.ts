@@ -1,4 +1,4 @@
-import { DeleteResult, getCustomRepository } from "typeorm";
+import { DeleteResult } from "typeorm";
 import { Collection } from "../entity/collection";
 import { Post } from "../entity/post";
 import { CollectionRepository } from "../repository/collection-repository";
@@ -6,7 +6,9 @@ import { CollectionRepository } from "../repository/collection-repository";
 type CollectionParams = Pick<Collection, 'name' | 'description'>;
 
 export class CollectionService {
-    collectionRepository = getCustomRepository(CollectionRepository);
+    public constructor(
+        private readonly collectionRepository: CollectionRepository
+    ) { }
 
     getCollectionsByUser(userId: string): Promise<Collection[]> {
         return this.collectionRepository.find({ where: { creator: { id: userId } } });

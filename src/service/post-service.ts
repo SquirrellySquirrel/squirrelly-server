@@ -1,15 +1,17 @@
-import { DeleteResult, getCustomRepository } from "typeorm";
+import { DeleteResult } from "typeorm";
 import { Location } from "../entity/location";
 import { Photo } from "../entity/photo";
 import { Post } from "../entity/post";
 import { PostRepository } from "../repository/post-repository";
-import { PostLikeService } from "../service/post-like-service";
 import { PhotoService } from "./photo-service";
+import { PostLikeService } from "./post-like-service";
 
 export class PostService {
-    postRepository = getCustomRepository(PostRepository);
-    photoService = new PhotoService();
-    postLikeService = new PostLikeService();
+    public constructor(
+        private readonly postRepository: PostRepository,
+        private readonly photoService: PhotoService,
+        private readonly postLikeService: PostLikeService
+    ) { }
 
     async getPosts(count: number): Promise<Post[] | undefined> {
         const posts = await this.postRepository.find({ take: count });

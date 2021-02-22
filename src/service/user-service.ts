@@ -1,10 +1,12 @@
-import { DeleteResult, getCustomRepository } from "typeorm";
+import { DeleteResult } from "typeorm";
 import { Device } from "../entity/device";
 import { User } from "../entity/user";
 import { UserRepository } from "../repository/user-repository";
 
 export class UserService {
-    userRepository = getCustomRepository(UserRepository);
+    public constructor(
+        private readonly userRepository: UserRepository
+    ) { }
 
     getUser(userId: string): Promise<User | undefined> {
         return this.userRepository.findOne(userId);
