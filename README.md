@@ -4,7 +4,7 @@
 * npm: 7.x
 * mysql: 8.x
 
-1. Copy `.env.example` to `.env` with actual environment variables.
+1. Copy `.env.example` to `.env[.profile]` (e.g. `.env.dev`) with actual environment variables.
 
 2. Install dependencies:
 
@@ -21,11 +21,17 @@ $ npm run build
 4. Start server:
 
 ```console
-$ npm start
+$ npm run start
 ```
 
-5. Local dev (no need to build):
+5. Start server locally (no need to build):
 
 ```console
 $ npm run start:dev
+```
+
+6. Run tests:
+
+```console
+$ npm run test
 ```
