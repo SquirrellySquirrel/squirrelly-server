@@ -9,7 +9,7 @@ export class UserService {
     ) { }
 
     getUser(userId: string): Promise<User | undefined> {
-        return this.userRepository.findOne(userId);
+        return this.userRepository.findOne(userId, { relations: ['devices'] });
     }
 
     createGhostUser(deviceId: string, deviceType: string): Promise<User> {
