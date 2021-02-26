@@ -1,8 +1,8 @@
-require('dotenv').config();
+require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
-import { connectDB } from './database';
+import connection from './database';
 
 const app = express();
 app.use(cors());
@@ -19,6 +19,6 @@ const startServer = async () => {
 };
 
 (async () => {
-    await connectDB();
+    await connection.create();
     await startServer();
 })();

@@ -1,5 +1,3 @@
-require("dotenv").config();
-
 module.exports = {
   type: "mysql",
   host: process.env.DB_HOST,

@@ -8,4 +8,5 @@ dist/
 .vscode
 
 # Config
-.env
+.env*
+!.env.example
