@@ -9,6 +9,6 @@ module.exports = {
   synchronize: true,
   logging: true,
   migrationsRun: true,
-  migrations: ["dist/migration/*.js"],
-  entities: ["dist/entity/*.js"]
+  migrations: [process.env.DB_MIGRATIONS],
+  entities: [process.env.DB_ENTITIES]
 };
