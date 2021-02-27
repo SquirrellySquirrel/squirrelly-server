@@ -13,7 +13,7 @@ export class Collection {
     @Column('text', { nullable: true })
     description?: string;
 
-    @ManyToOne(type => User, creator => creator.posts, { nullable: false, onDelete: "CASCADE" })
+    @ManyToOne(type => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     creator!: User;
 

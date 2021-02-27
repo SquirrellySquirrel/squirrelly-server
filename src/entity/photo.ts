@@ -24,7 +24,7 @@ export class Photo {
     @Column()
     order!: number;
 
-    @ManyToOne(type => Post, { nullable: false, onDelete: "CASCADE" })
+    @ManyToOne(type => Post, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'post_id' })
     post!: Post;
 }
