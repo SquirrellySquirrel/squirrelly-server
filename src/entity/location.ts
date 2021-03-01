@@ -2,7 +2,7 @@ import { Column, Double, Entity, OneToMany, PrimaryGeneratedColumn, Unique } fro
 import { Post } from "./post";
 
 @Entity(({ name: 'locations' }))
-@Unique('UQ', ['latitude', 'longitude'])
+@Unique('UQ_locations_latitude_longitude', ['latitude', 'longitude'])
 export class Location {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
