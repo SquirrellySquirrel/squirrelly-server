@@ -9,11 +9,11 @@ export class Post {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @ManyToOne(type => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
+    @ManyToOne(() => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     creator!: User;
 
-    @ManyToOne(type => Location, location => location.posts, { nullable: false })
+    @ManyToOne(() => Location, location => location.posts, { nullable: false })
     @JoinColumn({ name: 'location_id' })
     location!: Location;
 
@@ -26,10 +26,10 @@ export class Post {
     @Column()
     public!: boolean;
 
-    @OneToMany(type => Photo, photo => photo.post, { cascade: ['insert', 'update'] })
+    @OneToMany(() => Photo, photo => photo.post, { cascade: ['insert'] })
     photos?: Photo[];
 
-    @OneToMany(type => Comment, comment => comment.post)
+    @OneToMany(() => Comment, comment => comment.post)
     comments?: Comment[];
 
     likes: number = 0;

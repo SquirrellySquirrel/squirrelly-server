@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Post } from "./post";
 import { User } from "./user";
 
@@ -13,11 +13,21 @@ export class Collection {
     @Column('text', { nullable: true })
     description?: string;
 
-    @ManyToOne(type => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
+    @ManyToOne(() => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     creator!: User;
 
-    @OneToMany(type => Post, post => post.location)
-    @JoinColumn({ name: 'post_id' })
+    @ManyToMany(() => Post)
+    @JoinTable({
+        name: 'collections_posts',
+        joinColumn: {
+            name: 'collection_id',
+            referencedColumnName: 'id'
+        },
+        inverseJoinColumn: {
+            name: 'post_id',
+            referencedColumnName: 'id'
+        }
+    })
     posts!: Post[];
 }

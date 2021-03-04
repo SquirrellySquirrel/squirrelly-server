@@ -18,15 +18,15 @@ export class User {
     @Column({ name: 'display_name', length: 50, nullable: true, unique: true })
     displayName?: string;
 
-    @OneToMany(type => Device, device => device.owner, { cascade: ['insert'] })
+    @OneToMany(() => Device, device => device.owner, { cascade: ['insert'] })
     devices!: Device[];
 
-    @OneToMany(type => Post, post => post.creator)
+    @OneToMany(() => Post, post => post.creator)
     posts?: Post[];
 
-    @OneToMany(type => Collection, collection => collection.creator)
+    @OneToMany(() => Collection, collection => collection.creator)
     collections?: Collection[];
 
-    @OneToMany(type => Comment, comment => comment.creator)
+    @OneToMany(() => Comment, comment => comment.creator, { cascade: ['insert', 'update'] })
     comments?: Comment[];
 }

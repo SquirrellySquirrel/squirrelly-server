@@ -6,7 +6,7 @@ export class Device {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @ManyToOne(type => User, owner => owner.devices, { nullable: false, onDelete: "CASCADE" })
+    @ManyToOne(() => User, owner => owner.devices, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     owner!: User;
 

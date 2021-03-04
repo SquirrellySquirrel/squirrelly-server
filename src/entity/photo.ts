@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Post } from "./post";
 
 @Entity(({ name: 'photos' }))
@@ -19,12 +19,16 @@ export class Photo {
     width!: number;
 
     @Column()
-    orientation!: string;
-
-    @Column()
     order!: number;
 
-    @ManyToOne(type => Post, { nullable: false, onDelete: 'CASCADE' })
+    @ManyToOne(() => Post, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'post_id' })
     post!: Post;
+
+    protected orientation!: string;
+
+    @AfterLoad()
+    getOrientation(): string {
+        return this.height < this.width ? 'landscape' : 'portrait';
+    }
 }

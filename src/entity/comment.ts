@@ -15,11 +15,11 @@ export class Comment {
     @Column('timestamp')
     created!: Date;
 
-    @ManyToOne(type => User, creator => creator.posts, { nullable: false })
+    @ManyToOne(() => User, creator => creator.comments, { nullable: false })
     @JoinColumn({ name: 'user_id' })
     creator!: User;
 
-    @ManyToOne(type => Post, { nullable: false, onDelete: 'CASCADE' })
+    @ManyToOne(() => Post, post => post.comments, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({ name: 'post_id' })
     post!: Post;
 }
