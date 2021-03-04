@@ -7,7 +7,7 @@ module.exports = {
   password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE,
   synchronize: true,
-  logging: true,
+  logging: process.env.DB_LOGGING,
   migrationsRun: true,
   migrations: [process.env.DB_MIGRATIONS],
   entities: [process.env.DB_ENTITIES]
