@@ -70,26 +70,25 @@ afterAll(async () => {
 });
 
 it('creates a post with location and another photo', async () => {
-    postService.savePost(user.id, location, false, new Date(), [photo2]).then(async savedPost => {
-        const newPost = await postService.getPost(savedPost.id) as Post;
+    const newPostId = (await postService.savePost(user.id, location, false, new Date(), [photo2])).id;
+    const newPost = await postService.getPost(newPostId) as Post;
 
-        //expect(newPost.creator.id).toEqual(user.id);
-        expect(newPost.id).toEqual(savedPost.id);
-        expect(newPost.location).toEqual(location);
-        expect(newPost.photos).toHaveLength(1);
-        const savedPhoto = newPost.photos![0];
-        expect(savedPhoto.id).not.toBeNull;
-        expect(savedPhoto).toEqual(
-            expect.objectContaining({
-                path: photo2.path,
-                type: photo2.type,
-                height: photo2.height,
-                width: photo2.width,
-                order: 0
-            })
-        );
-        expect(newPost.public).toBeFalsy;
-    });
+    //expect(newPost.creator.id).toEqual(user.id);
+    expect(newPost.id).toEqual(newPostId);
+    expect(newPost.location).toEqual(location);
+    expect(newPost.photos).toHaveLength(1);
+    const savedPhoto = newPost.photos![0];
+    expect(savedPhoto.id).not.toBeNull;
+    expect(savedPhoto).toEqual(
+        expect.objectContaining({
+            path: photo2.path,
+            type: photo2.type,
+            height: photo2.height,
+            width: photo2.width,
+            order: 0
+        })
+    );
+    expect(newPost.public).toBeFalsy;
 });
 
 describe('updates the existing post', () => {
@@ -98,19 +97,21 @@ describe('updates the existing post', () => {
         let photo1 = existingPost.photos![0]; // existing photo with id
         photo2.order = 1;
 
-        postService.updatePost(post.id, location, false, post.created, [photo1, photo2]).then(async updatedPost => {
-            const post = await postService.getPost(updatedPost.id) as Post;
+        await postService.updatePost(post.id, location, false, post.created, [photo1, photo2]);
 
-            expect(post.location).toEqual(location);
-            expect(post.photos).toHaveLength(2);
-            expect(post.photos![0].id).not.toBeNull;
-            expect(post.photos![1].id).not.toBeNull;
-            expect(post.public).toBeFalsy;
-        });
+        const updatedPost = await postService.getPost(post.id) as Post;
+
+        expect(updatedPost.location).toEqual(location);
+        expect(updatedPost.photos).toHaveLength(2);
+        expect(updatedPost.photos![0].id).not.toBeNull;
+        expect(updatedPost.photos![1].id).not.toBeNull;
+        expect(updatedPost.public).toBeFalsy;
     });
 
     it('relaces the existing photo', async () => {
-        const updatedPost = await postService.getPost((await postService.updatePost(post.id, location, false, post.created, [photo2])).id) as Post;
+        await postService.updatePost(post.id, location, false, post.created, [photo2]);
+
+        const updatedPost = await postService.getPost(post.id) as Post;
 
         expect(updatedPost.location).toEqual(location);
         expect(updatedPost.photos).toHaveLength(1);
@@ -135,7 +136,9 @@ describe('updates the existing post', () => {
         newLocation.address = 'Somewhere only we know';
         newLocation.id = (await locationService.saveLocation(newLocation)).id;
 
-        const updatedPost = await postService.getPost((await postService.updatePost(post.id, newLocation, true, post.created, [photo])).id) as Post;
+        await postService.updatePost(post.id, newLocation, true, post.created, [photo]);
+
+        const updatedPost = await postService.getPost(post.id) as Post;
 
         expect(updatedPost.location).toEqual(newLocation);
         expect(updatedPost.photos).toHaveLength(1);
@@ -156,7 +159,8 @@ describe('updates the existing post', () => {
 
 it('gets all posts by user', async () => {
     await postService.savePost(user.id, location, true, new Date(), [photo2]);
-    await postService.getPostsByUser(user.id).then(posts => expect(posts).toHaveLength(2));
+    const posts = await postService.getPostsByUser(user.id);
+    expect(posts).toHaveLength(2);
 });
 
 describe('gets an existing post by id', () => {
@@ -183,5 +187,6 @@ describe('gets an existing post by id', () => {
 it('deletes a post', async () => {
     const post2 = await postService.savePost(user.id, location, true, new Date(), [photo2]);
     await postService.deletePost(post2.id);
-    await postService.getPost(post2.id).then(post => expect(post).toBeUndefined);
+    const post = postService.getPost(post2.id);
+    expect(post).toBeUndefined;
 });
