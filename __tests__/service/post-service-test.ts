@@ -78,7 +78,7 @@ it('creates a post with location and another photo', async () => {
     expect(newPost.location).toEqual(location);
     expect(newPost.photos).toHaveLength(1);
     const savedPhoto = newPost.photos![0];
-    expect(savedPhoto.id).not.toBeNull;
+    expect(savedPhoto.id).not.toBeNull();
     expect(savedPhoto).toEqual(
         expect.objectContaining({
             path: photo2.path,
@@ -88,7 +88,7 @@ it('creates a post with location and another photo', async () => {
             order: 0
         })
     );
-    expect(newPost.public).toBeFalsy;
+    expect(newPost.public).toBeFalsy();
 });
 
 describe('updates the existing post', () => {
@@ -103,9 +103,9 @@ describe('updates the existing post', () => {
 
         expect(updatedPost.location).toEqual(location);
         expect(updatedPost.photos).toHaveLength(2);
-        expect(updatedPost.photos![0].id).not.toBeNull;
-        expect(updatedPost.photos![1].id).not.toBeNull;
-        expect(updatedPost.public).toBeFalsy;
+        expect(updatedPost.photos![0].id).not.toBeNull();
+        expect(updatedPost.photos![1].id).not.toBeNull();
+        expect(updatedPost.public).toBeFalsy();
     });
 
     it('relaces the existing photo', async () => {
@@ -116,7 +116,7 @@ describe('updates the existing post', () => {
         expect(updatedPost.location).toEqual(location);
         expect(updatedPost.photos).toHaveLength(1);
         const savedPhoto = updatedPost.photos![0];
-        expect(savedPhoto.id).not.toBeNull;
+        expect(savedPhoto.id).not.toBeNull();
         expect(savedPhoto).toEqual(
             expect.objectContaining({
                 path: photo2.path,
@@ -143,7 +143,7 @@ describe('updates the existing post', () => {
         expect(updatedPost.location).toEqual(newLocation);
         expect(updatedPost.photos).toHaveLength(1);
         const savedPhoto = updatedPost.photos![0];
-        expect(savedPhoto.id).not.toBeNull;
+        expect(savedPhoto.id).not.toBeNull();
         expect(savedPhoto).toEqual(
             expect.objectContaining({
                 path: photo.path,
@@ -153,7 +153,7 @@ describe('updates the existing post', () => {
                 order: photo.order
             })
         );
-        expect(updatedPost.public).toBeTruthy;
+        expect(updatedPost.public).toBeTruthy();
     });
 });
 
@@ -170,7 +170,7 @@ describe('gets an existing post by id', () => {
         await commentService.addComment(post.id, user2.id, 'aww');
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.comments).toHaveLength(1);
-        expect(existingPost.comments![0].id).not.toBeNull;
+        expect(existingPost.comments![0].id).not.toBeNull();
         expect(existingPost.comments![0].content).toEqual('aww');
     });
 
@@ -187,6 +187,6 @@ describe('gets an existing post by id', () => {
 it('deletes a post', async () => {
     const post2 = await postService.savePost(user.id, location, true, new Date(), [photo2]);
     await postService.deletePost(post2.id);
-    const post = postService.getPost(post2.id);
-    expect(post).toBeUndefined;
+    const post = await postService.getPost(post2.id);
+    expect(post).toBeUndefined();
 });

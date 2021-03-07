@@ -22,10 +22,10 @@ afterAll(async () => {
 
 it('creates a ghost user', async () => {
     const user = await userService.createGhostUser('foo', 'android');
-    expect(user.id).not.toBeNull;
+    expect(user.id).not.toBeNull();
     expect(user.devices).toHaveLength(1);
     const device = user.devices[0];
-    expect(device.id).not.toBeNull;
+    expect(device.id).not.toBeNull();
     expect(device.type).toEqual('android');
     expect(device.deviceId).toEqual('foo');
 });
@@ -47,7 +47,8 @@ it('updates user display name', async () => {
 });
 
 it('deletes a user', async () => {
-    const user = await userService.createGhostUser('foo', 'android');
-    await userService.deleteUser(user.id);
-    await userService.getUser(user.id).then(user => expect(user).toBeUndefined);
+    const userId = (await userService.createGhostUser('foo', 'android')).id;
+    await userService.deleteUser(userId);
+    const user = await userService.getUser(userId);
+    expect(user).toBeUndefined();
 });

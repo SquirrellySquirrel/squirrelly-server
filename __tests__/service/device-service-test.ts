@@ -25,13 +25,12 @@ afterAll(async () => {
 });
 
 it('adds a device to an existing user', async () => {
-    const user = await userService.createGhostUser('foo', 'android');
-    await userService.getUser(user.id).then(user => {
-        expect(user!.devices).toHaveLength(1);
-    });
+    const userId = (await userService.createGhostUser('foo', 'android')).id;
+    const newUser = await userService.getUser(userId);
 
-    await deviceService.addDevice(user.id, { type: 'ios', deviceId: 'bar' });
-    await userService.getUser(user.id).then(user => {
-        expect(user!.devices).toHaveLength(2);
-    });
+    expect(newUser!.devices).toHaveLength(1);
+
+    await deviceService.addDevice(userId, { type: 'ios', deviceId: 'bar' });
+    const userWithNewDevice = await userService.getUser(userId);
+    expect(userWithNewDevice!.devices).toHaveLength(2);
 });
