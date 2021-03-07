@@ -12,7 +12,7 @@ beforeAll(async () => {
     userService = new UserService(getCustomRepository(UserRepository));
 });
 
-afterEach(async () => {
+beforeEach(async () => {
     await connection.clear();
 });
 
