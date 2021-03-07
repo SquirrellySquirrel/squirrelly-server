@@ -1,3 +1,4 @@
+import { getConnection } from "typeorm";
 import { Location } from "../entity/location";
 import { LocationRepository } from "../repository/location-repository";
 
@@ -8,11 +9,17 @@ export class LocationService {
         private readonly LocationRepository: LocationRepository
     ) { }
 
-    saveLocation(params: SaveLocationParams): Promise<Location> {
-        return this.LocationRepository.save({
-            latitude: params.latitude,
-            longitude: params.longitude,
-            address: params.address
-        });
+    async saveLocation(params: SaveLocationParams): Promise<Location> {
+        let result = await getConnection().createQueryBuilder()
+            .insert()
+            .into(Location)
+            .values({
+                latitude: params.latitude,
+                longitude: params.longitude,
+                address: params.address
+            })
+            .orIgnore() // ignore duplicate entry
+            .execute();
+        return result.generatedMaps[0] as Location;
     }
 } 

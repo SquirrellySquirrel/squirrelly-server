@@ -45,8 +45,8 @@ export class PostService {
         return post;
     }
 
-    savePost(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
-        return this.postRepository.save({
+    async savePost(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+        return await this.postRepository.save({
             location: location,
             creator: { id: userId },
             public: isPublic,
@@ -56,15 +56,19 @@ export class PostService {
         });
     }
 
-    updatePost(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
-        return this.postRepository.save({
+    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+        const post = await this.postRepository.save({
             id: postId,
             location: location,
             public: isPublic,
             created: created,
-            updated: new Date(),
-            photos: photos
+            updated: new Date()
         });
+        for (let photo of photos) {
+            photo.post = post;
+        }
+        await this.photoService.upsertPhotosByPost(post.id, photos);
+        return post;
     }
 
     deletePost(postId: string): Promise<DeleteResult> {
