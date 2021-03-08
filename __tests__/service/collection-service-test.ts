@@ -26,6 +26,7 @@ let user: User;
 
 beforeAll(async () => {
     await connection.create();
+
     collectionService = new CollectionService(getCustomRepository(CollectionRepository));
     userService = new UserService(getCustomRepository(UserRepository));
     postService = new PostService(getCustomRepository(PostRepository),

@@ -139,6 +139,22 @@ describe('updates the existing post', () => {
     });
 });
 
+describe('gets all posts', () => {
+    it('less than limit', async () => {
+        const user2 = await userService.createGhostUser('bar', 'android');
+        await postService.savePost(user2.id, location, true, new Date(), [photo2]);
+        const posts = await postService.getPosts(9);
+        expect(posts).toHaveLength(2);
+    });
+
+    it('more than limit', async () => {
+        const user2 = await userService.createGhostUser('bar', 'android');
+        await postService.savePost(user2.id, location, true, new Date(), [photo2]);
+        const posts = await postService.getPosts(1);
+        expect(posts).toHaveLength(1);
+    });
+});
+
 it('gets all posts by user', async () => {
     await postService.savePost(user.id, location, true, new Date(), [photo2]);
     const posts = await postService.getPostsByUser(user.id);

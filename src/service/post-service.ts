@@ -36,7 +36,7 @@ export class PostService {
     }
 
     async getPost(postId: string): Promise<Post | undefined> {
-        const post = await this.postRepository.findOne({ where: { id: postId }, relations: ["creator", "location", "photos", "comments"] });
+        const post = await this.postRepository.findOne({ where: { id: postId }, relations: ["creator", "location", "photos", "comments", "comments.creator"] });
         if (!post) {
             return undefined;
         }
