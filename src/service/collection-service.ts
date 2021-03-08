@@ -10,6 +10,10 @@ export class CollectionService {
         private readonly collectionRepository: CollectionRepository
     ) { }
 
+    getCollection(collectionId: string): Promise<Collection | undefined> {
+        return this.collectionRepository.findOne({ where: { id: collectionId }, relations: ["creator", "posts"] });
+    }
+
     getCollectionsByUser(userId: string): Promise<Collection[]> {
         return this.collectionRepository.find({ where: { creator: { id: userId } } });
     }
