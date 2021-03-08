@@ -28,8 +28,9 @@ let location: Location;
 let photo: Photo;
 let photo2: Photo;
 
-beforeAll(async () => {
+beforeEach(async () => {
     await connection.create();
+    await connection.clear();
 
     postService = new PostService(getCustomRepository(PostRepository),
         new PhotoService(getCustomRepository(PhotoRepository)),
@@ -38,10 +39,6 @@ beforeAll(async () => {
     userService = new UserService(getCustomRepository(UserRepository));
 
     locationService = new LocationService(getCustomRepository(LocationRepository));
-});
-
-beforeEach(async () => {
-    await connection.clear();
 
     user = await userService.createGhostUser('foo', 'android');
 
@@ -68,7 +65,7 @@ beforeEach(async () => {
     post = await postService.savePost(user.id, location, false, new Date(), [photo]);
 });
 
-afterAll(async () => {
+afterEach(async () => {
     await connection.close();
 });
 
