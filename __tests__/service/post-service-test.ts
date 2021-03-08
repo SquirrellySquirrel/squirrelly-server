@@ -29,15 +29,18 @@ let location: Location;
 let photo1: Photo;
 let photo2: Photo;
 
-beforeEach(async () => {
+beforeAll(async () => {
     await connection.create();
-    await connection.clear();
 
     postService = new PostService(getCustomRepository(PostRepository),
         new PhotoService(getCustomRepository(PhotoRepository)),
         new PostLikeService(getCustomRepository(PostLikeRepository)));
     userService = new UserService(getCustomRepository(UserRepository));
     locationService = new LocationService(getCustomRepository(LocationRepository));
+});
+
+beforeEach(async () => {
+    await connection.clear();
 
     user = await userService.createGhostUser('foo', 'android');
     location = MockData.location1();
@@ -47,7 +50,7 @@ beforeEach(async () => {
     post = await postService.savePost(user.id, location, false, new Date(), [photo1]);
 });
 
-afterEach(async () => {
+afterAll(async () => {
     await connection.close();
 });
 

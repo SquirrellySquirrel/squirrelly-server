@@ -10,5 +10,8 @@ module.exports = {
   logging: process.env.DB_LOGGING,
   migrationsRun: true,
   migrations: [process.env.DB_MIGRATIONS],
-  entities: [process.env.DB_ENTITIES]
+  entities: [process.env.DB_ENTITIES],
+  extra: {
+    connectionLimit: Number(process.env.DB_POOL_SIZE)
+  }
 };
