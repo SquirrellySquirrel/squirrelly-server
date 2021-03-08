@@ -155,10 +155,15 @@ describe('gets all posts', () => {
     });
 });
 
-it('gets all posts by user', async () => {
-    await postService.savePost(user.id, location, true, new Date(), [photo2]);
-    const posts = await postService.getPostsByUser(user.id);
+it('gets all posts by user with correct orders and covers', async () => {
+    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1s before saving a new post
+    const post2 = await postService.savePost(user.id, location, true, new Date(), [photo2]);
+    const posts = await postService.getPostsByUser(user.id) as Post[];
     expect(posts).toHaveLength(2);
+    expect(posts[0].id).toEqual(post2.id);
+    expect(posts[0].cover.id).toEqual(photo2.id);
+    expect(posts[1].id).toEqual(post.id);
+    expect(posts[1].cover.id).toEqual(photo1.id);
 });
 
 describe('gets an existing post by id', () => {

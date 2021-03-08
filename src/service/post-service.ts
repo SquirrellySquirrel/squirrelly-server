@@ -13,8 +13,8 @@ export class PostService {
         private readonly postLikeService: PostLikeService
     ) { }
 
-    async getPosts(count: number): Promise<Post[] | undefined> {
-        const posts = await this.postRepository.find({ take: count });
+    async getPosts(count: number): Promise<Post[]> {
+        const posts = await this.postRepository.find({ take: count, order: { created: 'DESC' } });
         for (const post of posts) {
             const cover = await this.photoService.getPostCover(post.id);
             if (cover) {
@@ -24,8 +24,8 @@ export class PostService {
         return posts;
     }
 
-    async getPostsByUser(userId: string): Promise<Post[] | undefined> {
-        const posts = await this.postRepository.find({ where: { creator: { id: userId } } });
+    async getPostsByUser(userId: string): Promise<Post[]> {
+        const posts = await this.postRepository.find({ where: { creator: { id: userId } }, order: { created: 'DESC' } });
         for (const post of posts) {
             const cover = await this.photoService.getPostCover(post.id);
             if (cover) {
