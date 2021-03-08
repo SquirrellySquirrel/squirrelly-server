@@ -24,9 +24,9 @@ let userService: UserService;
 let locationService: LocationService;
 let user: User;
 let post: Post;
-const location = new Location();
-const photo = new Photo();
-const photo2 = new Photo();
+let location: Location;
+let photo: Photo;
+let photo2: Photo;
 
 beforeAll(async () => {
     await connection.create();
@@ -45,17 +45,20 @@ beforeEach(async () => {
 
     user = await userService.createGhostUser('foo', 'android');
 
+    location = new Location();
     location.latitude = 1.2;
     location.longitude = -2.3;
     location.address = 'Somewhere on the earch';
     location.id = (await locationService.saveLocation(location)).id;
 
+    photo = new Photo();
     photo.path = '/path/to/photo-1';
     photo.type = 'png';
     photo.height = 400;
     photo.width = 600;
     photo.order = 0;
 
+    photo2 = new Photo();
     photo2.path = '/path/to/photo-2';
     photo2.type = 'jpeg';
     photo2.height = 800;
