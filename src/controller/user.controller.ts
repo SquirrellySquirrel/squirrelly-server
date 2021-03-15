@@ -15,7 +15,9 @@ export default class UserController implements Controller {
 
     private initRoutes() {
         this.router.get(`${this.path}/:id`, this.getUser);
-        this.router.post(this.path, this.createUser)
+        this.router.post(this.path, this.createUser);
+        this.router.put(`${this.path}/:id`, this.updateUser);
+        this.router.delete(`${this.path}/:id`, this.deleteUser);
     }
 
     private getUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -29,6 +31,25 @@ export default class UserController implements Controller {
     }
 
     private createUser = async (req: Request, res: Response) => {
-        return res.send(await this.userService.createGhostUser(req.body['device_id'], req.body['device_type']));
+        res.status(201)
+            .send(await this.userService.createGhostUser(req.body['device_id'], req.body['device_type']));
+    }
+
+    private updateUser = async (req: Request, res: Response) => {
+        const id = req.params.id;
+        const email = req.body['email'];
+        const password = req.body['password'];
+        const displayName = req.body['display_name'];
+        if (email && password) {
+            res.send(await this.userService.upgradeGhostUser(id, email, password, displayName));
+        } else {
+            res.send(await this.userService.updateUser(id, displayName));
+        }
+    }
+
+    private deleteUser = async (req: Request, res: Response) => {
+        const id = req.params.id;
+        await this.userService.deleteUser(id);
+        res.sendStatus(204);
     }
 }

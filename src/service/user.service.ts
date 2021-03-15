@@ -12,34 +12,42 @@ export default class UserService {
         private readonly userRepository: UserRepository
     ) { }
 
-    getUser(userId: string): Promise<User | undefined> {
-        return this.userRepository.findOne(userId, { relations: ['devices'] });
+    async getUser(userId: string): Promise<User | undefined> {
+        const user = await this.userRepository.findOne(userId, { relations: ['devices'] });
+        if (user) {
+            const { password, ...foundUser } = user;
+            return foundUser;
+        }
+        return undefined;
     }
 
-    createGhostUser(deviceId: string, deviceType: string): Promise<User> {
+    async createGhostUser(deviceId: string, deviceType: string): Promise<User> {
         const device = new Device();
         device.type = deviceType;
         device.deviceId = deviceId;
         const user = new User();
         user.devices = new Array();
         user.devices.push(device);
-        return this.userRepository.save(user);
+        const { password, ...savedUser } = await this.userRepository.save(user);
+        return savedUser;
     }
 
-    upgradeGhostUser(userId: string, email: string, password: string, displayName: string): Promise<User> {
-        return this.userRepository.save({
+    async upgradeGhostUser(userId: string, email: string, pass: string, displayName: string): Promise<User> {
+        const { password, ...savedUser } = await this.userRepository.save({
             id: userId,
             email: email,
-            password: password,
+            password: pass,
             displayName: displayName
         });
+        return savedUser;
     }
 
-    updateUser(userId: string, displayName: string): Promise<User> {
-        return this.userRepository.save({
+    async updateUser(userId: string, displayName: string): Promise<User> {
+        const { email, password, ...savedUser } = await this.userRepository.save({
             id: userId,
             displayName: displayName
         });
+        return savedUser;
     }
 
     deleteUser(userId: string): Promise<DeleteResult> {
