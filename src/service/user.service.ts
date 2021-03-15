@@ -1,12 +1,11 @@
 import { DeleteResult } from "typeorm";
 import { Device } from "../entity/device";
 import { User } from "../entity/user";
-import { UserRepository } from "../repository/user-repository";
+import { UserRepository } from "../repository/user.repository";
 
 export class UserService {
-    public constructor(
-        private readonly userRepository: UserRepository
-    ) { }
+    constructor(private readonly userRepository: UserRepository) {
+    }
 
     getUser(userId: string): Promise<User | undefined> {
         return this.userRepository.findOne(userId, { relations: ['devices'] });

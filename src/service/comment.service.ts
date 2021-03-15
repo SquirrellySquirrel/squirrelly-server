@@ -1,6 +1,6 @@
 import { DeleteResult } from "typeorm";
 import { Comment } from "../entity/comment";
-import { CommentRepository } from "../repository/comment-repository";
+import { CommentRepository } from "../repository/comment.repository";
 
 export class CommentService {
     public constructor(

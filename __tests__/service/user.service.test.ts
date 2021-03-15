@@ -2,8 +2,8 @@ require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require("reflect-metadata");
 import { getCustomRepository } from 'typeorm';
 import connection from '../../src/database';
-import { UserRepository } from '../../src/repository/user-repository';
-import { UserService } from '../../src/service/user-service';
+import { UserRepository } from '../../src/repository/user.repository';
+import { UserService } from '../../src/service/user.service';
 
 let userService: UserService;
 

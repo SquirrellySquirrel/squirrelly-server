@@ -1,5 +1,5 @@
 import { Photo } from "../entity/photo";
-import { PhotoRepository } from "../repository/photo-repository";
+import { PhotoRepository } from "../repository/photo.repository";
 
 export class PhotoService {
     public constructor(

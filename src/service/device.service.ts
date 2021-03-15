@@ -1,5 +1,5 @@
 import { Device } from "../entity/device";
-import { DeviceRepository } from "../repository/device-repository";
+import { DeviceRepository } from "../repository/device.repository";
 
 type AddDeviceParams = Omit<Device, 'id' | 'owner'>;
 

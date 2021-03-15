@@ -2,9 +2,9 @@ import { DeleteResult } from "typeorm";
 import { Location } from "../entity/location";
 import { Photo } from "../entity/photo";
 import { Post } from "../entity/post";
-import { PostRepository } from "../repository/post-repository";
-import { PhotoService } from "./photo-service";
-import { PostLikeService } from "./post-like-service";
+import { PostRepository } from "../repository/post.repository";
+import { PhotoService } from "./photo.service";
+import { PostLikeService } from "./post-like.service";
 
 export class PostService {
     public constructor(

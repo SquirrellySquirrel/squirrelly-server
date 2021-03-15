@@ -1,6 +1,6 @@
 import { getConnection } from "typeorm";
 import { Location } from "../entity/location";
-import { LocationRepository } from "../repository/location-repository";
+import { LocationRepository } from "../repository/location.repository";
 
 type SaveLocationParams = Omit<Location, 'id' | 'posts'>;
 

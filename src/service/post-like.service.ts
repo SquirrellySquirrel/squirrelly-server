@@ -1,6 +1,6 @@
 import { DeleteResult } from "typeorm";
 import { PostLike } from "../entity/post-like";
-import { PostLikeRepository } from "../repository/post-like-repository";
+import { PostLikeRepository } from "../repository/post-like.repository";
 
 export class PostLikeService {
     public constructor(
