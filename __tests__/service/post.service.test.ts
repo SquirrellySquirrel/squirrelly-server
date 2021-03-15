@@ -1,23 +1,19 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require("reflect-metadata");
-import { getCustomRepository } from 'typeorm';
+import { getCustomRepository, useContainer } from 'typeorm';
+import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import { Location } from '../../src/entity/location';
-import { Photo } from '../../src/entity/photo';
-import { Post } from '../../src/entity/post';
-import { User } from '../../src/entity/user';
-import { CommentRepository } from '../../src/repository/comment.repository';
-import { LocationRepository } from '../../src/repository/location.repository';
-import { PhotoRepository } from '../../src/repository/photo.repository';
-import { PostLikeRepository } from '../../src/repository/post-like.repository';
-import { PostRepository } from '../../src/repository/post.repository';
-import { UserRepository } from '../../src/repository/user.repository';
-import { CommentService } from '../../src/service/comment.service';
-import { LocationService } from '../../src/service/location.service';
-import { PhotoService } from '../../src/service/photo.service';
-import { PostLikeService } from '../../src/service/post-like.service';
-import { PostService } from '../../src/service/post.service';
-import { UserService } from '../../src/service/user.service';
+import Location from '../../src/entity/location';
+import Photo from '../../src/entity/photo';
+import Post from '../../src/entity/post';
+import User from '../../src/entity/user';
+import CommentRepository from '../../src/repository/comment.repository';
+import PostLikeRepository from '../../src/repository/post-like.repository';
+import CommentService from '../../src/service/comment.service';
+import LocationService from '../../src/service/location.service';
+import PostLikeService from '../../src/service/post-like.service';
+import PostService from '../../src/service/post.service';
+import UserService from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
 
 let postService: PostService;
@@ -30,13 +26,13 @@ let photo1: Photo;
 let photo2: Photo;
 
 beforeAll(async () => {
+    useContainer(Container);
+
     await connection.create();
 
-    postService = new PostService(getCustomRepository(PostRepository),
-        new PhotoService(getCustomRepository(PhotoRepository)),
-        new PostLikeService(getCustomRepository(PostLikeRepository)));
-    userService = new UserService(getCustomRepository(UserRepository));
-    locationService = new LocationService(getCustomRepository(LocationRepository));
+    postService = Container.get(PostService);
+    userService = Container.get(UserService);
+    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {

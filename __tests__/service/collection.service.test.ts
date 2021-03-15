@@ -1,21 +1,14 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require("reflect-metadata");
-import { getCustomRepository } from 'typeorm';
+import { useContainer } from 'typeorm';
+import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import { Collection } from '../../src/entity/collection';
-import { User } from '../../src/entity/user';
-import { CollectionRepository } from '../../src/repository/collection.repository';
-import { LocationRepository } from '../../src/repository/location.repository';
-import { PhotoRepository } from '../../src/repository/photo.repository';
-import { PostLikeRepository } from '../../src/repository/post-like.repository';
-import { PostRepository } from '../../src/repository/post.repository';
-import { UserRepository } from '../../src/repository/user.repository';
-import { CollectionService } from '../../src/service/collection.service';
-import { LocationService } from '../../src/service/location.service';
-import { PhotoService } from '../../src/service/photo.service';
-import { PostLikeService } from '../../src/service/post-like.service';
-import { PostService } from '../../src/service/post.service';
-import { UserService } from '../../src/service/user.service';
+import Collection from '../../src/entity/collection';
+import User from '../../src/entity/user';
+import CollectionService from '../../src/service/collection.service';
+import LocationService from '../../src/service/location.service';
+import PostService from '../../src/service/post.service';
+import UserService from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
 
 let collectionService: CollectionService;
@@ -25,14 +18,14 @@ let locationService: LocationService;
 let user: User;
 
 beforeAll(async () => {
+    useContainer(Container);
+
     await connection.create();
 
-    collectionService = new CollectionService(getCustomRepository(CollectionRepository));
-    userService = new UserService(getCustomRepository(UserRepository));
-    postService = new PostService(getCustomRepository(PostRepository),
-        new PhotoService(getCustomRepository(PhotoRepository)),
-        new PostLikeService(getCustomRepository(PostLikeRepository)));
-    locationService = new LocationService(getCustomRepository(LocationRepository));
+    collectionService = Container.get(CollectionService);
+    userService = Container.get(UserService);
+    postService = Container.get(PostService);
+    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {

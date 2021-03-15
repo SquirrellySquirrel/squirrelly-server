@@ -1,15 +1,18 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require("reflect-metadata");
-import { getCustomRepository } from 'typeorm';
+import { useContainer } from 'typeorm';
+import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import { UserRepository } from '../../src/repository/user.repository';
-import { UserService } from '../../src/service/user.service';
+import UserService from '../../src/service/user.service';
 
 let userService: UserService;
 
 beforeAll(async () => {
+    useContainer(Container);
+
     await connection.create();
-    userService = new UserService(getCustomRepository(UserRepository));
+
+    userService = Container.get(UserService);
 });
 
 beforeEach(async () => {

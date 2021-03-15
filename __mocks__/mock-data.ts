@@ -1,5 +1,5 @@
-import { Location } from '../src/entity/location';
-import { Photo } from "../src/entity/photo";
+import Location from '../src/entity/location';
+import Photo from "../src/entity/photo";
 
 export class MockData {
     static location1(): Location {
