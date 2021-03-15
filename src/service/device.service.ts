@@ -1,10 +1,14 @@
-import { Device } from "../entity/device";
-import { DeviceRepository } from "../repository/device.repository";
+import { Service } from 'typedi';
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Device from "../entity/device";
+import DeviceRepository from "../repository/device.repository";
 
 type AddDeviceParams = Omit<Device, 'id' | 'owner'>;
 
-export class DeviceService {
-    public constructor(
+@Service()
+export default class DeviceService {
+    constructor(
+        @InjectRepository()
         private readonly deviceRepository: DeviceRepository
     ) { }
 

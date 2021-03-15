@@ -1,8 +1,12 @@
-import { Photo } from "../entity/photo";
-import { PhotoRepository } from "../repository/photo.repository";
+import { Service } from 'typedi';
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Photo from "../entity/photo";
+import PhotoRepository from "../repository/photo.repository";
 
-export class PhotoService {
-    public constructor(
+@Service()
+export default class PhotoService {
+    constructor(
+        @InjectRepository()
         private readonly photoRepository: PhotoRepository
     ) { }
 

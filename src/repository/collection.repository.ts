@@ -1,6 +1,8 @@
+import { Service } from 'typedi';
 import { EntityRepository, Repository } from "typeorm";
-import { Collection } from "../entity/collection";
+import Collection from "../entity/collection";
 
+@Service()
 @EntityRepository(Collection)
-export class CollectionRepository extends Repository<Collection> {
+export default class CollectionRepository extends Repository<Collection> {
 }

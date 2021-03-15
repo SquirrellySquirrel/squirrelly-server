@@ -1,9 +1,13 @@
+import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
-import { PostLike } from "../entity/post-like";
-import { PostLikeRepository } from "../repository/post-like.repository";
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import PostLike from "../entity/post-like";
+import PostLikeRepository from "../repository/post-like.repository";
 
-export class PostLikeService {
-    public constructor(
+@Service()
+export default class PostLikeService {
+    constructor(
+        @InjectRepository()
         private readonly postLikeRepository: PostLikeRepository
     ) { }
 

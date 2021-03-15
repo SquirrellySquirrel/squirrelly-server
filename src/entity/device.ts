@@ -1,8 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "./user";
+import User from "./user";
 
 @Entity(({ name: 'devices' }))
-export class Device {
+export default class Device {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 

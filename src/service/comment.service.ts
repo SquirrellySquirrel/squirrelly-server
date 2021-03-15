@@ -1,9 +1,13 @@
+import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
-import { Comment } from "../entity/comment";
-import { CommentRepository } from "../repository/comment.repository";
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Comment from "../entity/comment";
+import CommentRepository from "../repository/comment.repository";
 
-export class CommentService {
-    public constructor(
+@Service()
+export default class CommentService {
+    constructor(
+        @InjectRepository()
         private readonly commentRepository: CommentRepository
     ) { }
 

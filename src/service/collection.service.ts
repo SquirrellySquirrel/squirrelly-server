@@ -1,12 +1,16 @@
+import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
-import { Collection } from "../entity/collection";
-import { Post } from "../entity/post";
-import { CollectionRepository } from "../repository/collection.repository";
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Collection from "../entity/collection";
+import Post from "../entity/post";
+import CollectionRepository from "../repository/collection.repository";
 
 type CollectionParams = Pick<Collection, 'name' | 'description'>;
 
-export class CollectionService {
-    public constructor(
+@Service()
+export default class CollectionService {
+    constructor(
+        @InjectRepository()
         private readonly collectionRepository: CollectionRepository
     ) { }
 

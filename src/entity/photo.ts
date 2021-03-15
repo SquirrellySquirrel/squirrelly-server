@@ -1,8 +1,8 @@
 import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Post } from "./post";
+import Post from "./post";
 
 @Entity(({ name: 'photos' }))
-export class Photo {
+export default class Photo {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 

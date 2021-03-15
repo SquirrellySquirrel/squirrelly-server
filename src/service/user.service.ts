@@ -1,11 +1,16 @@
+import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
-import { Device } from "../entity/device";
-import { User } from "../entity/user";
-import { UserRepository } from "../repository/user.repository";
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Device from "../entity/device";
+import User from "../entity/user";
+import UserRepository from "../repository/user.repository";
 
-export class UserService {
-    constructor(private readonly userRepository: UserRepository) {
-    }
+@Service()
+export default class UserService {
+    constructor(
+        @InjectRepository()
+        private readonly userRepository: UserRepository
+    ) { }
 
     getUser(userId: string): Promise<User | undefined> {
         return this.userRepository.findOne(userId, { relations: ['devices'] });

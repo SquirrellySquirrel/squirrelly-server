@@ -1,17 +1,15 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import { getCustomRepository } from 'typeorm';
+import { Service } from 'typedi';
 import UserNotFoundException from '../exception/user-not-found.exception';
 import Controller from '../interfaces/controller.interface';
-import { UserRepository } from '../repository/user.repository';
-import { UserService } from '../service/user.service';
+import UserService from '../service/user.service';
 
-class UserController implements Controller {
+@Service()
+export default class UserController implements Controller {
     public path = '/users';
     public router = Router();
-    private userService: UserService;
 
-    constructor() {
-        this.userService = new UserService(getCustomRepository(UserRepository));
+    constructor(private readonly userService: UserService) {
         this.initRoutes();
     }
 
@@ -34,5 +32,3 @@ class UserController implements Controller {
         return res.send(await this.userService.createGhostUser(req.body['device_id'], req.body['device_type']));
     }
 }
-
-export default UserController;

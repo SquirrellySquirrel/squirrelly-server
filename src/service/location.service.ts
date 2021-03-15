@@ -1,11 +1,15 @@
+import { Service } from 'typedi';
 import { getConnection } from "typeorm";
-import { Location } from "../entity/location";
-import { LocationRepository } from "../repository/location.repository";
+import { InjectRepository } from 'typeorm-typedi-extensions';
+import Location from "../entity/location";
+import LocationRepository from "../repository/location.repository";
 
 type SaveLocationParams = Omit<Location, 'id' | 'posts'>;
 
-export class LocationService {
-    public constructor(
+@Service()
+export default class LocationService {
+    constructor(
+        @InjectRepository()
         private readonly LocationRepository: LocationRepository
     ) { }
 

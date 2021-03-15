@@ -1,9 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { Post } from "./post";
-import { User } from "./user";
+import Post from "./post";
+import User from "./user";
 
 @Entity(({ name: 'comments' }))
-export class Comment {
+export default class Comment {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 

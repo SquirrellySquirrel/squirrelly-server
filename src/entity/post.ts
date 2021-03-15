@@ -1,11 +1,11 @@
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Comment } from "./comment";
-import { Location } from "./location";
-import { Photo } from "./photo";
-import { User } from "./user";
+import Comment from "./comment";
+import Location from "./location";
+import Photo from "./photo";
+import User from "./user";
 
 @Entity(({ name: 'posts' }))
-export class Post {
+export default class Post {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
