@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
-import UserNotFoundException from '../exception/user-not-found.exception';
+import NotFoundException from '../exception/not-found.exception';
 import Controller from '../interfaces/controller.interface';
+import CollectionService from '../service/collection.service';
+import PostService from '../service/post.service';
 import UserService from '../service/user.service';
 
 @Service()
@@ -9,12 +11,17 @@ export default class UserController implements Controller {
     public path = '/users';
     public router = Router();
 
-    constructor(private readonly userService: UserService) {
+    constructor(
+        private readonly userService: UserService,
+        private readonly postService: PostService,
+        private readonly collectionService: CollectionService) {
         this.initRoutes();
     }
 
     private initRoutes() {
         this.router.get(`${this.path}/:id`, this.getUser);
+        this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
+        this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
         this.router.post(this.path, this.createUser);
         this.router.put(`${this.path}/:id`, this.updateUser);
         this.router.delete(`${this.path}/:id`, this.deleteUser);
@@ -26,7 +33,7 @@ export default class UserController implements Controller {
         if (user) {
             res.send(user);
         } else {
-            next(new UserNotFoundException(id));
+            next(new NotFoundException('User', id));
         }
     }
 
@@ -51,5 +58,15 @@ export default class UserController implements Controller {
         const id = req.params.id;
         await this.userService.deleteUser(id);
         res.sendStatus(204);
+    }
+
+    private getUserPosts = async (req: Request, res: Response) => {
+        const id = req.params.id;
+        res.send(await this.postService.getPostsByUser(id));
+    }
+
+    private getUserCollections = async (req: Request, res: Response) => {
+        const id = req.params.id;
+        res.send(await this.collectionService.getCollectionsByUser(id));
     }
 }
