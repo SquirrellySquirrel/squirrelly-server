@@ -12,8 +12,17 @@ export default class UserService {
         private readonly userRepository: UserRepository
     ) { }
 
-    async getUser(userId: string): Promise<User | undefined> {
+    async getUserById(userId: string): Promise<User | undefined> {
         const user = await this.userRepository.findOne(userId, { relations: ['devices'] });
+        if (user) {
+            const { password, ...foundUser } = user;
+            return foundUser;
+        }
+        return undefined;
+    }
+
+    async getUserByEmail(email: string): Promise<User | undefined> {
+        const user = await this.userRepository.findOne({ where: { email: email }, relations: ['devices'] });
         if (user) {
             const { password, ...foundUser } = user;
             return foundUser;

@@ -38,7 +38,7 @@ it('upgrades a ghost user', async () => {
     const user = await userService.upgradeGhostUser(ghostUser.id, 'foo@bar.com', 'secret', 'squirrel');
     expect(user.id).toEqual(ghostUser.id);
     expect(user.email).toEqual('foo@bar.com');
-    expect(user.password).toEqual('secret');
+    expect(user.password).toBeUndefined();
     expect(user.displayName).toEqual('squirrel');
 });
 
@@ -52,6 +52,6 @@ it('updates user display name', async () => {
 it('deletes a user', async () => {
     const userId = (await userService.createGhostUser('foo', 'android')).id;
     await userService.deleteUser(userId);
-    const user = await userService.getUser(userId);
+    const user = await userService.getUserById(userId);
     expect(user).toBeUndefined();
 });
