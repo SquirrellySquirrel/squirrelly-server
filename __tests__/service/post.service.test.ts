@@ -54,7 +54,7 @@ it('creates a post with location and another photo', async () => {
     const newPostId = (await postService.savePost(user.id, location, false, new Date(), [photo2])).id;
     const newPost = await postService.getPost(newPostId) as Post;
 
-    //expect(newPost.creator.id).toEqual(user.id);
+    expect(newPost.creator.id).toEqual(user.id);
     expect(newPost.id).toEqual(newPostId);
     expect(newPost.location).toEqual(location);
     expect(newPost.photos).toHaveLength(1);
