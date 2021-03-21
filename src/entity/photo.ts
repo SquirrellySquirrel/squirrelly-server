@@ -12,11 +12,11 @@ export default class Photo {
     @Column()
     type!: string;
 
-    @Column('int')
-    height!: number;
+    @Column('int', { nullable: true })
+    height?: number;
 
-    @Column('int')
-    width!: number;
+    @Column('int', { nullable: true })
+    width?: number;
 
     @Column()
     order!: number;
@@ -28,7 +28,10 @@ export default class Photo {
     protected orientation!: string;
 
     @AfterLoad()
-    getOrientation(): string {
+    getOrientation(): string | undefined {
+        if (!this.height || !this.width) {
+            return undefined;
+        }
         return this.height < this.width ? 'landscape' : 'portrait';
     }
 }
