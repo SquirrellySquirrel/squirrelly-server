@@ -59,16 +59,15 @@ export default class PostController implements Controller {
     private createPost = async (req: Request, res: Response) => {
         const files = req.files as Express.Multer.File[];
         const photos: Photo[] = []
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        files.forEach(file => {
             const photo = new Photo();
             photo.path = file['path'];
-            photo.type = file['mimetype'];
+            photo.type = file['type'];
             photo.height = file['height'];
             photo.width = file['width'];
-            photo.order = i;
+            photo.order = file['order'];
             photos.push(photo);
-        }
+        });
 
         const location = JSON.parse(req.body['location']);
         const locationToSave: Partial<Location> = {
@@ -89,6 +88,48 @@ export default class PostController implements Controller {
     }
 
     private updatePost = async (req: Request, res: Response) => {
+        const files = req.files as Express.Multer.File[];
+        const photos: Photo[] = []
+        files.forEach(file => {
+            const photo = new Photo();
+            photo.id = file['id'];
+            photo.path = file['path'];
+            photo.type = file['type'];
+            photo.height = file['height'];
+            photo.width = file['width'];
+            photo.order = file['order'];
+            photos.push(photo);
+        });
+
+        const location = JSON.parse(req.body['location']);
+        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
+        if (!existingLocation) {
+            const locationToSave: Partial<Location> = {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                address: location.address
+            };
+            const locationId = (await this.locationService.saveLocation(location)).id;
+
+            res.status(201)
+                .send(await this.postService.savePost(
+                    req.body['userId'],
+                    { id: locationId, ...locationToSave } as Location,
+                    req.body['isPublic'],
+                    req.body['created'],
+                    photos));
+        } else {
+            res.status(201)
+                .send(await this.postService.savePost(
+                    req.body['userId'],
+                    existingLocation,
+                    req.body['isPublic'],
+                    req.body['created'],
+                    photos));
+        }
+
+        // TODO: delete photos if saving post failed
+        // TODO: delete location if not used by any posts
     }
 
     private deletePost = async (req: Request, res: Response) => {
