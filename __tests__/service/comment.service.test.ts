@@ -38,7 +38,7 @@ beforeEach(async () => {
     location1.id = (await locationService.saveLocation(location1)).id;
     let location2 = MockData.location2();
     location2.id = (await locationService.saveLocation(location2)).id;
-    post = await postService.savePost(user.id, location1, true, new Date(), [MockData.photo1()]);
+    post = await postService.savePost(user.id, location1.id, true, new Date(), [MockData.photo1()]);
 });
 
 afterAll(async () => {

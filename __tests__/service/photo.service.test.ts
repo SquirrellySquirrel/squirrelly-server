@@ -45,7 +45,7 @@ it('chooses a cover for a post', async () => {
     const photo1 = MockData.photo1();
     const photo2 = MockData.photo2();
     photo1.order = 1; // reorder photo1 and photo2
-    const postId = (await postService.savePost(user.id, location1, true, new Date(), [photo1, MockData.photo2()])).id;
+    const postId = (await postService.savePost(user.id, location1.id, true, new Date(), [photo1, MockData.photo2()])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(

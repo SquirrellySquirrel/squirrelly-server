@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import multer from 'multer';
 import { Service } from 'typedi';
-import Location from '../entity/location';
 import Photo from '../entity/photo';
 import NotFoundException from '../exception/not-found.exception';
 import Controller from '../interfaces/controller.interface';
@@ -76,17 +75,12 @@ export default class PostController implements Controller {
         });
 
         const location = JSON.parse(req.body['location']);
-        const locationToSave: Partial<Location> = {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address: location.address
-        };
         const locationId = (await this.locationService.saveLocation(location)).id;
 
         res.status(201)
             .send(await this.postService.savePost(
                 req.body['userId'],
-                { id: locationId, ...locationToSave } as Location,
+                locationId,
                 req.body['isPublic'],
                 req.body['created'],
                 photos));
@@ -110,17 +104,12 @@ export default class PostController implements Controller {
         const location = JSON.parse(req.body['location']);
         const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
         if (!existingLocation) {
-            const locationToSave: Partial<Location> = {
-                latitude: location.latitude,
-                longitude: location.longitude,
-                address: location.address
-            };
             const locationId = (await this.locationService.saveLocation(location)).id;
 
             res.status(201)
                 .send(await this.postService.savePost(
                     req.body['userId'],
-                    { id: locationId, ...locationToSave } as Location,
+                    locationId,
                     req.body['isPublic'],
                     req.body['created'],
                     photos));
@@ -128,7 +117,7 @@ export default class PostController implements Controller {
             res.status(201)
                 .send(await this.postService.savePost(
                     req.body['userId'],
-                    existingLocation,
+                    existingLocation.id,
                     req.body['isPublic'],
                     req.body['created'],
                     photos));

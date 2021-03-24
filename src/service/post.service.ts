@@ -1,7 +1,6 @@
 import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import Location from "../entity/location";
 import Photo from "../entity/photo";
 import Post from "../entity/post";
 import PostRepository from "../repository/post.repository";
@@ -48,9 +47,9 @@ export default class PostService {
         return post;
     }
 
-    async savePost(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async savePost(userId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
         return await this.postRepository.save({
-            location: location,
+            location: { id: locationId },
             creator: { id: userId },
             public: isPublic,
             created: created,
@@ -59,10 +58,10 @@ export default class PostService {
         });
     }
 
-    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async updatePost(postId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
         const post = await this.postRepository.save({
             id: postId,
-            location: location,
+            location: { id: locationId },
             public: isPublic,
             created: created,
             updated: new Date()

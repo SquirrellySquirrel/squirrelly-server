@@ -43,7 +43,7 @@ beforeEach(async () => {
     location.id = (await locationService.saveLocation(location)).id;
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();
-    post = await postService.savePost(user.id, location, false, new Date(), [photo1]);
+    post = await postService.savePost(user.id, location.id, false, new Date(), [photo1]);
 });
 
 afterAll(async () => {
@@ -51,7 +51,7 @@ afterAll(async () => {
 });
 
 it('creates a post with location and another photo', async () => {
-    const newPostId = (await postService.savePost(user.id, location, false, new Date(), [photo2])).id;
+    const newPostId = (await postService.savePost(user.id, location.id, false, new Date(), [photo2])).id;
     const newPost = await postService.getPost(newPostId) as Post;
 
     expect(newPost.creator.id).toEqual(user.id);
@@ -78,7 +78,7 @@ describe('updates the existing post', () => {
         let photo1 = existingPost.photos![0]; // existing photo with id
         photo2.order = 1;
 
-        await postService.updatePost(post.id, location, false, post.created, [photo1, photo2]);
+        await postService.updatePost(post.id, location.id, false, post.created, [photo1, photo2]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
@@ -90,7 +90,7 @@ describe('updates the existing post', () => {
     });
 
     it('relaces the existing photo', async () => {
-        await postService.updatePost(post.id, location, false, post.created, [photo2]);
+        await postService.updatePost(post.id, location.id, false, post.created, [photo2]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
@@ -114,7 +114,7 @@ describe('updates the existing post', () => {
         const newLocation = MockData.location2();
         newLocation.id = (await locationService.saveLocation(newLocation)).id;
 
-        await postService.updatePost(post.id, newLocation, true, post.created, [photo1]);
+        await postService.updatePost(post.id, newLocation.id, true, post.created, [photo1]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
@@ -138,14 +138,14 @@ describe('updates the existing post', () => {
 describe('gets all posts', () => {
     it('less than limit', async () => {
         const user2 = await userService.createGhostUser('bar', 'android');
-        await postService.savePost(user2.id, location, true, new Date(), [photo2]);
+        await postService.savePost(user2.id, location.id, true, new Date(), [photo2]);
         const posts = await postService.getPosts(9);
         expect(posts).toHaveLength(2);
     });
 
     it('more than limit', async () => {
         const user2 = await userService.createGhostUser('bar', 'android');
-        await postService.savePost(user2.id, location, true, new Date(), [photo2]);
+        await postService.savePost(user2.id, location.id, true, new Date(), [photo2]);
         const posts = await postService.getPosts(1);
         expect(posts).toHaveLength(1);
     });
@@ -153,7 +153,7 @@ describe('gets all posts', () => {
 
 it('gets all posts by user with correct orders and covers', async () => {
     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1s before saving a new post
-    const post2 = await postService.savePost(user.id, location, true, new Date(), [photo2]);
+    const post2 = await postService.savePost(user.id, location.id, true, new Date(), [photo2]);
     const posts = await postService.getPostsByUser(user.id) as Post[];
     expect(posts).toHaveLength(2);
     expect(posts[0].id).toEqual(post2.id);
@@ -184,7 +184,7 @@ describe('gets an existing post by id', () => {
 
 
 it('deletes a post', async () => {
-    const post2 = await postService.savePost(user.id, location, true, new Date(), [photo2]);
+    const post2 = await postService.savePost(user.id, location.id, true, new Date(), [photo2]);
     await postService.deletePost(post2.id);
     const post = await postService.getPost(post2.id);
     expect(post).toBeUndefined();

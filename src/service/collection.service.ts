@@ -2,7 +2,6 @@ import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Collection from "../entity/collection";
-import Post from "../entity/post";
 import CollectionRepository from "../repository/collection.repository";
 
 type CollectionParams = Pick<Collection, 'name' | 'description'>;
@@ -22,19 +21,19 @@ export default class CollectionService {
         return this.collectionRepository.find({ where: { creator: { id: userId } } });
     }
 
-    createCollection(posts: Post[], userId: string, collectionParams: CollectionParams): Promise<Collection> {
+    createCollection(postIds: string[], userId: string, collectionParams: CollectionParams): Promise<Collection> {
         return this.collectionRepository.save({
             creator: { id: userId },
-            posts: posts,
+            posts: postIds.map(id => ({ id: id })),
             name: collectionParams.name,
             description: collectionParams.description
         });
     }
 
-    updateCollection(collectionId: string, posts: Post[], collectionParams: CollectionParams): Promise<Collection> {
+    updateCollection(collectionId: string, postIds: string[], collectionParams: CollectionParams): Promise<Collection> {
         return this.collectionRepository.save({
             id: collectionId,
-            posts: posts,
+            posts: postIds.map(id => ({ id: id })),
             name: collectionParams.name,
             description: collectionParams.description
         });
