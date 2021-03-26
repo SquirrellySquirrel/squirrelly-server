@@ -7,10 +7,10 @@ export default class Collection {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column({ name: 'text', length: 50 })
+    @Column({ length: 50 })
     name!: string;
 
-    @Column({ name: 'text', length: 250, nullable: true })
+    @Column({ length: 250, nullable: true })
     description?: string;
 
     @ManyToOne(() => User, creator => creator.posts, { nullable: false, onDelete: 'CASCADE' })
