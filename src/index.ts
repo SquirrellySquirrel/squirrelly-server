@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import App from './app';
+import CollectionController from './controller/collection.controller';
 import PostController from './controller/post.controller';
 import UserController from './controller/user.controller';
 import connection from './database';
@@ -13,7 +14,8 @@ useContainer(Container);
     const app = new App(
         [
             Container.get(UserController),
-            Container.get(PostController)
+            Container.get(PostController),
+            Container.get(CollectionController)
         ]
     );
 
