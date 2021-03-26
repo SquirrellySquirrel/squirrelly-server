@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import NotFoundException from '../exception/not-found.exception';
+import UnauthorizedException from '../exception/unauthorized.exception';
 import Controller from '../interfaces/controller.interface';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
@@ -9,6 +10,8 @@ import UserService from '../service/user.service';
 import CreateUserDTO from './dto/create-user.dto';
 import UpdateUserDTO from './dto/update-user.dto';
 import UpgradeUserDTO from './dto/upgrade-user.dto';
+
+const bcrypt = require('bcrypt');
 
 @Service()
 export default class UserController implements Controller {
@@ -26,6 +29,7 @@ export default class UserController implements Controller {
         this.router.get(`${this.path}/:id`, this.getUser);
         this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
         this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
+        this.router.post(`${this.path}/authenticate`, this.authenticate);
         this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.createUser);
         this.router.put(`${this.path}/:id/upgrade`, requestValidationMiddleware(UpgradeUserDTO), this.upgradeUser);
         this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
@@ -39,6 +43,22 @@ export default class UserController implements Controller {
             res.send(user);
         } else {
             next(new NotFoundException('User', id));
+        }
+    }
+
+    private authenticate = async (req: Request, res: Response, next: NextFunction) => {
+        const email = req.body['email'];
+        const userByEmail = await this.userService.getUserByEmail(email);
+        if (userByEmail) {
+            const password = req.body['password'];
+            const isPasswordMatching = await bcrypt.compare(password, userByEmail.password);
+            if (isPasswordMatching) {
+                res.sendStatus(200);
+            } else {
+                next(new UnauthorizedException());
+            }
+        } else {
+            next(new NotFoundException('User', email));
         }
     }
 
@@ -62,11 +82,13 @@ export default class UserController implements Controller {
         }
 
         const password = req.body['password'];
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         let displayName = req.body['displayName'];
         if (!displayName) {
             displayName = email.split('@', 1)[0];
         }
-        res.send(await this.userService.upgradeGhostUser(id, email, password, displayName));
+        res.send(await this.userService.upgradeGhostUser(id, email, hashedPassword, displayName));
     }
 
     private updateUser = async (req: Request, res: Response, next: NextFunction) => {

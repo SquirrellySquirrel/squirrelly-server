@@ -22,12 +22,7 @@ export default class UserService {
     }
 
     async getUserByEmail(email: string): Promise<User | undefined> {
-        const user = await this.userRepository.findOne({ where: { email: email }, relations: ['devices'] });
-        if (user) {
-            const { password, ...foundUser } = user;
-            return foundUser;
-        }
-        return undefined;
+        return await this.userRepository.findOne({ where: { email: email }, relations: ['devices'] });
     }
 
     async createGhostUser(deviceId: string, deviceType: string): Promise<User> {
