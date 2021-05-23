@@ -2,6 +2,6 @@ import HttpException from './http.exception';
 
 export default class NotFoundException extends HttpException {
     constructor(entity: string, identifier: string) {
-        super(404, `${entity} not found by: ${identifier}`);
+        super(404, `${entity} not found by [id=${identifier}]`);
     }
 }
