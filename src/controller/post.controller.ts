@@ -74,8 +74,9 @@ export default class PostController implements Controller {
         });
 
         const location = JSON.parse(req.body['location']);
-        const locationId = (await this.locationService.saveLocation(location)).id;
-        console.log("Saved location: " + locationId);
+        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
+        const locationId = existingLocation ? existingLocation.id : (await this.locationService.saveLocation(location)).id
+        console.log("Location: " + locationId);
 
         try {
             res.status(201)
