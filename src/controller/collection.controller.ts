@@ -50,8 +50,13 @@ export default class CollectionController implements Controller {
         }
         const name = req.body['name'];
         const descrption = req.body['description'];
-        res.status(201)
-            .send(await this.collectionService.createCollection(postIds, userId, { name: name, description: descrption }));
+
+        try {
+            res.status(201)
+                .send(await this.collectionService.createCollection(postIds, userId, { name: name, description: descrption }));
+        } catch (err) {
+            next(err);
+        }
     }
 
     private updateCollection = async (req: Request, res: Response, next: NextFunction) => {
@@ -64,13 +69,22 @@ export default class CollectionController implements Controller {
         });
         const name = req.body['name'];
         const descrption = req.body['description'];
-        res.send(await this.collectionService.updateCollection(id, postIds, { name: name, description: descrption }));
+
+        try {
+            res.send(await this.collectionService.updateCollection(id, postIds, { name: name, description: descrption }));
+        } catch (err) {
+            next(err);
+        }
     }
 
-    private deleteCollection = async (req: Request, res: Response) => {
+    private deleteCollection = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
-        await this.collectionService.deleteCollection(id);
-        res.sendStatus(204);
+        try {
+            await this.collectionService.deleteCollection(id);
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
     }
 
 }

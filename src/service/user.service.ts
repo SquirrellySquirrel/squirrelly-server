@@ -3,6 +3,7 @@ import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Device from "../entity/device";
 import User from "../entity/user";
+import TypeORMException from "../exception/typeorm.exception";
 import UserRepository from "../repository/user.repository";
 
 @Service()
@@ -32,7 +33,10 @@ export default class UserService {
         const user = new User();
         user.devices = new Array();
         user.devices.push(device);
-        const { password, ...savedUser } = await this.userRepository.save(user);
+        const { password, ...savedUser } = await this.userRepository.save(user)
+            .catch((err: Error) => {
+                throw new TypeORMException(err.message);
+            });;
         return savedUser;
     }
 
@@ -42,7 +46,9 @@ export default class UserService {
             email: email,
             password: pass,
             displayName: displayName
-        });
+        }).catch((err: Error) => {
+            throw new TypeORMException(err.message);
+        });;
         return savedUser;
     }
 
@@ -50,11 +56,16 @@ export default class UserService {
         const { email, password, ...savedUser } = await this.userRepository.save({
             id: userId,
             displayName: displayName
-        });
+        }).catch((err: Error) => {
+            throw new TypeORMException(err.message);
+        });;
         return savedUser;
     }
 
-    deleteUser(userId: string): Promise<DeleteResult> {
-        return this.userRepository.delete(userId);
+    async deleteUser(userId: string): Promise<DeleteResult> {
+        return this.userRepository.delete(userId)
+            .catch((err: Error) => {
+                throw new TypeORMException(err.message);
+            });;
     }
 }

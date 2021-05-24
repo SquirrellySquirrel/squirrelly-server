@@ -62,9 +62,13 @@ export default class UserController implements Controller {
         }
     }
 
-    private createUser = async (req: Request, res: Response) => {
-        res.status(201)
-            .send(await this.userService.createGhostUser(req.body['deviceId'], req.body['deviceType']));
+    private createUser = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.status(201)
+                .send(await this.userService.createGhostUser(req.body['deviceId'], req.body['deviceType']));
+        } catch (err) {
+            next(err);
+        }
     }
 
     private upgradeUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -88,7 +92,11 @@ export default class UserController implements Controller {
         if (!displayName) {
             displayName = email.split('@', 1)[0];
         }
-        res.send(await this.userService.upgradeGhostUser(id, email, hashedPassword, displayName));
+        try {
+            res.send(await this.userService.upgradeGhostUser(id, email, hashedPassword, displayName));
+        } catch (err) {
+            next(err);
+        }
     }
 
     private updateUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -99,7 +107,11 @@ export default class UserController implements Controller {
         }
 
         const displayName = req.body['displayName'];
-        res.send(await this.userService.updateUser(id, displayName));
+        try {
+            res.send(await this.userService.updateUser(id, displayName));
+        } catch (err) {
+            next(err);
+        }
     }
 
     private deleteUser = async (req: Request, res: Response, next: NextFunction) => {
@@ -110,8 +122,12 @@ export default class UserController implements Controller {
             return;
         }
 
-        await this.userService.deleteUser(id);
-        res.sendStatus(204);
+        try {
+            await this.userService.deleteUser(id);
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
     }
 
     private getUserPosts = async (req: Request, res: Response) => {

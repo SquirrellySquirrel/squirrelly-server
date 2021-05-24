@@ -76,7 +76,10 @@ export default class PostService {
         return post;
     }
 
-    deletePost(postId: string): Promise<DeleteResult> {
-        return this.postRepository.delete(postId);
+    async deletePost(postId: string): Promise<DeleteResult> {
+        return this.postRepository.delete(postId)
+            .catch((err: Error) => {
+                throw new TypeORMException(err.message);
+            });;
     }
 }

@@ -1,6 +1,7 @@
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Device from "../entity/device";
+import TypeORMException from "../exception/typeorm.exception";
 import DeviceRepository from "../repository/device.repository";
 
 type AddDeviceParams = Omit<Device, 'id' | 'owner'>;
@@ -12,11 +13,13 @@ export default class DeviceService {
         private readonly deviceRepository: DeviceRepository
     ) { }
 
-    addDevice(userId: string, params: AddDeviceParams): Promise<Device | undefined> {
+    async addDevice(userId: string, params: AddDeviceParams): Promise<Device | undefined> {
         return this.deviceRepository.save({
             type: params.type,
             deviceId: params.deviceId,
             owner: { id: userId }
-        });
+        }).catch((err: Error) => {
+            throw new TypeORMException(err.message);
+        });;
     }
 }

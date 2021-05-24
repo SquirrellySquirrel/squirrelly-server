@@ -30,4 +30,4 @@ export default class LocationService {
             .execute();
         return result.generatedMaps[0] as Location;
     }
-} 
+}

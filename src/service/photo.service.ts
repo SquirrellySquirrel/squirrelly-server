@@ -1,6 +1,7 @@
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Photo from "../entity/photo";
+import TypeORMException from "../exception/typeorm.exception";
 import PhotoRepository from "../repository/photo.repository";
 
 @Service()
@@ -23,6 +24,9 @@ export default class PhotoService {
                 this.photoRepository.delete(id);
             }
         }
-        return this.photoRepository.save(photos);
+        return this.photoRepository.save(photos)
+            .catch((err: Error) => {
+                throw new TypeORMException(err.message);
+            });
     }
 }

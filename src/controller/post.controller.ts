@@ -75,6 +75,7 @@ export default class PostController implements Controller {
 
         const location = JSON.parse(req.body['location']);
         const locationId = (await this.locationService.saveLocation(location)).id;
+        console.log("Saved location: " + locationId);
 
         try {
             res.status(201)
@@ -85,20 +86,14 @@ export default class PostController implements Controller {
                     req.body['created'],
                     photos));
         } catch (err) {
-            files.forEach(file => {
-                fs.unlink(file['path'], (err) => {
-                    if (err) {
-                        console.error(err);
-                        return;
-                    }
-                });
-            });
+            this.removeFiles(files);
             console.log("Removed photos due to failed post creation.");
+
             next(err);
         }
     }
 
-    private updatePost = async (req: Request, res: Response) => {
+    private updatePost = async (req: Request, res: Response, next: NextFunction) => {
         const files = req.files as Express.Multer.File[];
         const photos: Photo[] = []
         files.forEach(file => {
@@ -113,35 +108,56 @@ export default class PostController implements Controller {
         });
 
         const location = JSON.parse(req.body['location']);
-        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
-        if (!existingLocation) {
-            const locationId = (await this.locationService.saveLocation(location)).id;
 
-            res.status(201)
-                .send(await this.postService.savePost(
-                    req.body['userId'],
-                    locationId,
-                    req.body['isPublic'],
-                    req.body['created'],
-                    photos));
-        } else {
-            res.status(201)
-                .send(await this.postService.savePost(
-                    req.body['userId'],
-                    existingLocation.id,
-                    req.body['isPublic'],
-                    req.body['created'],
-                    photos));
+        try {
+            const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
+            if (!existingLocation) {
+                const locationId = (await this.locationService.saveLocation(location)).id;
+
+                res.status(201)
+                    .send(await this.postService.savePost(
+                        req.body['userId'],
+                        locationId,
+                        req.body['isPublic'],
+                        req.body['created'],
+                        photos));
+            } else {
+                res.status(201)
+                    .send(await this.postService.savePost(
+                        req.body['userId'],
+                        existingLocation.id,
+                        req.body['isPublic'],
+                        req.body['created'],
+                        photos));
+            }
+        } catch (err) {
+            this.removeFiles(files);
+            console.log("Removed photos due to failed post update.");
+
+            next(err);
         }
-
-        // TODO: delete photos if saving post failed
         // TODO: delete location if not used by any posts
     }
 
-    private deletePost = async (req: Request, res: Response) => {
+    private removeFiles(files: Express.Multer.File[]) {
+        files.forEach(file => {
+            fs.unlink(file['path'], (err) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+            });
+        });
+    }
+
+    private deletePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
-        await this.postService.deletePost(id);
-        res.sendStatus(204);
+        try {
+            await this.postService.deletePost(id);
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
     }
 
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
@@ -154,25 +170,41 @@ export default class PostController implements Controller {
         }
     }
 
-    private createComment = async (req: Request, res: Response) => {
+    private createComment = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
-        res.status(201)
-            .send(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
+        try {
+            res.status(201)
+                .send(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
+        } catch (err) {
+            next(err);
+        }
     }
 
-    private deleteComment = async (req: Request, res: Response) => {
+    private deleteComment = async (req: Request, res: Response, next: NextFunction) => {
         await this.commentService.deleteComment(req.params.commentId);
-        res.sendStatus(204);
+        try {
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
     }
 
-    private addLike = async (req: Request, res: Response) => {
-        res.status(201)
-            .send(await this.postLikeService.addPostLike(req.params.id, req.body['userId']));
+    private addLike = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.status(201)
+                .send(await this.postLikeService.addPostLike(req.params.id, req.body['userId']));
+        } catch (err) {
+            next(err);
+        }
     }
 
-    private deleteLike = async (req: Request, res: Response) => {
-        await this.postLikeService.deletePostLike(req.params.id, req.body['userId']);
-        res.sendStatus(204);
+    private deleteLike = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await this.postLikeService.deletePostLike(req.params.id, req.body['userId']);
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
     }
 
 }
