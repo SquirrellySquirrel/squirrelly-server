@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import fs from 'fs';
 import multer from 'multer';
 import { Service } from 'typedi';
 import Photo from '../entity/photo';
@@ -11,13 +12,11 @@ import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
 import CreateCommentDTO from './dto/create-comment.dto';
 
+
 const Storage = multer.diskStorage({
     destination(req, file, callback) {
-        console.log(__dirname + '/images');
-
         callback(null, __dirname + '/images')
     },
-    // add back file extensions
     filename(req, file, callback) {
         callback(null, `${file.fieldname}_${Date.now()}_${file.originalname}`)
     },
@@ -61,7 +60,7 @@ export default class PostController implements Controller {
         }
     }
 
-    private createPost = async (req: Request, res: Response) => {
+    private createPost = async (req: Request, res: Response, next: NextFunction) => {
         const files = req.files as Express.Multer.File[];
         const photos: Photo[] = []
         files.forEach(file => {
@@ -77,14 +76,26 @@ export default class PostController implements Controller {
         const location = JSON.parse(req.body['location']);
         const locationId = (await this.locationService.saveLocation(location)).id;
 
-        res.status(201)
-            .send(await this.postService.savePost(
-                req.body['userId'],
-                locationId,
-                req.body['isPublic'],
-                req.body['created'],
-                photos));
-        // TODO: delete photos if saving post failed
+        try {
+            res.status(201)
+                .send(await this.postService.savePost(
+                    req.body['userId'],
+                    locationId,
+                    req.body['isPublic'],
+                    req.body['created'],
+                    photos));
+        } catch (err) {
+            files.forEach(file => {
+                fs.unlink(file['path'], (err) => {
+                    if (err) {
+                        console.error(err);
+                        return;
+                    }
+                });
+            });
+            console.log("Removed photos due to failed post creation.");
+            next(err);
+        }
     }
 
     private updatePost = async (req: Request, res: Response) => {

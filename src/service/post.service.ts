@@ -3,6 +3,7 @@ import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Photo from "../entity/photo";
 import Post from "../entity/post";
+import TypeORMException from '../exception/typeorm.exception';
 import PostRepository from "../repository/post.repository";
 import PhotoService from "./photo.service";
 import PostLikeService from "./post-like.service";
@@ -55,6 +56,8 @@ export default class PostService {
             created: created,
             updated: new Date(),
             photos: photos
+        }).catch((err: Error) => {
+            throw new TypeORMException(err.message);
         });
     }
 
