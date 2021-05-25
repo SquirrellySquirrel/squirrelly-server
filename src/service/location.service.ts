@@ -1,7 +1,8 @@
 import { Service } from 'typedi';
-import { Double, getConnection } from "typeorm";
+import { DeleteResult, Double, getConnection } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Location from "../entity/location";
+import TypeORMException from "../exception/typeorm.exception";
 import LocationRepository from "../repository/location.repository";
 
 type SaveLocationParams = Omit<Location, 'id' | 'posts'>;
@@ -26,8 +27,15 @@ export default class LocationService {
                 longitude: params.longitude,
                 address: params.address
             })
-            .orIgnore() // ignore duplicate entry
+            .onConflict(`("latitude","longitude") DO NOTHING`) // ignore duplicate entry
             .execute();
         return result.generatedMaps[0] as Location;
+    }
+
+    async deleteLocation(id: string): Promise<DeleteResult> {
+        return this.locationRepository.delete(id)
+            .catch((err: Error) => {
+                throw new TypeORMException(err.message);
+            });;
     }
 }

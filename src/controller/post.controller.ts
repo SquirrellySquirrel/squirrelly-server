@@ -44,7 +44,7 @@ export default class PostController implements Controller {
         this.router.post(this.path, upload.array('photos', 5), this.createPost);
         this.router.post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment);
         this.router.post(`${this.path}/:id/likes`, this.addLike);
-        this.router.put(`${this.path}/:id`, this.updatePost);
+        this.router.put(`${this.path}/:id`, upload.array('photos', 5), this.updatePost);
         this.router.delete(`${this.path}/:id`, this.deletePost);
         this.router.delete(`${this.path}/:id/comments/:commentId`, this.deleteComment);
         this.router.delete(`${this.path}/:id/likes`, this.deleteLike);
@@ -62,27 +62,22 @@ export default class PostController implements Controller {
 
     private createPost = async (req: Request, res: Response, next: NextFunction) => {
         const files = req.files as Express.Multer.File[];
-        const photos: Photo[] = []
-        files.forEach(file => {
-            const photo = new Photo();
-            photo.path = file['path'];
-            photo.type = file['type'];
-            photo.height = file['height'];
-            photo.width = file['width'];
-            photo.order = file['order'];
-            photos.push(photo);
-        });
-
-        const location = JSON.parse(req.body['location']);
-        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
-        const locationId = existingLocation ? existingLocation.id : (await this.locationService.saveLocation(location)).id
-        console.log("Location: " + locationId);
-
         try {
+            const photos: Photo[] = []
+            files.forEach((file, index) => {
+                const photo = new Photo();
+                photo.path = file['path'];
+                photo.type = file['type'] || file['mimetype'];
+                photo.height = file['height'];
+                photo.width = file['width'];
+                photo.order = file['order'] || index;
+                photos.push(photo);
+            });
+
             res.status(201)
-                .send(await this.postService.savePost(
+                .send(await this.postService.savePostAndLocation(
                     req.body['userId'],
-                    locationId,
+                    JSON.parse(req.body['location']),
                     req.body['isPublic'],
                     req.body['created'],
                     photos));
@@ -95,49 +90,47 @@ export default class PostController implements Controller {
     }
 
     private updatePost = async (req: Request, res: Response, next: NextFunction) => {
+        const id = req.params.id;
+        const post = await this.postService.getPost(id);
+        if (!post) {
+            next(new NotFoundException('Post', id));
+            return;
+        }
+
         const files = req.files as Express.Multer.File[];
-        const photos: Photo[] = []
-        files.forEach(file => {
-            const photo = new Photo();
-            photo.id = file['id'];
-            photo.path = file['path'];
-            photo.type = file['type'];
-            photo.height = file['height'];
-            photo.width = file['width'];
-            photo.order = file['order'];
-            photos.push(photo);
-        });
-
-        const location = JSON.parse(req.body['location']);
-
         try {
-            const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
-            if (!existingLocation) {
-                const locationId = (await this.locationService.saveLocation(location)).id;
+            const photos: Photo[] = []
+            files.forEach((file, index) => {
+                const photo = new Photo();
+                photo.id = file['id'];
+                photo.path = file['path'];
+                photo.type = file['type'] || file['mimetype'];
+                photo.height = file['height'];
+                photo.width = file['width'];
+                photo.order = file['order'] || index;
+                photos.push(photo);
+            });
 
-                res.status(201)
-                    .send(await this.postService.savePost(
-                        req.body['userId'],
-                        locationId,
-                        req.body['isPublic'],
-                        req.body['created'],
-                        photos));
-            } else {
-                res.status(201)
-                    .send(await this.postService.savePost(
-                        req.body['userId'],
-                        existingLocation.id,
-                        req.body['isPublic'],
-                        req.body['created'],
-                        photos));
+            const updatedPost = await this.postService.updatePostAndLocation(
+                id,
+                JSON.parse(req.body['location']),
+                req.body['isPublic'],
+                req.body['created'],
+                photos);
+
+            // remove orphaned location
+            const oldLocationId = post.location.id;
+            if ((await this.postService.getPostsByLocation(oldLocationId, false)).length == 0) {
+                this.locationService.deleteLocation(oldLocationId);
             }
+            // TODO: remove orphaned photos from db and disk
+            res.status(201).send(updatedPost);
         } catch (err) {
             this.removeFiles(files);
             console.log("Removed photos due to failed post update.");
 
             next(err);
         }
-        // TODO: delete location if not used by any posts
     }
 
     private removeFiles(files: Express.Multer.File[]) {

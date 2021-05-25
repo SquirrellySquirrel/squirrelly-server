@@ -1,10 +1,12 @@
 import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
+import Location from "../entity/location";
 import Photo from "../entity/photo";
 import Post from "../entity/post";
 import TypeORMException from '../exception/typeorm.exception';
 import PostRepository from "../repository/post.repository";
+import LocationService from './location.service';
 import PhotoService from "./photo.service";
 import PostLikeService from "./post-like.service";
 
@@ -13,26 +15,44 @@ export default class PostService {
     constructor(
         @InjectRepository() private readonly postRepository: PostRepository,
         private readonly photoService: PhotoService,
-        private readonly postLikeService: PostLikeService
+        private readonly postLikeService: PostLikeService,
+        private readonly locationService: LocationService
     ) { }
 
-    async getPosts(count: number): Promise<Post[]> {
+    async getPosts(count: number, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.find({ take: count, order: { created: 'DESC' } });
-        for (const post of posts) {
-            const cover = await this.photoService.getPostCover(post.id);
-            if (cover) {
-                post.cover = cover;
+        if (withCover) {
+            for (const post of posts) {
+                const cover = await this.photoService.getPostCover(post.id);
+                if (cover) {
+                    post.cover = cover;
+                }
             }
         }
         return posts;
     }
 
-    async getPostsByUser(userId: string): Promise<Post[]> {
+    async getPostsByUser(userId: string, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.find({ where: { creator: { id: userId } }, order: { created: 'DESC' } });
-        for (const post of posts) {
-            const cover = await this.photoService.getPostCover(post.id);
-            if (cover) {
-                post.cover = cover;
+        if (withCover) {
+            for (const post of posts) {
+                const cover = await this.photoService.getPostCover(post.id);
+                if (cover) {
+                    post.cover = cover;
+                }
+            }
+        }
+        return posts;
+    }
+
+    async getPostsByLocation(locationId: string, withCover = true): Promise<Post[]> {
+        const posts = await this.postRepository.find({ where: { location: { id: locationId } }, order: { created: 'DESC' } });
+        if (withCover) {
+            for (const post of posts) {
+                const cover = await this.photoService.getPostCover(post.id);
+                if (cover) {
+                    post.cover = cover;
+                }
             }
         }
         return posts;
@@ -48,7 +68,10 @@ export default class PostService {
         return post;
     }
 
-    async savePost(userId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async savePostAndLocation(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
+        const locationId = existingLocation ? existingLocation.id : (await this.locationService.saveLocation(location)).id
+
         return await this.postRepository.save({
             location: { id: locationId },
             creator: { id: userId },
@@ -61,14 +84,36 @@ export default class PostService {
         });
     }
 
-    async updatePost(postId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async updatePostAndLocation(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+        const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
+        if (!existingLocation) {
+            const locationId = (await this.locationService.saveLocation(location)).id;
+            return await this.updatePost(
+                postId,
+                locationId,
+                isPublic,
+                created,
+                photos);
+        }
+        return await this.updatePost(
+            postId,
+            existingLocation.id,
+            isPublic,
+            created,
+            photos);
+    }
+
+    private async updatePost(postId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
         const post = await this.postRepository.save({
             id: postId,
             location: { id: locationId },
             public: isPublic,
             created: created,
             updated: new Date()
+        }).catch((err: Error) => {
+            throw new TypeORMException(err.message);
         });
+
         for (let photo of photos) {
             photo.post = post;
         }
