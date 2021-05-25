@@ -37,15 +37,12 @@ afterAll(async () => {
 it('chooses a cover for a post', async () => {
     const user = await userService.createGhostUser('foo', 'android');
 
-    const location1 = MockData.location1();
-    location1.id = (await locationService.saveLocation(location1)).id;
-    const location2 = MockData.location2();
-    location2.id = (await locationService.saveLocation(location2)).id;
+    const location = MockData.location1();
 
     const photo1 = MockData.photo1();
     const photo2 = MockData.photo2();
     photo1.order = 1; // reorder photo1 and photo2
-    const postId = (await postService.savePost(user.id, location1.id, true, new Date(), [photo1, MockData.photo2()])).id;
+    const postId = (await postService.savePostAndLocation(user.id, location, true, new Date(), [photo1, MockData.photo2()])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(

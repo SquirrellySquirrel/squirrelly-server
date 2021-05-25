@@ -34,11 +34,8 @@ beforeEach(async () => {
 
     user = await userService.createGhostUser('foo', 'android');
 
-    let location1 = MockData.location1();
-    location1.id = (await locationService.saveLocation(location1)).id;
-    let location2 = MockData.location2();
-    location2.id = (await locationService.saveLocation(location2)).id;
-    post = await postService.savePost(user.id, location1.id, true, new Date(), [MockData.photo1()]);
+    let location = MockData.location1();
+    post = await postService.savePostAndLocation(user.id, location, true, new Date(), [MockData.photo1()]);
 });
 
 afterAll(async () => {
