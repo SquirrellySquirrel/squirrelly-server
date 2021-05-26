@@ -24,7 +24,7 @@ export default class Post {
     updated!: Date;
 
     @Column()
-    public!: boolean;
+    public: boolean = false;
 
     @OneToMany(() => Photo, photo => photo.post, { cascade: ['insert'] })
     photos?: Photo[];

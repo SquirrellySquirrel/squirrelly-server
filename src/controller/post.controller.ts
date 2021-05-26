@@ -78,8 +78,8 @@ export default class PostController implements Controller {
                 .send(await this.postService.savePostAndLocation(
                     req.body['userId'],
                     JSON.parse(req.body['location']),
-                    req.body['isPublic'],
-                    req.body['created'],
+                    JSON.parse(req.body['isPublic']),
+                    req.body['created'] as Date,
                     photos));
         } catch (err) {
             this.removeFiles(files);
@@ -114,7 +114,7 @@ export default class PostController implements Controller {
             const updatedPost = await this.postService.updatePostAndLocation(
                 id,
                 JSON.parse(req.body['location']),
-                req.body['isPublic'],
+                JSON.parse(req.body['isPublic']),
                 req.body['created'],
                 photos);
 
