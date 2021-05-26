@@ -3,7 +3,9 @@ require("reflect-metadata");
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
+import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
+import User from '../../src/entity/user';
 import LocationService from '../../src/service/location.service';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
@@ -14,6 +16,10 @@ let photoService: PhotoService;
 let userService: UserService;
 let postService: PostService;
 let locationService: LocationService;
+let user: User;
+let location: Location;
+let photo1: Photo;
+let photo2: Photo;
 
 beforeAll(async () => {
     useContainer(Container);
@@ -28,6 +34,11 @@ beforeAll(async () => {
 
 beforeEach(async () => {
     await connection.clear();
+
+    user = await userService.createGhostUser('foo', 'android');
+    location = MockData.location1();
+    photo1 = MockData.photo1();
+    photo2 = MockData.photo2();
 });
 
 afterAll(async () => {
@@ -35,12 +46,6 @@ afterAll(async () => {
 });
 
 it('chooses a cover for a post', async () => {
-    const user = await userService.createGhostUser('foo', 'android');
-
-    const location = MockData.location1();
-
-    const photo1 = MockData.photo1();
-    const photo2 = MockData.photo2();
     photo1.order = 1; // reorder photo1 and photo2
     const postId = (await postService.savePostAndLocation(user.id, location, true, new Date(), [photo1, MockData.photo2()])).id;
 
@@ -53,5 +58,12 @@ it('chooses a cover for a post', async () => {
             width: photo2.width
         })
     );
+});
+
+it('identifies non-existent photos', async () => {
+    const savedPhotoId = (await postService.savePostAndLocation(user.id, location, true, new Date(), [photo1])).photos![0].id;
+    const idToNameMap = new Map([[savedPhotoId, photo1.path], ['id', photo2.path]]);
+    const photosToRemove = await photoService.identifyPhotosToRemove(idToNameMap);
+    expect(photosToRemove).toContain(photo2.path);
 });
 

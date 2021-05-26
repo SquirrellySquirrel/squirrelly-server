@@ -8,14 +8,16 @@ import Controller from '../interfaces/controller.interface';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CommentService from '../service/comment.service';
 import LocationService from '../service/location.service';
+import PhotoService from '../service/photo.service';
 import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
 import CreateCommentDTO from './dto/create-comment.dto';
 
+const photoDest = __dirname + '/images/';
 
 const Storage = multer.diskStorage({
     destination(req, file, callback) {
-        callback(null, __dirname + '/images')
+        callback(null, photoDest)
     },
     filename(req, file, callback) {
         callback(null, `${file.fieldname}_${Date.now()}_${file.originalname}`)
@@ -33,7 +35,8 @@ export default class PostController implements Controller {
         private readonly postService: PostService,
         private readonly locationService: LocationService,
         private readonly commentService: CommentService,
-        private readonly postLikeService: PostLikeService
+        private readonly postLikeService: PostLikeService,
+        private readonly photoService: PhotoService
     ) {
         this.initRoutes();
     }
@@ -66,7 +69,7 @@ export default class PostController implements Controller {
             const photos: Photo[] = []
             files.forEach((file, index) => {
                 const photo = new Photo();
-                photo.path = file['path'];
+                photo.path = file['filename'];
                 photo.type = file['type'] || file['mimetype'];
                 photo.height = file['height'];
                 photo.width = file['width'];
@@ -82,7 +85,7 @@ export default class PostController implements Controller {
                     req.body['created'] as Date,
                     photos));
         } catch (err) {
-            this.removeFiles(files);
+            this.removeFiles(files.map(file => file['filename']));
             console.log("Removed photos due to failed post creation.");
 
             next(err);
@@ -103,13 +106,16 @@ export default class PostController implements Controller {
             files.forEach((file, index) => {
                 const photo = new Photo();
                 photo.id = file['id'];
-                photo.path = file['path'];
+                photo.path = file['filename'];
                 photo.type = file['type'] || file['mimetype'];
                 photo.height = file['height'];
                 photo.width = file['width'];
                 photo.order = file['order'] || index;
                 photos.push(photo);
             });
+
+            const oldLocationId = post.location.id;
+            const oldPhotos = new Map(post.photos?.map(photo => [photo.id, photo.path]));
 
             const updatedPost = await this.postService.updatePostAndLocation(
                 id,
@@ -118,24 +124,35 @@ export default class PostController implements Controller {
                 req.body['created'],
                 photos);
 
-            // remove orphaned location
-            const oldLocationId = post.location.id;
-            if ((await this.postService.getPostsByLocation(oldLocationId, false)).length == 0) {
-                this.locationService.deleteLocation(oldLocationId);
-            }
-            // TODO: remove orphaned photos from db and disk
+            this.cleanupLocationFromDB(oldLocationId);
+            this.cleanupPhotosFromDisk(oldPhotos);
+
             res.status(201).send(updatedPost);
         } catch (err) {
-            this.removeFiles(files);
+            this.removeFiles(files.map(file => file['filename']));
             console.log("Removed photos due to failed post update.");
 
             next(err);
         }
     }
 
-    private removeFiles(files: Express.Multer.File[]) {
-        files.forEach(file => {
-            fs.unlink(file['path'], (err) => {
+    private async cleanupLocationFromDB(locationId: string) {
+        if ((await this.postService.getPostsByLocation(locationId, false)).length == 0) {
+            this.locationService.deleteLocation(locationId);
+            console.log("Removed location: " + locationId);
+        }
+    }
+
+    private async cleanupPhotosFromDisk(photos: Map<string, string>) {
+        const photosToRemove = await this.photoService.identifyPhotosToRemove(photos);
+        this.removeFiles(photosToRemove);
+        console.log("Removed photos: \n" + photosToRemove.join('\n'));
+    }
+
+    private async removeFiles(filenames: string[]) {
+        filenames.forEach(filename => {
+            const path = photoDest + filename;
+            fs.unlink(path, (err) => {
                 if (err) {
                     console.error(err);
                     return;

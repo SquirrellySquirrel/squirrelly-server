@@ -117,7 +117,8 @@ export default class PostService {
         for (let photo of photos) {
             photo.post = post;
         }
-        await this.photoService.upsertPhotosByPost(post.id, photos);
+        const updatedPhotos = await this.photoService.upsertPhotosByPost(post.id, photos);
+        post.photos = updatedPhotos;
         return post;
     }
 
