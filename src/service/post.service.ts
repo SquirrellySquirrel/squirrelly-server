@@ -19,7 +19,7 @@ export default class PostService {
         private readonly locationService: LocationService
     ) { }
 
-    async getPosts(count: number, withCover = true): Promise<Post[]> {
+    async getPosts(count?: number, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.find({ take: count, order: { created: 'DESC' } });
         if (withCover) {
             for (const post of posts) {
@@ -32,8 +32,8 @@ export default class PostService {
         return posts;
     }
 
-    async getPostsByUser(userId: string, withCover = true): Promise<Post[]> {
-        const posts = await this.postRepository.find({ where: { creator: { id: userId } }, order: { created: 'DESC' } });
+    async getPostsByUser(userId: string, count?: number, withCover = true): Promise<Post[]> {
+        const posts = await this.postRepository.find({ where: { creator: { id: userId } }, take: count, order: { created: 'DESC' } });
         if (withCover) {
             for (const post of posts) {
                 const cover = await this.photoService.getPostCover(post.id);

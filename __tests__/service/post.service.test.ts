@@ -161,14 +161,14 @@ describe('gets all posts', () => {
     it('less than limit', async () => {
         const user2 = await userService.createGhostUser('bar', 'android');
         await postService.savePostAndLocation(user2.id, location, true, new Date(), [photo2]);
-        const posts = await postService.getPosts(9);
+        const posts = await postService.getPosts(); // get all posts
         expect(posts).toHaveLength(2);
     });
 
     it('more than limit', async () => {
         const user2 = await userService.createGhostUser('bar', 'android');
         await postService.savePostAndLocation(user2.id, location, true, new Date(), [photo2]);
-        const posts = await postService.getPosts(1);
+        const posts = await postService.getPosts(1); // get one post
         expect(posts).toHaveLength(1);
     });
 });

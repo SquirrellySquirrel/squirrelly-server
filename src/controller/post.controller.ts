@@ -42,6 +42,7 @@ export default class PostController implements Controller {
     }
 
     private initRoutes() {
+        this.router.get(`${this.path}`, this.getPosts);
         this.router.get(`${this.path}/:id`, this.getPost);
         this.router.get(`${this.path}/:id/comments`, this.getPostComments);
         this.router.post(this.path, upload.array('photos', 5), this.createPost);
@@ -51,6 +52,12 @@ export default class PostController implements Controller {
         this.router.delete(`${this.path}/:id`, this.deletePost);
         this.router.delete(`${this.path}/:id/comments/:commentId`, this.deleteComment);
         this.router.delete(`${this.path}/:id/likes`, this.deleteLike);
+    }
+
+    private getPosts = async (req: Request, res: Response) => {
+        const userId = req.query.userId as string;
+        const count = req.query.count as string;
+        res.send(await this.postService.getPostsByUser(userId, Number(count)));
     }
 
     private getPost = async (req: Request, res: Response, next: NextFunction) => {
