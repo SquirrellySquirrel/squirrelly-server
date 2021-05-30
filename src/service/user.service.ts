@@ -3,14 +3,17 @@ import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Device from "../entity/device";
 import User from "../entity/user";
+import InvalidInputDataException from '../exception/invalid-input-data.exception';
 import TypeORMException from "../exception/typeorm.exception";
 import UserRepository from "../repository/user.repository";
+import DeviceService from './device.service';
 
 @Service()
 export default class UserService {
     constructor(
         @InjectRepository()
-        private readonly userRepository: UserRepository
+        private readonly userRepository: UserRepository,
+        private readonly deviceService: DeviceService
     ) { }
 
     async getUserById(userId: string): Promise<User | undefined> {
@@ -26,9 +29,18 @@ export default class UserService {
         return await this.userRepository.findOne({ where: { email: email }, relations: ['devices'] });
     }
 
-    async createGhostUser(deviceId: string, deviceType: string): Promise<User> {
+    async createGhostUser(deviceId: string, systemName: string): Promise<Partial<User>> {
+        const existingDevice = await this.deviceService.getDevice(deviceId, systemName);
+        if (existingDevice) {
+            return { id: existingDevice.owner.id };
+        }
+
         const device = new Device();
-        device.type = deviceType;
+        const system = Device.mapSystem(systemName);
+        if (!system) {
+            throw new InvalidInputDataException({ systemName: systemName });
+        }
+        device.system = system;
         device.deviceId = deviceId;
         const user = new User();
         user.devices = new Array();
@@ -36,8 +48,8 @@ export default class UserService {
         const { password, ...savedUser } = await this.userRepository.save(user)
             .catch((err: Error) => {
                 throw new TypeORMException(err.message);
-            });;
-        return savedUser;
+            });
+        return { id: savedUser.id };
     }
 
     async upgradeGhostUser(userId: string, email: string, pass: string, displayName: string): Promise<User> {

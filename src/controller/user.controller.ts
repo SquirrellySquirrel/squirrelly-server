@@ -65,7 +65,7 @@ export default class UserController implements Controller {
     private createUser = async (req: Request, res: Response, next: NextFunction) => {
         try {
             res.status(201)
-                .send(await this.userService.createGhostUser(req.body['deviceId'], req.body['deviceType']));
+                .send(await this.userService.createGhostUser(req.body['deviceId'], req.body['systemName']));
         } catch (err) {
             next(err);
         }
