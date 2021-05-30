@@ -40,7 +40,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         const user = await this.userService.getUserById(id);
         if (user) {
-            res.send(user);
+            res.json(user);
         } else {
             next(new NotFoundException('User', id));
         }
@@ -65,7 +65,7 @@ export default class UserController implements Controller {
     private createUser = async (req: Request, res: Response, next: NextFunction) => {
         try {
             res.status(201)
-                .send(await this.userService.createGhostUser(req.body['deviceId'], req.body['systemName']));
+                .json(await this.userService.createGhostUser(req.body['deviceId'], req.body['systemName']));
         } catch (err) {
             next(err);
         }
@@ -93,7 +93,7 @@ export default class UserController implements Controller {
             displayName = email.split('@', 1)[0];
         }
         try {
-            res.send(await this.userService.upgradeGhostUser(id, email, hashedPassword, displayName));
+            res.json(await this.userService.upgradeGhostUser(id, email, hashedPassword, displayName));
         } catch (err) {
             next(err);
         }
@@ -108,7 +108,7 @@ export default class UserController implements Controller {
 
         const displayName = req.body['displayName'];
         try {
-            res.send(await this.userService.updateUser(id, displayName));
+            res.json(await this.userService.updateUser(id, displayName));
         } catch (err) {
             next(err);
         }
@@ -132,11 +132,11 @@ export default class UserController implements Controller {
 
     private getUserPosts = async (req: Request, res: Response) => {
         const id = req.params.id;
-        res.send(await this.postService.getPostsByUser(id));
+        res.json(await this.postService.getPostsByUser(id));
     }
 
     private getUserCollections = async (req: Request, res: Response) => {
         const id = req.params.id;
-        res.send(await this.collectionService.getCollectionsByUser(id));
+        res.json(await this.collectionService.getCollectionsByUser(id));
     }
 }

@@ -57,14 +57,14 @@ export default class PostController implements Controller {
     private getPosts = async (req: Request, res: Response) => {
         const userId = req.query.userId as string;
         const count = req.query.count as string;
-        res.send(await this.postService.getPostsByUser(userId, Number(count)));
+        res.json(await this.postService.getPostsByUser(userId, Number(count)));
     }
 
     private getPost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         const post = await this.postService.getPost(id);
         if (post) {
-            res.send(post);
+            res.json(post);
         } else {
             next(new NotFoundException('Post', id));
         }
@@ -85,7 +85,7 @@ export default class PostController implements Controller {
             });
 
             res.status(201)
-                .send(await this.postService.savePostAndLocation(
+                .json(await this.postService.savePostAndLocation(
                     req.body['userId'],
                     JSON.parse(req.body['location']),
                     JSON.parse(req.body['isPublic']),
@@ -134,7 +134,7 @@ export default class PostController implements Controller {
             this.cleanupLocationFromDB(oldLocationId);
             this.cleanupPhotosFromDisk(oldPhotos);
 
-            res.status(201).send(updatedPost);
+            res.status(201).json(updatedPost);
         } catch (err) {
             this.removeFiles(files.map(file => file['filename']));
             console.log("Removed photos due to failed post update.");
@@ -182,7 +182,7 @@ export default class PostController implements Controller {
         const id = req.params.id;
         const post = await this.postService.getPost(id);
         if (post) {
-            res.send(post.comments)
+            res.json(post.comments)
         } else {
             next(new NotFoundException('Post', id));
         }
@@ -192,7 +192,7 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         try {
             res.status(201)
-                .send(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
+                .json(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
         } catch (err) {
             next(err);
         }
@@ -210,7 +210,7 @@ export default class PostController implements Controller {
     private addLike = async (req: Request, res: Response, next: NextFunction) => {
         try {
             res.status(201)
-                .send(await this.postLikeService.addPostLike(req.params.id, req.body['userId']));
+                .json(await this.postLikeService.addPostLike(req.params.id, req.body['userId']));
         } catch (err) {
             next(err);
         }
