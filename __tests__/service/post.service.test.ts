@@ -6,11 +6,9 @@ import connection from '../../src/database';
 import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
 import Post from '../../src/entity/post';
-import User from '../../src/entity/user';
 import CommentRepository from '../../src/repository/comment.repository';
 import PostLikeRepository from '../../src/repository/post-like.repository';
 import CommentService from '../../src/service/comment.service';
-import LocationService from '../../src/service/location.service';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -18,8 +16,7 @@ import { MockData } from '../../__mocks__/mock-data';
 
 let postService: PostService;
 let userService: UserService;
-let locationService: LocationService;
-let user: User;
+let userId: string;
 let post: Post;
 let location: Location;
 let photo1: Photo;
@@ -32,17 +29,16 @@ beforeAll(async () => {
 
     postService = Container.get(PostService);
     userService = Container.get(UserService);
-    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {
     await connection.clear();
 
-    user = await userService.createGhostUser('foo', 'android');
+    userId = (await userService.createGhostUser('foo', 'android')).id!;
     location = MockData.location1();
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();
-    post = await postService.savePostAndLocation(user.id, location, false, new Date(), [photo1]);
+    post = await postService.savePostAndLocation(userId, location, false, new Date(), [photo1]);
 });
 
 afterAll(async () => {
@@ -50,10 +46,10 @@ afterAll(async () => {
 });
 
 it('creates a post with location and another photo', async () => {
-    const newPostId = (await postService.savePostAndLocation(user.id, location, false, new Date(), [photo2])).id;
+    const newPostId = (await postService.savePostAndLocation(userId, location, false, new Date(), [photo2])).id;
     const newPost = await postService.getPost(newPostId) as Post;
 
-    expect(newPost.creator.id).toEqual(user.id);
+    expect(newPost.creator.id).toEqual(userId);
     expect(newPost.id).toEqual(newPostId);
     expect(newPost.location).toEqual(
         expect.objectContaining({
@@ -159,15 +155,15 @@ describe('updates the existing post', () => {
 
 describe('gets all posts', () => {
     it('less than limit', async () => {
-        const user2 = await userService.createGhostUser('bar', 'android');
-        await postService.savePostAndLocation(user2.id, location, true, new Date(), [photo2]);
+        const user2Id = (await userService.createGhostUser('bar', 'android')).id!;
+        await postService.savePostAndLocation(user2Id, location, true, new Date(), [photo2]);
         const posts = await postService.getPosts(); // get all posts
         expect(posts).toHaveLength(2);
     });
 
     it('more than limit', async () => {
-        const user2 = await userService.createGhostUser('bar', 'android');
-        await postService.savePostAndLocation(user2.id, location, true, new Date(), [photo2]);
+        const user2Id = (await userService.createGhostUser('bar', 'android')).id!;
+        await postService.savePostAndLocation(user2Id, location, true, new Date(), [photo2]);
         const posts = await postService.getPosts(1); // get one post
         expect(posts).toHaveLength(1);
     });
@@ -175,8 +171,8 @@ describe('gets all posts', () => {
 
 it('gets all posts by user with correct orders and covers', async () => {
     await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1s before saving a new post
-    const post2 = await postService.savePostAndLocation(user.id, location, true, new Date(), [photo2]);
-    const posts = await postService.getPostsByUser(user.id) as Post[];
+    const post2 = await postService.savePostAndLocation(userId, location, true, new Date(), [photo2]);
+    const posts = await postService.getPostsByUser(userId) as Post[];
     expect(posts).toHaveLength(2);
     expect(posts[0].id).toEqual(post2.id);
     expect(posts[0].cover.id).toEqual(photo2.id);
@@ -187,8 +183,8 @@ it('gets all posts by user with correct orders and covers', async () => {
 describe('gets an existing post by id', () => {
     it('gets comments', async () => {
         const commentService = new CommentService(getCustomRepository(CommentRepository));
-        const user2 = await userService.createGhostUser('bar', 'android');
-        await commentService.addComment(post.id, user2.id, 'aww');
+        const user2Id = (await userService.createGhostUser('bar', 'android')).id!;
+        await commentService.addComment(post.id, user2Id, 'aww');
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.comments).toHaveLength(1);
         expect(existingPost.comments![0].id).not.toBeNull();
@@ -197,8 +193,8 @@ describe('gets an existing post by id', () => {
 
     it('gets likes', async () => {
         const postLikeService = new PostLikeService(getCustomRepository(PostLikeRepository));
-        const user2 = await userService.createGhostUser('bar', 'android');
-        await postLikeService.addPostLike(post.id, user2.id);
+        const user2Id = (await userService.createGhostUser('bar', 'android')).id!;
+        await postLikeService.addPostLike(post.id, user2Id);
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.likes).toBe(1);
     });
@@ -206,7 +202,7 @@ describe('gets an existing post by id', () => {
 
 
 it('deletes a post', async () => {
-    const post2 = await postService.savePostAndLocation(user.id, location, true, new Date(), [photo2]);
+    const post2 = await postService.savePostAndLocation(userId, location, true, new Date(), [photo2]);
     await postService.deletePost(post2.id);
     const post = await postService.getPost(post2.id);
     expect(post).toBeUndefined();

@@ -5,7 +5,6 @@ import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
-import User from '../../src/entity/user';
 import LocationService from '../../src/service/location.service';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
@@ -16,7 +15,7 @@ let photoService: PhotoService;
 let userService: UserService;
 let postService: PostService;
 let locationService: LocationService;
-let user: User;
+let userId: string;
 let location: Location;
 let photo1: Photo;
 let photo2: Photo;
@@ -35,7 +34,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    user = await userService.createGhostUser('foo', 'android');
+    userId = (await userService.createGhostUser('foo', 'android')).id!;
     location = MockData.location1();
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();
@@ -47,7 +46,7 @@ afterAll(async () => {
 
 it('chooses a cover for a post', async () => {
     photo1.order = 1; // reorder photo1 and photo2
-    const postId = (await postService.savePostAndLocation(user.id, location, true, new Date(), [photo1, MockData.photo2()])).id;
+    const postId = (await postService.savePostAndLocation(userId, location, true, new Date(), [photo1, MockData.photo2()])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(
@@ -61,7 +60,7 @@ it('chooses a cover for a post', async () => {
 });
 
 it('identifies non-existent photos', async () => {
-    const savedPhotoId = (await postService.savePostAndLocation(user.id, location, true, new Date(), [photo1])).photos![0].id;
+    const savedPhotoId = (await postService.savePostAndLocation(userId, location, true, new Date(), [photo1])).photos![0].id;
     const idToNameMap = new Map([[savedPhotoId, photo1.path], ['id', photo2.path]]);
     const photosToRemove = await photoService.identifyPhotosToRemove(idToNameMap);
     expect(photosToRemove).toContain(photo2.path);

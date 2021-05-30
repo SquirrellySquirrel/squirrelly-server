@@ -4,7 +4,6 @@ import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Post from '../../src/entity/post';
-import User from '../../src/entity/user';
 import CommentService from '../../src/service/comment.service';
 import LocationService from '../../src/service/location.service';
 import PostService from '../../src/service/post.service';
@@ -15,7 +14,7 @@ let commentService: CommentService;
 let userService: UserService;
 let postService: PostService;
 let locationService: LocationService;
-let user: User;
+let userId: string;
 let post: Post;
 
 beforeAll(async () => {
@@ -32,10 +31,10 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    user = await userService.createGhostUser('foo', 'android');
+    userId = (await userService.createGhostUser('foo', 'android')).id!;
 
     let location = MockData.location1();
-    post = await postService.savePostAndLocation(user.id, location, true, new Date(), [MockData.photo1()]);
+    post = await postService.savePostAndLocation(userId, location, true, new Date(), [MockData.photo1()]);
 });
 
 afterAll(async () => {
@@ -43,7 +42,7 @@ afterAll(async () => {
 });
 
 it('adds a comment', async () => {
-    const commentId = (await commentService.addComment(post.id, user.id, 'sweet squirrel')).id;
+    const commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
     const postWithComment = await postService.getPost(post.id) as Post;
     expect(postWithComment.comments).toHaveLength(1);
     expect(postWithComment.comments![0]).toEqual(
@@ -55,7 +54,7 @@ it('adds a comment', async () => {
 });
 
 it('deletes a comment', async () => {
-    const commentId = (await commentService.addComment(post.id, user.id, 'sweet squirrel')).id;
+    const commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
     await commentService.deleteComment(commentId);
 
     const postWithComment = await postService.getPost(post.id) as Post;

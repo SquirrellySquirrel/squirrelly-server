@@ -4,7 +4,6 @@ import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Post from '../../src/entity/post';
-import User from '../../src/entity/user';
 import LocationService from '../../src/service/location.service';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
@@ -15,7 +14,7 @@ let postLikeService: PostLikeService;
 let userService: UserService;
 let postService: PostService;
 let locationService: LocationService;
-let user: User;
+let userId: string;
 let post: Post;
 
 beforeAll(async () => {
@@ -32,10 +31,10 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    user = await userService.createGhostUser('foo', 'android');
+    userId = (await userService.createGhostUser('foo', 'android')).id!;
 
     let location = MockData.location1();
-    post = await postService.savePostAndLocation(user.id, location, true, new Date(), [MockData.photo1()]);
+    post = await postService.savePostAndLocation(userId, location, true, new Date(), [MockData.photo1()]);
 });
 
 afterAll(async () => {
@@ -43,9 +42,9 @@ afterAll(async () => {
 });
 
 it('deletes a like', async () => {
-    const user2 = await userService.createGhostUser('bar', 'android');
-    await postLikeService.addPostLike(post.id, user2.id);
-    await postLikeService.deletePostLike(post.id, user2.id);
+    const user2Id = (await userService.createGhostUser('bar', 'android')).id!;
+    await postLikeService.addPostLike(post.id, user2Id);
+    await postLikeService.deletePostLike(post.id, user2Id);
 
     const existingPost = await postService.getPost(post.id) as Post;
     expect(existingPost.likes).toBe(0);
