@@ -10,12 +10,31 @@ export default class Device {
     @JoinColumn({ name: 'user_id' })
     owner!: User;
 
-    @Column({
-        type: 'enum',
-        enum: ['android', 'ios']
+    @Column('enum', {
+        enum: ['android', 'ios'],
+        nullable: false
     })
-    type!: string;
+    system!: string;
 
     @Column({ name: 'device_id', length: 50, nullable: false, unique: true })
     deviceId!: string;
+
+    static mapSystem(systemName?: string): string | undefined {
+        if (!systemName) {
+            console.error('Undefined system name');
+            return undefined;
+        }
+
+        switch (systemName.toLowerCase()) {
+            case 'android':
+                return 'android';
+            case 'ios':
+                return 'ios';
+            case 'iphone os':
+                return 'ios';
+            default:
+                console.warn('Unknown system name: ' + systemName);
+                return undefined;
+        }
+    }
 }
