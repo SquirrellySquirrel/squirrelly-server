@@ -30,7 +30,7 @@ export default class UserController implements Controller {
         this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
         this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
         this.router.post(`${this.path}/authenticate`, this.authenticate);
-        this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.createUser);
+        this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.initUser);
         this.router.put(`${this.path}/:id/upgrade`, requestValidationMiddleware(UpgradeUserDTO), this.upgradeUser);
         this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
         this.router.delete(`${this.path}/:id`, this.deleteUser);
@@ -62,10 +62,16 @@ export default class UserController implements Controller {
         }
     }
 
-    private createUser = async (req: Request, res: Response, next: NextFunction) => {
+    private initUser = async (req: Request, res: Response, next: NextFunction) => {
+        console.log("Init user: " + JSON.stringify(req.body));
         try {
-            res.status(201)
-                .json(await this.userService.createGhostUser(req.body['deviceId'], req.body['systemName']));
+            const user = await this.userService.createOrGetUser(req.body['deviceId'], req.body['systemName']);
+            const userId = (({ id }) => ({ id }))(user);
+            if (user.created) {
+                res.status(201).json(userId);
+            } else {
+                res.status(200).json(userId);
+            }
         } catch (err) {
             next(err);
         }

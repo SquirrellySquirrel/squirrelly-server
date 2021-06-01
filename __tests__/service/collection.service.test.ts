@@ -30,7 +30,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createGhostUser('foo', 'android')).id!;
+    userId = (await userService.createOrGetUser('foo', 'android')).id!;
 });
 
 afterAll(async () => {

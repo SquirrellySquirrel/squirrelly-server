@@ -29,10 +29,10 @@ export default class UserService {
         return await this.userRepository.findOne({ where: { email: email }, relations: ['devices'] });
     }
 
-    async createGhostUser(deviceId: string, systemName: string): Promise<Partial<User>> {
+    async createOrGetUser(deviceId: string, systemName: string): Promise<any> {
         const existingDevice = await this.deviceService.getDevice(deviceId, systemName);
         if (existingDevice) {
-            return { id: existingDevice.owner.id };
+            return { id: existingDevice.owner.id, created: false };
         }
 
         const device = new Device();
@@ -49,7 +49,7 @@ export default class UserService {
             .catch((err: Error) => {
                 throw new TypeORMException(err.message);
             });
-        return { id: savedUser.id };
+        return { id: savedUser.id, created: true };
     }
 
     async upgradeGhostUser(userId: string, email: string, pass: string, displayName: string): Promise<User> {

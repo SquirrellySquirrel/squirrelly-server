@@ -34,7 +34,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createGhostUser('foo', 'android')).id!;
+    userId = (await userService.createOrGetUser('foo', 'android')).id!;
     location = MockData.location1();
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();

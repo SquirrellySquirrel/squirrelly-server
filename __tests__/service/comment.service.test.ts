@@ -31,7 +31,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createGhostUser('foo', 'android')).id!;
+    userId = (await userService.createOrGetUser('foo', 'android')).id!;
 
     let location = MockData.location1();
     post = await postService.savePostAndLocation(userId, location, true, new Date(), [MockData.photo1()]);
