@@ -26,6 +26,9 @@ export default class Post {
     @Column()
     public: boolean = false;
 
+    @Column('text')
+    description?: string;
+
     @OneToMany(() => Photo, photo => photo.post, { cascade: ['insert'] })
     photos?: Photo[];
 

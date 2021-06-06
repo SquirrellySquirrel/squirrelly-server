@@ -90,6 +90,7 @@ export default class PostController implements Controller {
                     JSON.parse(req.body['location']),
                     JSON.parse(req.body['isPublic']),
                     req.body['created'] as Date,
+                    req.body['description'],
                     photos));
         } catch (err) {
             this.removeFiles(files.map(file => file['filename']));
@@ -129,6 +130,7 @@ export default class PostController implements Controller {
                 JSON.parse(req.body['location']),
                 JSON.parse(req.body['isPublic']),
                 req.body['created'],
+                req.body['description'],
                 photos);
 
             this.cleanupLocationFromDB(oldLocationId);

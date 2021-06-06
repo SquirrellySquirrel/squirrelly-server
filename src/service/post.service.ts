@@ -68,7 +68,7 @@ export default class PostService {
         return post;
     }
 
-    async savePostAndLocation(userId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async savePostAndLocation(userId: string, location: Location, isPublic: boolean, created: Date, description: string, photos: Photo[]): Promise<Post> {
         const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
         const locationId = existingLocation ? existingLocation.id : (await this.locationService.saveLocation(location)).id
 
@@ -78,13 +78,14 @@ export default class PostService {
             public: isPublic,
             created: created,
             updated: new Date(),
+            description: description,
             photos: photos
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
     }
 
-    async updatePostAndLocation(postId: string, location: Location, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    async updatePostAndLocation(postId: string, location: Location, isPublic: boolean, created: Date, description: string, photos: Photo[]): Promise<Post> {
         const existingLocation = await this.locationService.getLocationByCoordinate(location.latitude, location.longitude);
         if (!existingLocation) {
             const locationId = (await this.locationService.saveLocation(location)).id;
@@ -93,6 +94,7 @@ export default class PostService {
                 locationId,
                 isPublic,
                 created,
+                description,
                 photos);
         }
         return await this.updatePost(
@@ -100,16 +102,18 @@ export default class PostService {
             existingLocation.id,
             isPublic,
             created,
+            description,
             photos);
     }
 
-    private async updatePost(postId: string, locationId: string, isPublic: boolean, created: Date, photos: Photo[]): Promise<Post> {
+    private async updatePost(postId: string, locationId: string, isPublic: boolean, created: Date, description: string, photos: Photo[]): Promise<Post> {
         const post = await this.postRepository.save({
             id: postId,
             location: { id: locationId },
             public: isPublic,
             created: created,
-            updated: new Date()
+            updated: new Date(),
+            description: description
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
