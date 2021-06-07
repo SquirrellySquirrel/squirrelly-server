@@ -94,7 +94,7 @@ export default class PostController implements Controller {
                     photos));
         } catch (err) {
             this.removeFiles(files.map(file => file['filename']));
-            console.log("Removed photos due to failed post creation.");
+            console.log("Removed photos due to failed post creation: " + err);
 
             next(err);
         }
@@ -139,7 +139,7 @@ export default class PostController implements Controller {
             res.status(201).json(updatedPost);
         } catch (err) {
             this.removeFiles(files.map(file => file['filename']));
-            console.log("Removed photos due to failed post update.");
+            console.log("Removed photos due to failed post update: " + err);
 
             next(err);
         }
