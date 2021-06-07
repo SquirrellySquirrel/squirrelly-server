@@ -172,8 +172,19 @@ export default class PostController implements Controller {
 
     private deletePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
+        const post = await this.postService.getPost(id);
+        if (!post) {
+            next(new NotFoundException('Post', id));
+            return;
+        }
+
         try {
+            const oldPhotos = new Map(post.photos?.map(photo => [photo.id, photo.path]));
+
             await this.postService.deletePost(id);
+
+            this.cleanupPhotosFromDisk(oldPhotos);
+
             res.sendStatus(204);
         } catch (err) {
             next(err);
