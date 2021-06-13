@@ -1,7 +1,6 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import Collection from "./collection";
 import Comment from "./comment";
-import Device from "./device";
 import Post from "./post";
 
 @Entity(({ name: 'users' }))
@@ -9,17 +8,24 @@ export default class User {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Column({ nullable: true, unique: true })
-    email?: string;
+    @Column({ nullable: false, unique: true })
+    email!: string;
 
-    @Column({ nullable: true })
-    password?: string;
+    @Column({ nullable: false })
+    password!: string;
 
-    @Column({ name: 'display_name', length: 50, nullable: true, unique: true })
-    displayName?: string;
+    @Column('timestamp')
+    created!: Date;
 
-    @OneToMany(() => Device, device => device.owner, { cascade: ['insert'] })
-    devices!: Device[];
+    @Column('timestamp', { nullable: true })
+    lastLogin?: Date;
+
+    @Column({ default: false })
+    validated: boolean = false;
+
+    @Column({ name: 'display_name', length: 50, nullable: false })
+    @Index()
+    displayName!: string;
 
     @OneToMany(() => Post, post => post.creator)
     posts?: Post[];

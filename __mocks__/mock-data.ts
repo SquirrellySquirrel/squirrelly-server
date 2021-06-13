@@ -2,6 +2,10 @@ import Location from '../src/entity/location';
 import Photo from "../src/entity/photo";
 
 export class MockData {
+    static DEFAULT_EMAIL = "foo@bar.com";
+    static DEFAULT_DISPLAY_NAME = "foo";
+    static DEFAULT_PASSWORD = "secure-Pa55";
+
     static location1(): Location {
         const location = new Location();
         location.latitude = 1.2;
