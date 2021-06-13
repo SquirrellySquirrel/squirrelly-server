@@ -36,7 +36,7 @@ export default class UserService {
     }
 
     async getUserByEmail(email: string): Promise<Partial<User>> {
-        const user = await this.userRepository.findOne({ where: { email: email } });
+        const user = await this.userRepository.findByEmail(email);
         if (!user) {
             throw new NotFoundException('User', email);
         }
@@ -45,7 +45,7 @@ export default class UserService {
     }
 
     async getUserByEmailUnsafe(email: string): Promise<Partial<User> | undefined> {
-        const user = await this.userRepository.findOne({ where: { email: email } });
+        const user = await this.userRepository.findByEmail(email);
         if (!user) {
             return undefined;
         }
@@ -54,7 +54,7 @@ export default class UserService {
     }
 
     async authenticate(email: string, pass: string) {
-        const userByEmail = await this.userRepository.findOne({ where: { email: email } });
+        const userByEmail = await this.userRepository.findByEmail(email);
         if (!userByEmail) {
             throw new UnauthorizedException();
         }
@@ -92,7 +92,7 @@ export default class UserService {
 
     async updateUser(userId: string, displayName: string) {
         await this.getUserById(userId);
-        const user = await this.userRepository.findOne({ where: { displayName: displayName } });
+        const user = await this.userRepository.findByDisplayName(displayName);
         if (user && user.id != userId) {
             throw new DuplicateDataException({ displayName: displayName });
         }
