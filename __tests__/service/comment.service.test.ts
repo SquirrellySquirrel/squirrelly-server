@@ -31,10 +31,10 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createOrGetUser('foo', 'android')).id!;
+    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
     let location = MockData.location1();
-    post = await postService.savePostAndLocation(userId, location, true, new Date(), [MockData.photo1()]);
+    post = await postService.savePostAndLocation(userId, location, true, new Date(), '', [MockData.photo1()]);
 });
 
 afterAll(async () => {

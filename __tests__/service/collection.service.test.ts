@@ -30,7 +30,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createOrGetUser('foo', 'android')).id!;
+    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 });
 
 afterAll(async () => {
@@ -51,8 +51,8 @@ describe('creates a collection', () => {
     it('creates a collection with existing posts', async () => {
         let location1 = MockData.location1();
         let location2 = MockData.location2();
-        let post1 = await postService.savePostAndLocation(userId, location1, true, new Date(), [MockData.photo1()]);
-        let post2 = await postService.savePostAndLocation(userId, location2, true, new Date(), [MockData.photo2()]);
+        let post1 = await postService.savePostAndLocation(userId, location1, true, new Date(), '', [MockData.photo1()]);
+        let post2 = await postService.savePostAndLocation(userId, location2, true, new Date(), '', [MockData.photo2()]);
 
         let collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         let newCollection = await collectionService.getCollection(collectionId) as Collection;
@@ -79,8 +79,8 @@ describe('updates a collection', () => {
     it('updates posts', async () => {
         let location1 = MockData.location1();
         let location2 = MockData.location2();
-        let post1 = await postService.savePostAndLocation(userId, location1, true, new Date(), [MockData.photo1()]);
-        let post2 = await postService.savePostAndLocation(userId, location2, true, new Date(), [MockData.photo2()]);
+        let post1 = await postService.savePostAndLocation(userId, location1, true, new Date(), '', [MockData.photo1()]);
+        let post2 = await postService.savePostAndLocation(userId, location2, true, new Date(), '', [MockData.photo2()]);
 
         let collectionId = (await collectionService.createCollection([post1.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         await collectionService.updateCollection(collectionId, [post2.id], { name: 'my cooler collection', description: 'cooler squirrel' });

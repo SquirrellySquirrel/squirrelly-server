@@ -34,7 +34,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createOrGetUser('foo', 'android')).id!;
+    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
     location = MockData.location1();
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();
@@ -46,7 +46,7 @@ afterAll(async () => {
 
 it('chooses a cover for a post', async () => {
     photo1.order = 1; // reorder photo1 and photo2
-    const postId = (await postService.savePostAndLocation(userId, location, true, new Date(), [photo1, MockData.photo2()])).id;
+    const postId = (await postService.savePostAndLocation(userId, location, true, new Date(), '', [photo1, MockData.photo2()])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(
@@ -60,7 +60,7 @@ it('chooses a cover for a post', async () => {
 });
 
 it('identifies non-existent photos', async () => {
-    const savedPhotoId = (await postService.savePostAndLocation(userId, location, true, new Date(), [photo1])).photos![0].id;
+    const savedPhotoId = (await postService.savePostAndLocation(userId, location, true, new Date(), '', [photo1])).photos![0].id;
     const idToNameMap = new Map([[savedPhotoId, photo1.path], ['id', photo2.path]]);
     const photosToRemove = await photoService.identifyPhotosToRemove(idToNameMap);
     expect(photosToRemove).toContain(photo2.path);

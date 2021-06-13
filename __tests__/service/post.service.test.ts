@@ -34,7 +34,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createOrGetUser('foo', 'android')).id!;
+    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
     location = MockData.location1();
     photo1 = MockData.photo1();
     photo2 = MockData.photo2();
@@ -159,14 +159,14 @@ describe('updates the existing post', () => {
 
 describe('gets all posts', () => {
     it('less than limit', async () => {
-        const user2Id = (await userService.createOrGetUser('bar', 'android')).id!;
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postService.savePostAndLocation(user2Id, location, true, new Date(), 'Test post', [photo2]);
         const posts = await postService.getPosts(); // get all posts
         expect(posts).toHaveLength(2);
     });
 
     it('more than limit', async () => {
-        const user2Id = (await userService.createOrGetUser('bar', 'android')).id!;
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postService.savePostAndLocation(user2Id, location, true, new Date(), 'Test post', [photo2]);
         const posts = await postService.getPosts(1); // get one post
         expect(posts).toHaveLength(1);
@@ -187,7 +187,7 @@ it('gets all posts by user with correct orders and covers', async () => {
 describe('gets an existing post by id', () => {
     it('gets comments', async () => {
         const commentService = new CommentService(getCustomRepository(CommentRepository));
-        const user2Id = (await userService.createOrGetUser('bar', 'android')).id!;
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await commentService.addComment(post.id, user2Id, 'aww');
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.comments).toHaveLength(1);
@@ -197,7 +197,7 @@ describe('gets an existing post by id', () => {
 
     it('gets likes', async () => {
         const postLikeService = new PostLikeService(getCustomRepository(PostLikeRepository));
-        const user2Id = (await userService.createOrGetUser('bar', 'android')).id!;
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postLikeService.addPostLike(post.id, user2Id);
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.likes).toBe(1);

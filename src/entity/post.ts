@@ -23,7 +23,7 @@ export default class Post {
     @Column('timestamp')
     updated!: Date;
 
-    @Column()
+    @Column({ default: false })
     public: boolean = false;
 
     @Column('text', { nullable: true })

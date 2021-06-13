@@ -43,7 +43,7 @@ describe('authenticates a user', () => {
     it('authentication succeeds, saves default display name and last login', async () => {
         const user = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
         await userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
-        
+
         const authenticatedUser = await userService.getUserById(user.id);
         expect(authenticatedUser.displayName).toEqual(MockData.DEFAULT_DISPLAY_NAME);
         expect(authenticatedUser.lastLogin).not.toBeNull();
@@ -74,7 +74,7 @@ describe('updates a user', () => {
 
     it('updating user fails due to existent display name', async () => {
         const user1 = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
-        const user2 = await userService.createUser('baz@email.com', MockData.DEFAULT_PASSWORD);
+        const user2 = await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD);
         await expect(userService.updateUser(user2.id, MockData.DEFAULT_DISPLAY_NAME)).rejects.toThrow(DuplicateDataException);
     });
 });

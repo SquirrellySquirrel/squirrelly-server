@@ -3,6 +3,7 @@ import Photo from "../src/entity/photo";
 
 export class MockData {
     static DEFAULT_EMAIL = "foo@bar.com";
+    static EMAIL_2 = "baz@qux.com";
     static DEFAULT_DISPLAY_NAME = "foo";
     static DEFAULT_PASSWORD = "secure-Pa55";
 

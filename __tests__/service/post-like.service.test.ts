@@ -31,10 +31,10 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    userId = (await userService.createOrGetUser('foo', 'android')).id!;
+    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
     let location = MockData.location1();
-    post = await postService.savePostAndLocation(userId, location, true, new Date(), [MockData.photo1()]);
+    post = await postService.savePostAndLocation(userId, location, true, new Date(), '', [MockData.photo1()]);
 });
 
 afterAll(async () => {
@@ -42,7 +42,7 @@ afterAll(async () => {
 });
 
 it('deletes a like', async () => {
-    const user2Id = (await userService.createOrGetUser('bar', 'android')).id!;
+    const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
     await postLikeService.addPostLike(post.id, user2Id);
     await postLikeService.deletePostLike(post.id, user2Id);
 
