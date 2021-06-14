@@ -50,8 +50,8 @@ it('creates a post with location and another photo', async () => {
     const newPostId = (await postService.createPost(userId, location, false, new Date(), 'Test post', [photo2])).id;
     const newPost = await postService.getPost(newPostId) as Post;
 
-    expect(newPost.creator.id).toEqual(userId);
     expect(newPost.id).toEqual(newPostId);
+    expect(newPost.creator.id).toEqual(userId);
     expect(newPost.location).toEqual(
         expect.objectContaining({
             latitude: location.latitude,
@@ -85,6 +85,8 @@ describe('updates the existing post', () => {
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
+        expect(updatedPost.id).toEqual(post.id);
+        expect(updatedPost.creator.id).toEqual(userId);
         expect(updatedPost.location).toEqual(
             expect.objectContaining({
                 latitude: location.latitude,
@@ -107,6 +109,8 @@ describe('updates the existing post', () => {
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
+        expect(updatedPost.id).toEqual(post.id);
+        expect(updatedPost.creator.id).toEqual(userId);
         expect(updatedPost.location).toEqual(
             expect.objectContaining({
                 latitude: location.latitude,
@@ -134,9 +138,12 @@ describe('updates the existing post', () => {
         const newLocation = MockData.location2();
 
         await postService.updatePost(post.id, newLocation, true, post.created, 'Updated post');
+        await postService.updateDBPhotos([], []);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
+        expect(updatedPost.id).toEqual(post.id);
+        expect(updatedPost.creator.id).toEqual(userId);
         expect(updatedPost.location).toEqual(
             expect.objectContaining({
                 latitude: newLocation.latitude,
