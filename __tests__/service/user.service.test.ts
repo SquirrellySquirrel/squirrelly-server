@@ -85,8 +85,4 @@ describe('deletes a user', () => {
         await userService.deleteUser(user.id);
         await expect(userService.getUserById(user.id)).rejects.toThrow(NotFoundException);
     });
-
-    it('deleting user fails due to non-existent user', async () => {
-        await expect(userService.deleteUser('00000000-1111-2222-3333-444444444444')).rejects.toThrow(NotFoundException);
-    });
 });

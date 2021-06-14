@@ -105,9 +105,8 @@ export default class UserService {
         });
     }
 
+    // ignore if user does not exist
     async deleteUser(userId: string): Promise<DeleteResult> {
-        await this.getUserById(userId);
-
         return this.userRepository.delete(userId)
             .catch((err: Error) => {
                 throw new TypeORMException(err.message);

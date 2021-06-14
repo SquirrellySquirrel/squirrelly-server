@@ -5,6 +5,7 @@ import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
+import PostRepository from '../../src/repository/post.repository';
 import LocationService from '../../src/service/location.service';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
@@ -13,8 +14,9 @@ import { MockData } from '../../__mocks__/mock-data';
 
 let photoService: PhotoService;
 let userService: UserService;
-let postService: PostService;
 let locationService: LocationService;
+let postService: PostService;
+let postRepository: PostRepository;
 let userId: string;
 let location: Location;
 let photo1: Photo;
@@ -27,8 +29,9 @@ beforeAll(async () => {
 
     photoService = Container.get(PhotoService);
     userService = Container.get(UserService);
-    postService = Container.get(PostService);
     locationService = Container.get(LocationService);
+    postService = Container.get(PostService);
+    postRepository = Container.get(PostRepository);
 });
 
 beforeEach(async () => {
@@ -45,8 +48,8 @@ afterAll(async () => {
 });
 
 it('chooses a cover for a post', async () => {
-    photo1.order = 1; // reorder photo1 and photo2
-    const postId = (await postService.savePostAndLocation(userId, location, true, new Date(), '', [photo1, MockData.photo2()])).id;
+    photo1.order = 1; // order: [photo2, photo1]
+    const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(
@@ -59,10 +62,24 @@ it('chooses a cover for a post', async () => {
     );
 });
 
-it('identifies non-existent photos', async () => {
-    const savedPhotoId = (await postService.savePostAndLocation(userId, location, true, new Date(), '', [photo1])).photos![0].id;
-    const idToNameMap = new Map([[savedPhotoId, photo1.path], ['id', photo2.path]]);
-    const photosToRemove = await photoService.identifyPhotosToRemove(idToNameMap);
-    expect(photosToRemove).toContain(photo2.path);
+it('identifies photos to add', async () => {
+    const post = (await postService.createPost(userId, location, true, new Date(), '', [photo1]));
+
+    const photosToAdd = photoService.identifyPhotosToAdd(post, [photo1, photo2]);
+    expect(photosToAdd.length).toEqual(1);
+    expect(photosToAdd[0]).toEqual(photo2);
+});
+
+it('identifies photos to remove', async () => {
+    photo2.order = 1; // order: [photo1, photo2]
+    const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
+
+    const photos = await photoService.getPhotosByPost(postId);
+    console.log("saved:" + photos);
+    const savedPhoto1 = photos[0];
+    const savedPhoto2 = photos[1];
+    const photosToRemove = await photoService.identifyPhotosToRemove(postId, [savedPhoto1]);
+    expect(photosToRemove.length).toEqual(1);
+    expect(photosToRemove[0]).toEqual(savedPhoto2);
 });
 

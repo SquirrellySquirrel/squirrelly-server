@@ -15,7 +15,7 @@ export default class LocationService {
     ) { }
 
     getLocationByCoordinate(latitude: Double, longitude: Double): Promise<Location | undefined> {
-        return this.locationRepository.findOne({ where: { latitude: latitude, longitude: longitude } });
+        return this.locationRepository.findByLatAndLong(latitude, longitude);
     }
 
     async saveLocation(params: SaveLocationParams): Promise<Location> {
@@ -28,10 +28,12 @@ export default class LocationService {
                 address: params.address
             })
             .onConflict(`("latitude","longitude") DO NOTHING`) // ignore duplicate entry
-            .execute();
+            .execute()
+            .catch((err: Error) => { throw new TypeORMException(err.message); });
         return result.generatedMaps[0] as Location;
     }
 
+    // ignore if location does not exist
     async deleteLocation(id: string): Promise<DeleteResult> {
         return this.locationRepository.delete(id)
             .catch((err: Error) => {
