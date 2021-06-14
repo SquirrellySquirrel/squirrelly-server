@@ -1,11 +1,8 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
-import NotFoundException from '../exception/not-found.exception';
 import Controller from '../interfaces/controller.interface';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
-import PostService from '../service/post.service';
-import UserService from '../service/user.service';
 import CreateCollectionDTO from './dto/create-collection.dto';
 import UpdateCollectionDTO from './dto/update-collection.dto';
 
@@ -14,9 +11,7 @@ export default class CollectionController implements Controller {
     public path = '/collections';
     public router = Router();
 
-    constructor(private readonly collectionService: CollectionService,
-        private readonly postService: PostService,
-        private readonly userService: UserService) {
+    constructor(private readonly collectionService: CollectionService) {
         this.initRoutes();
     }
 
@@ -29,25 +24,17 @@ export default class CollectionController implements Controller {
 
     private getCollection = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
-        const post = await this.collectionService.getCollection(id);
-        if (post) {
+        try {
+            const post = await this.collectionService.getCollection(id);
             res.json(post);
-        } else {
-            next(new NotFoundException('Collection', id));
+        } catch (err) {
+            next(err);
         }
     }
 
     private createCollection = async (req: Request, res: Response, next: NextFunction) => {
         const postIds = req.body['postIds'] as string[];
-        postIds.forEach(async id => {
-            if (!(await this.postService.getPost(id))) {
-                next(new NotFoundException('Post', id));
-            }
-        });
         const userId = req.body['userId'];
-        if (!(await this.userService.getUserById(userId))) {
-            next(new NotFoundException('User', userId));
-        }
         const name = req.body['name'];
         const descrption = req.body['description'];
 
@@ -62,11 +49,6 @@ export default class CollectionController implements Controller {
     private updateCollection = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         const postIds = req.body['postIds'] as string[];
-        postIds.forEach(async id => {
-            if (!(await this.postService.getPost(id))) {
-                next(new NotFoundException('Post', id));
-            }
-        });
         const name = req.body['name'];
         const descrption = req.body['description'];
 

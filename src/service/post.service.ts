@@ -32,6 +32,19 @@ export default class PostService {
         return posts;
     }
 
+    async getPostsByIds(ids: string[], withCover = true): Promise<Post[]> {
+        const posts = await this.postRepository.findByIds(ids, { order: { created: 'DESC' } });
+        if (withCover) {
+            for (const post of posts) {
+                const cover = await this.photoService.getPostCover(post.id);
+                if (cover) {
+                    post.cover = cover;
+                }
+            }
+        }
+        return posts;
+    }
+
     async getPostsByUser(userId: string, count?: number, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.findByUser(userId, count);
         if (withCover) {

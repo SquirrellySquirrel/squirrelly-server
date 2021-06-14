@@ -4,6 +4,7 @@ import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Collection from '../../src/entity/collection';
+import NotFoundException from '../../src/exception/not-found.exception';
 import CollectionService from '../../src/service/collection.service';
 import LocationService from '../../src/service/location.service';
 import PostService from '../../src/service/post.service';
@@ -106,8 +107,7 @@ it('deletes a collection', async () => {
     let collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
     await collectionService.deleteCollection(collectionId);
 
-    const collection = await collectionService.getCollection(collectionId);
-    expect(collection).toBeUndefined();
+    await expect(collectionService.getCollection(collectionId)).rejects.toThrow(NotFoundException);
 });
 
 

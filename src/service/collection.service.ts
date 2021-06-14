@@ -2,8 +2,11 @@ import { Service } from 'typedi';
 import { DeleteResult } from "typeorm";
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Collection from "../entity/collection";
+import NotFoundException from "../exception/not-found.exception";
 import TypeORMException from "../exception/typeorm.exception";
 import CollectionRepository from "../repository/collection.repository";
+import PostService from './post.service';
+import UserService from './user.service';
 
 type CollectionParams = Pick<Collection, 'name' | 'description'>;
 
@@ -11,18 +14,29 @@ type CollectionParams = Pick<Collection, 'name' | 'description'>;
 export default class CollectionService {
     constructor(
         @InjectRepository()
-        private readonly collectionRepository: CollectionRepository
+        private readonly collectionRepository: CollectionRepository,
+        private readonly userService: UserService,
+        private readonly postService: PostService
     ) { }
 
-    getCollection(collectionId: string): Promise<Collection | undefined> {
-        return this.collectionRepository.findOne({ where: { id: collectionId }, relations: ["creator", "posts"] });
+    async getCollection(collectionId: string): Promise<Collection> {
+        const collection = await this.collectionRepository.findOneWithRelations(collectionId);
+        if (!collection) {
+            throw new NotFoundException('Collection', collectionId);
+        }
+        return collection;
     }
 
-    getCollectionsByUser(userId: string): Promise<Collection[]> {
-        return this.collectionRepository.find({ where: { creator: { id: userId } } });
+    async getCollectionsByUser(userId: string): Promise<Collection[]> {
+        await this.verifyUser(userId);
+
+        return await this.collectionRepository.findByUser(userId);
     }
 
     async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams): Promise<Collection> {
+        await this.verifyUser(userId);
+        await this.verifyPosts(postIds);
+
         return this.collectionRepository.save({
             creator: { id: userId },
             posts: postIds.map(id => ({ id: id })),
@@ -34,6 +48,8 @@ export default class CollectionService {
     }
 
     async updateCollection(collectionId: string, postIds: string[], collectionParams: CollectionParams): Promise<Collection> {
+        await this.verifyPosts(postIds);
+
         return this.collectionRepository.save({
             id: collectionId,
             posts: postIds.map(id => ({ id: id })),
@@ -44,10 +60,18 @@ export default class CollectionService {
         });;
     }
 
+    // ignore if collection does not exist
     async deleteCollection(collectionId: string): Promise<DeleteResult> {
-        return this.collectionRepository.delete(collectionId)
-            .catch((err: Error) => {
-                throw new TypeORMException(err.message);
-            });;
+        return this.collectionRepository.delete(collectionId);
+    }
+
+    private async verifyUser(userId: string) {
+        await this.userService.getUserById(userId);
+    }
+
+    private async verifyPosts(postIds: string[]) {
+        postIds.forEach(async id => {
+            await this.postService.getPost(id);
+        });
     }
 }
