@@ -110,7 +110,7 @@ export default class PostController implements Controller {
             photo.type = file['type'] || file['mimetype'];
             photo.height = file['height'];
             photo.width = file['width'];
-            photo.order = file['order'] || index;
+            photo.order = index;
             photos.push(photo);
         });
         return photos;
