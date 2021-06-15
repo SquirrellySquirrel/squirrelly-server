@@ -1,4 +1,4 @@
-import Exception from "./exception";
+import Exception from './exception';
 
 class TypeORMException extends Exception {
     constructor(message: string) {

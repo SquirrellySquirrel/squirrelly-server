@@ -1,4 +1,4 @@
-import Exception from "./exception";
+import Exception from './exception';
 
 class HttpException extends Exception {
     constructor(status: number, message: string) {

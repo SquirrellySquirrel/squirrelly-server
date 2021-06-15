@@ -51,7 +51,7 @@ export default class UserService {
     async createUser(email: string, pass: string): Promise<any> {
         const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
-            throw new DuplicateDataException({ email: email });
+            throw new DuplicateDataException('email', email);
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
@@ -70,7 +70,7 @@ export default class UserService {
         await this.getUserById(userId);
         const user = await this.userRepository.findByDisplayName(displayName);
         if (user && user.id != userId) {
-            throw new DuplicateDataException({ displayName: displayName });
+            throw new DuplicateDataException('displayName', displayName);
         }
 
         await this.userRepository.save({

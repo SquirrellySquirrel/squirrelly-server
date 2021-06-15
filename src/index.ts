@@ -15,7 +15,7 @@ useContainer(Container);
         [
             Container.get(UserController),
             Container.get(PostController),
-            Container.get(CollectionController)
+            Container.get(CollectionController),
         ]
     );
 

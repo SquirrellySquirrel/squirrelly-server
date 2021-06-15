@@ -1,6 +1,6 @@
 import { Service } from 'typedi';
-import { EntityRepository, Repository } from "typeorm";
-import PostLike from "../entity/post-like";
+import { EntityRepository, Repository } from 'typeorm';
+import PostLike from '../entity/post-like';
 
 @Service()
 @EntityRepository(PostLike)

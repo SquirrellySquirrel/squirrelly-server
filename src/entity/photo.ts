@@ -1,5 +1,5 @@
-import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import Post from "./post";
+import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import Post from './post';
 
 @Entity(({ name: 'photos' }))
 export default class Photo {

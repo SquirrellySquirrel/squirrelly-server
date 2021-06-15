@@ -1,6 +1,6 @@
 module.exports = {
-  name: "default",
-  type: "mysql",
+  name: 'default',
+  type: 'mysql',
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
   username: process.env.DB_USERNAME,
@@ -12,6 +12,6 @@ module.exports = {
   migrations: [process.env.DB_MIGRATIONS],
   entities: [process.env.DB_ENTITIES],
   extra: {
-    connectionLimit: Number(process.env.DB_POOL_SIZE) || 10
-  }
+    connectionLimit: Number(process.env.DB_POOL_SIZE) || 10,
+  },
 };
