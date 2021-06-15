@@ -1,10 +1,9 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
-require("reflect-metadata");
+require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Post from '../../src/entity/post';
-import LocationService from '../../src/service/location.service';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -13,7 +12,6 @@ import { MockData } from '../../__mocks__/mock-data';
 let postLikeService: PostLikeService;
 let userService: UserService;
 let postService: PostService;
-let locationService: LocationService;
 let userId: string;
 let post: Post;
 
@@ -25,7 +23,6 @@ beforeAll(async () => {
     postLikeService = Container.get(PostLikeService);
     userService = Container.get(UserService);
     postService = Container.get(PostService);
-    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {
@@ -33,7 +30,7 @@ beforeEach(async () => {
 
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
-    let location = MockData.location1();
+    const location = MockData.location1();
     post = await postService.createPost(userId, location, true, new Date(), '', [MockData.photo1()]);
 });
 

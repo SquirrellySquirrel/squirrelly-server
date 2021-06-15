@@ -2,9 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import Photo from "../entity/photo";
-import Post from "../entity/post";
-import PhotoRepository from "../repository/photo.repository";
+import Photo from '../entity/photo';
+import Post from '../entity/post';
+import PhotoRepository from '../repository/photo.repository';
 
 const tmpDir = process.env.TMP_DIR as string;
 const fileDir = process.env.FILE_DIR as string;
@@ -38,13 +38,13 @@ export default class PhotoService {
             await this.photoRepository.save(photosToAdd);
         }
         if (photosToRemove.length > 0) {
-            await this.photoRepository.delete(photosToRemove.map(photo => photo.id));
+            await this.photoRepository.delete(photosToRemove.map((photo) => photo.id));
         }
     }
 
     identifyPhotosToAdd(post: Post, photos: Photo[]): Photo[] {
         const photosToAdd: Photo[] = [];
-        photos.forEach(photo => {
+        photos.forEach((photo) => {
             if (!photo.id) {
                 photo.post = post;
                 photosToAdd.push(photo);
@@ -56,14 +56,15 @@ export default class PhotoService {
     async identifyPhotosToRemove(postId: string, photos: Photo[]): Promise<Photo[]> {
         const existingPhotos = (await this.photoRepository.findByPost(postId));
 
-        const photoIdsToUpdate = photos.filter(photo => photo.id).map(photo => photo.id);
-        const photoIdsToRemove = existingPhotos.filter(photo => !photoIdsToUpdate.includes(photo.id)).map(photo => photo.id);
+        const photoIdsToUpdate = photos.filter((photo) => photo.id).map((photo) => photo.id);
+        const photoIdsToRemove = existingPhotos.filter((photo) => !photoIdsToUpdate.includes(photo.id))
+            .map((photo) => photo.id);
 
-        return existingPhotos.filter(photo => photoIdsToRemove.includes(photo.id));
+        return existingPhotos.filter((photo) => photoIdsToRemove.includes(photo.id));
     }
 
     async addPhotosToStorage(filenames: string[]) {
-        filenames.forEach(filename => {
+        filenames.forEach((filename) => {
             fs.rename(path.join(tmpDir, filename), path.join(fileDir, filename), (err) => {
                 if (err) {
                     console.error(err);
@@ -74,7 +75,7 @@ export default class PhotoService {
     }
 
     async removePhotosFromStorage(filenames: string[]) {
-        filenames.forEach(filename => {
+        filenames.forEach((filename) => {
             const filePath = path.join(fileDir, filename);
             if (fs.existsSync(filePath)) {
                 fs.unlink(filePath, (err) => {

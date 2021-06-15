@@ -1,12 +1,12 @@
 import { Service } from 'typedi';
-import { DeleteResult } from "typeorm";
+import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import User from "../entity/user";
+import User from '../entity/user';
 import DuplicateDataException from '../exception/duplicate-data.exception';
 import NotFoundException from '../exception/not-found.exception';
-import TypeORMException from "../exception/typeorm.exception";
+import TypeORMException from '../exception/typeorm.exception';
 import UnauthorizedException from '../exception/unauthorized.exception';
-import UserRepository from "../repository/user.repository";
+import UserRepository from '../repository/user.repository';
 
 const bcrypt = require('bcrypt');
 
@@ -39,7 +39,7 @@ export default class UserService {
         if (matching) {
             await this.userRepository.save({
                 id: user.id,
-                lastLogin: new Date()
+                lastLogin: new Date(),
             }).catch((err: Error) => {
                 throw new TypeORMException(err.message);
             });
@@ -59,7 +59,7 @@ export default class UserService {
             email: email,
             password: encryptedPassword,
             created: new Date(),
-            displayName: email.split('@', 1)[0]
+            displayName: email.split('@', 1)[0],
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
@@ -75,7 +75,7 @@ export default class UserService {
 
         await this.userRepository.save({
             id: userId,
-            displayName: displayName
+            displayName: displayName,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });

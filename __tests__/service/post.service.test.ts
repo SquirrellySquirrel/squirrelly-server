@@ -1,5 +1,5 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
-require("reflect-metadata");
+require('reflect-metadata');
 import { getCustomRepository, useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
@@ -56,7 +56,7 @@ it('creates a post with location and another photo', async () => {
         expect.objectContaining({
             latitude: location.latitude,
             longitude: location.longitude,
-            address: location.address
+            address: location.address,
         })
     );
     expect(newPost.description).toEqual('Test post');
@@ -69,7 +69,7 @@ it('creates a post with location and another photo', async () => {
             type: photo2.type,
             height: photo2.height,
             width: photo2.width,
-            order: 0
+            order: 0,
         })
     );
     expect(newPost.public).toBeFalsy();
@@ -91,7 +91,7 @@ describe('updates the existing post', () => {
             expect.objectContaining({
                 latitude: location.latitude,
                 longitude: location.longitude,
-                address: location.address
+                address: location.address,
             })
         );
         expect(updatedPost.description).toEqual('Updated post');
@@ -115,7 +115,7 @@ describe('updates the existing post', () => {
             expect.objectContaining({
                 latitude: location.latitude,
                 longitude: location.longitude,
-                address: location.address
+                address: location.address,
             })
         );
         expect(updatedPost.description).toEqual('Updated post');
@@ -128,7 +128,7 @@ describe('updates the existing post', () => {
                 type: photo2.type,
                 height: photo2.height,
                 width: photo2.width,
-                order: photo2.order
+                order: photo2.order,
             })
         );
         expect(updatedPost.public).toBeFalsy;
@@ -148,7 +148,7 @@ describe('updates the existing post', () => {
             expect.objectContaining({
                 latitude: newLocation.latitude,
                 longitude: newLocation.longitude,
-                address: newLocation.address
+                address: newLocation.address,
             })
         );
         expect(updatedPost.description).toEqual('Updated post');
@@ -161,7 +161,7 @@ describe('updates the existing post', () => {
                 type: photo1.type,
                 height: photo1.height,
                 width: photo1.width,
-                order: photo1.order
+                order: photo1.order,
             })
         );
         expect(updatedPost.public).toBeTruthy();
@@ -185,7 +185,7 @@ describe('gets all posts', () => {
 });
 
 it('gets all posts by user with correct orders and covers', async () => {
-    await new Promise(resolve => setTimeout(resolve, 1000)); // wait for 1s before saving a new post
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // wait for 1s before saving a new post
     const post2 = await postService.createPost(userId, location, true, new Date(), 'Test post', [photo2]);
     const posts = await postService.getPostsByUser(userId) as Post[];
     expect(posts).toHaveLength(2);

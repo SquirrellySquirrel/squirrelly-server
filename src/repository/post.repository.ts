@@ -1,12 +1,12 @@
 import { Service } from 'typedi';
-import { EntityRepository, Repository } from "typeorm";
-import Post from "../entity/post";
+import { EntityRepository, Repository } from 'typeorm';
+import Post from '../entity/post';
 
 @Service()
 @EntityRepository(Post)
 export default class PostRepository extends Repository<Post> {
     findOneWithRelations(postId: string) {
-        return this.findOne({ where: { id: postId }, relations: ["creator", "location", "photos", "comments", "comments.creator"], order: { created: 'DESC' } });
+        return this.findOne({ where: { id: postId }, relations: ['creator', 'location', 'photos', 'comments', 'comments.creator'], order: { created: 'DESC' } });
     }
 
     findLatest(count?: number): Promise<Post[]> {

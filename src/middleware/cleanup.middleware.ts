@@ -10,7 +10,7 @@ function cleanupMiddleware(request: Request, response: Response, next: NextFunct
 
         for (const file of files) {
             const filePath = path.join(tmpDir, file);
-            fs.unlink(filePath, err => {
+            fs.unlink(filePath, (err) => {
                 if (err) console.error(err);
             });
         }

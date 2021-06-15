@@ -1,10 +1,10 @@
 import { Service } from 'typedi';
-import { DeleteResult } from "typeorm";
+import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import Collection from "../entity/collection";
-import NotFoundException from "../exception/not-found.exception";
-import TypeORMException from "../exception/typeorm.exception";
-import CollectionRepository from "../repository/collection.repository";
+import Collection from '../entity/collection';
+import NotFoundException from '../exception/not-found.exception';
+import TypeORMException from '../exception/typeorm.exception';
+import CollectionRepository from '../repository/collection.repository';
 import PostService from './post.service';
 import UserService from './user.service';
 
@@ -39,25 +39,26 @@ export default class CollectionService {
 
         return this.collectionRepository.save({
             creator: { id: userId },
-            posts: postIds.map(id => ({ id: id })),
+            posts: postIds.map((id) => ({ id: id })),
             name: collectionParams.name,
-            description: collectionParams.description
+            description: collectionParams.description,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
-        });;
+        });
     }
 
-    async updateCollection(collectionId: string, postIds: string[], collectionParams: CollectionParams): Promise<Collection> {
+    async updateCollection(collectionId: string, postIds: string[],
+        collectionParams: CollectionParams): Promise<Collection> {
         await this.verifyPosts(postIds);
 
         return this.collectionRepository.save({
             id: collectionId,
-            posts: postIds.map(id => ({ id: id })),
+            posts: postIds.map((id) => ({ id: id })),
             name: collectionParams.name,
-            description: collectionParams.description
+            description: collectionParams.description,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
-        });;
+        });
     }
 
     // ignore if collection does not exist
@@ -70,7 +71,7 @@ export default class CollectionService {
     }
 
     private async verifyPosts(postIds: string[]) {
-        postIds.forEach(async id => {
+        postIds.forEach(async (id) => {
             await this.postService.getPost(id);
         });
     }

@@ -40,7 +40,8 @@ export default class CollectionController implements Controller {
 
         try {
             res.status(201)
-                .json(await this.collectionService.createCollection(postIds, userId, { name: name, description: descrption }));
+                .json(await this.collectionService.createCollection(
+                    postIds, userId, { name: name, description: descrption }));
         } catch (err) {
             next(err);
         }
@@ -53,7 +54,8 @@ export default class CollectionController implements Controller {
         const descrption = req.body['description'];
 
         try {
-            res.json(await this.collectionService.updateCollection(id, postIds, { name: name, description: descrption }));
+            res.json(await this.collectionService.updateCollection(
+                id, postIds, { name: name, description: descrption }));
         } catch (err) {
             next(err);
         }

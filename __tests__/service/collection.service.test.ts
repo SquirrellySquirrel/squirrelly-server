@@ -1,12 +1,11 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
-require("reflect-metadata");
+require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Collection from '../../src/entity/collection';
 import NotFoundException from '../../src/exception/not-found.exception';
 import CollectionService from '../../src/service/collection.service';
-import LocationService from '../../src/service/location.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
@@ -14,7 +13,6 @@ import { MockData } from '../../__mocks__/mock-data';
 let collectionService: CollectionService;
 let userService: UserService;
 let postService: PostService;
-let locationService: LocationService;
 let userId: string;
 
 beforeAll(async () => {
@@ -25,7 +23,6 @@ beforeAll(async () => {
     collectionService = Container.get(CollectionService);
     userService = Container.get(UserService);
     postService = Container.get(PostService);
-    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {
@@ -40,8 +37,8 @@ afterAll(async () => {
 
 describe('creates a collection', () => {
     it('creates an empty collection', async () => {
-        let collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection', description: 'empty squirrel' })).id;
-        let newCollection = await collectionService.getCollection(collectionId) as Collection;
+        const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection', description: 'empty squirrel' })).id;
+        const newCollection = await collectionService.getCollection(collectionId) as Collection;
 
         expect(newCollection.name).toEqual('my empty collection');
         expect(newCollection.description).toEqual('empty squirrel');
@@ -50,13 +47,13 @@ describe('creates a collection', () => {
     });
 
     it('creates a collection with existing posts', async () => {
-        let location1 = MockData.location1();
-        let location2 = MockData.location2();
-        let post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
-        let post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
+        const location1 = MockData.location1();
+        const location2 = MockData.location2();
+        const post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
+        const post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
 
-        let collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
-        let newCollection = await collectionService.getCollection(collectionId) as Collection;
+        const collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
+        const newCollection = await collectionService.getCollection(collectionId) as Collection;
 
         expect(newCollection.name).toEqual('my cool collection');
         expect(newCollection.description).toEqual('cool squirrel');
@@ -67,9 +64,9 @@ describe('creates a collection', () => {
 
 describe('updates a collection', () => {
     it('updates name and description', async () => {
-        let collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
+        const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
         await collectionService.updateCollection(collectionId, [], { name: 'my cooler collection', description: 'cooler squirrel' });
-        let updatedCollection = await collectionService.getCollection(collectionId) as Collection;
+        const updatedCollection = await collectionService.getCollection(collectionId) as Collection;
 
         expect(updatedCollection.name).toEqual('my cooler collection');
         expect(updatedCollection.description).toEqual('cooler squirrel');
@@ -78,14 +75,14 @@ describe('updates a collection', () => {
     });
 
     it('updates posts', async () => {
-        let location1 = MockData.location1();
-        let location2 = MockData.location2();
-        let post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
-        let post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
+        const location1 = MockData.location1();
+        const location2 = MockData.location2();
+        const post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
+        const post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
 
-        let collectionId = (await collectionService.createCollection([post1.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
+        const collectionId = (await collectionService.createCollection([post1.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         await collectionService.updateCollection(collectionId, [post2.id], { name: 'my cooler collection', description: 'cooler squirrel' });
-        let updatedCollection = await collectionService.getCollection(collectionId) as Collection;
+        const updatedCollection = await collectionService.getCollection(collectionId) as Collection;
 
         expect(updatedCollection.name).toEqual('my cooler collection');
         expect(updatedCollection.description).toEqual('cooler squirrel');
@@ -104,10 +101,8 @@ it('gets all collections by user', async () => {
 });
 
 it('deletes a collection', async () => {
-    let collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
+    const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
     await collectionService.deleteCollection(collectionId);
 
     await expect(collectionService.getCollection(collectionId)).rejects.toThrow(NotFoundException);
 });
-
-

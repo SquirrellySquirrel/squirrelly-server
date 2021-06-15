@@ -1,7 +1,7 @@
-import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import Collection from "./collection";
-import Comment from "./comment";
-import Post from "./post";
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import Collection from './collection';
+import Comment from './comment';
+import Post from './post';
 
 @Entity(({ name: 'users' }))
 export default class User {
@@ -27,12 +27,12 @@ export default class User {
     @Index()
     displayName!: string;
 
-    @OneToMany(() => Post, post => post.creator)
+    @OneToMany(() => Post, (post) => post.creator)
     posts?: Post[];
 
-    @OneToMany(() => Collection, collection => collection.creator)
+    @OneToMany(() => Collection, (collection) => collection.creator)
     collections?: Collection[];
 
-    @OneToMany(() => Comment, comment => comment.creator, { cascade: ['insert', 'update'] })
+    @OneToMany(() => Comment, (comment) => comment.creator, { cascade: ['insert', 'update'] })
     comments?: Comment[];
 }

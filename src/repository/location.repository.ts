@@ -1,6 +1,6 @@
 import { Service } from 'typedi';
-import { Double, EntityRepository, Repository } from "typeorm";
-import Location from "../entity/location";
+import { Double, EntityRepository, Repository } from 'typeorm';
+import Location from '../entity/location';
 
 @Service()
 @EntityRepository(Location)

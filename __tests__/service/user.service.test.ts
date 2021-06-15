@@ -1,5 +1,5 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
-require("reflect-metadata");
+require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
@@ -35,7 +35,8 @@ describe('creates a user', () => {
 
     it('creating user fails due to conflicting email', async () => {
         await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
-        await expect(userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).rejects.toThrow(DuplicateDataException);
+        await expect(userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
+            .rejects.toThrow(DuplicateDataException);
     });
 });
 
@@ -50,11 +51,13 @@ describe('authenticates a user', () => {
     });
 
     it('authentication fails due to non-existent user', async () => {
-        await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).rejects.toThrow(UnauthorizedException);
+        await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
+            .rejects.toThrow(UnauthorizedException);
     });
 
     it('authentication fails due to invalid credentials', async () => {
-        await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).rejects.toThrow(UnauthorizedException);
+        await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
+            .rejects.toThrow(UnauthorizedException);
     });
 });
 
@@ -73,9 +76,10 @@ describe('updates a user', () => {
     });
 
     it('updating user fails due to existent display name', async () => {
-        const user1 = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
         const user2 = await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD);
-        await expect(userService.updateUser(user2.id, MockData.DEFAULT_DISPLAY_NAME)).rejects.toThrow(DuplicateDataException);
+        await expect(userService.updateUser(user2.id, MockData.DEFAULT_DISPLAY_NAME))
+            .rejects.toThrow(DuplicateDataException);
     });
 });
 
