@@ -1,10 +1,9 @@
 import { NextFunction, Request, Response, Router } from 'express';
-import fs from 'fs';
 import multer from 'multer';
-import path from 'path';
 import { Service } from 'typedi';
 import Photo from '../entity/photo';
 import Controller from '../interfaces/controller.interface';
+import cleanupMiddleware from '../middleware/cleanup.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CommentService from '../service/comment.service';
 import PostLikeService from '../service/post-like.service';
@@ -41,10 +40,10 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts);
         this.router.get(`${this.path}/:id`, this.getPost);
         this.router.get(`${this.path}/:id/comments`, this.getPostComments);
-        this.router.post(this.path, upload.array('photos', 5), this.createPost, this.cleanupTempFiles);
+        this.router.post(this.path, upload.array('photos', 5), this.createPost, cleanupMiddleware);
         this.router.post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment);
         this.router.post(`${this.path}/:id/likes`, this.addLike);
-        this.router.put(`${this.path}/:id`, upload.array('photos', 5), this.updatePost, this.cleanupTempFiles);
+        this.router.put(`${this.path}/:id`, upload.array('photos', 5), this.updatePost, cleanupMiddleware);
         this.router.delete(`${this.path}/:id`, this.deletePost);
         this.router.delete(`${this.path}/:id/comments/:commentId`, this.deleteComment);
         this.router.delete(`${this.path}/:id/likes`, this.deleteLike);
@@ -172,18 +171,5 @@ export default class PostController implements Controller {
         } catch (err) {
             next(err);
         }
-    }
-
-    private cleanupTempFiles(req: Request, res: Response, next: NextFunction) {
-        const tmpDir = process.env.TMP_DIR as string;
-        fs.readdir(tmpDir, (err, files) => {
-            if (err) throw err;
-
-            for (const file of files) {
-                fs.unlink(path.join(tmpDir, file), err => {
-                    if (err) console.error(err);
-                });
-            }
-        });
     }
 }

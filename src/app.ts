@@ -1,7 +1,7 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
-import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
+import cleanupMiddleware from './middleware/cleanup.middleware';
 import errorHandlingMiddleware from './middleware/error-handling.middleware';
 
 const PORT = Number(process.env.PORT) || 3000;
@@ -25,7 +25,8 @@ class App {
 
     private initMiddlewares() {
         this.app.use(cors());
-        this.app.use(bodyParser.json());
+        this.app.use(express.json());
+        this.app.use(cleanupMiddleware);
     }
 
     private initControllers(controllers) {
