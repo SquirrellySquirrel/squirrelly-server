@@ -9,6 +9,10 @@ export default class UserRepository extends Repository<User> {
         return this.findOne({ where: { email: email } });
     }
 
+    findByEmailWithPassword(email: string) {
+        return this.findOne({ where: { email: email }, select: ['id', 'password'] });
+    }
+
     findByDisplayName(displayName: string) {
         return this.findOne({ where: { displayName: displayName } });
     }

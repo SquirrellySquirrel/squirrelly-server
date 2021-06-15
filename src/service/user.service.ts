@@ -17,52 +17,28 @@ export default class UserService {
         private readonly userRepository: UserRepository
     ) { }
 
-    async getUserById(userId: string): Promise<Partial<User>> {
+    async getUserById(userId: string): Promise<User> {
         const user = await this.userRepository.findOne(userId);
         if (!user) {
             throw new NotFoundException('User', userId);
         }
-        const { password, ...foundUser } = user;
-        return foundUser;
+        return user;
     }
 
     async getUserByIdUnsafe(userId: string): Promise<Partial<User> | undefined> {
-        const user = await this.userRepository.findOne(userId);
-        if (!user) {
-            return undefined;
-        }
-        const { password, ...foundUser } = user;
-        return foundUser;
-    }
-
-    async getUserByEmail(email: string): Promise<Partial<User>> {
-        const user = await this.userRepository.findByEmail(email);
-        if (!user) {
-            throw new NotFoundException('User', email);
-        }
-        const { password, ...foundUser } = user;
-        return foundUser;
-    }
-
-    async getUserByEmailUnsafe(email: string): Promise<Partial<User> | undefined> {
-        const user = await this.userRepository.findByEmail(email);
-        if (!user) {
-            return undefined;
-        }
-        const { password, ...foundUser } = user;
-        return foundUser;
+        return await this.userRepository.findOne(userId);
     }
 
     async authenticate(email: string, pass: string) {
-        const userByEmail = await this.userRepository.findByEmail(email);
-        if (!userByEmail) {
+        const user = await this.userRepository.findByEmailWithPassword(email);
+        if (!user) {
             throw new UnauthorizedException();
         }
 
-        const matching = await bcrypt.compare(pass, userByEmail.password);
+        const matching = await bcrypt.compare(pass, user.password);
         if (matching) {
             await this.userRepository.save({
-                id: userByEmail.id,
+                id: user.id,
                 lastLogin: new Date()
             }).catch((err: Error) => {
                 throw new TypeORMException(err.message);
@@ -73,13 +49,13 @@ export default class UserService {
     }
 
     async createUser(email: string, pass: string): Promise<any> {
-        const userByEmail = await this.getUserByEmailUnsafe(email);
+        const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
             throw new DuplicateDataException({ email: email });
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
-        const { password, ...savedUser } = await this.userRepository.save({
+        const savedUser = await this.userRepository.save({
             email: email,
             password: encryptedPassword,
             created: new Date(),
