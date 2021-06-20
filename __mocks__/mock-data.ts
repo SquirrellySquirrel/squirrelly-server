@@ -39,7 +39,7 @@ export class MockData {
         photo.type = 'jpeg';
         photo.height = 800;
         photo.width = 600;
-        photo.order = 0;
+        photo.order = 1;
         return photo;
     }
 }

@@ -10,6 +10,7 @@ import NotFoundException from '../../src/exception/not-found.exception';
 import CommentRepository from '../../src/repository/comment.repository';
 import PostLikeRepository from '../../src/repository/post-like.repository';
 import CommentService from '../../src/service/comment.service';
+import LocationService from '../../src/service/location.service';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -17,6 +18,7 @@ import { MockData } from '../../__mocks__/mock-data';
 
 let postService: PostService;
 let userService: UserService;
+let locationService: LocationService;
 let userId: string;
 let post: Post;
 let location: Location;
@@ -30,6 +32,7 @@ beforeAll(async () => {
 
     postService = Container.get(PostService);
     userService = Container.get(UserService);
+    locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {
@@ -37,51 +40,90 @@ beforeEach(async () => {
 
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
     location = MockData.location1();
-    photo1 = MockData.photo1();
+    const postId = await postService.createPost(userId, location, false, new Date(), 'Default post', [MockData.photo1()]);
+    post = await postService.getPost(postId.id);
+    photo1 = post.photos![0];
     photo2 = MockData.photo2();
-    post = await postService.createPost(userId, location, false, new Date(), 'Default post', [photo1]);
 });
 
 afterAll(async () => {
     await connection.close();
 });
 
-it('creates a post with location and another photo', async () => {
-    const newPostId = (await postService.createPost(userId, location, false, new Date(), 'Test post', [photo2])).id;
-    const newPost = await postService.getPost(newPostId) as Post;
+describe('creates a post', () => {
+    it('creates a post with a new location and photo', async () => {
+        photo2.order = 0;
 
-    expect(newPost.id).toEqual(newPostId);
-    expect(newPost.creator.id).toEqual(userId);
-    expect(newPost.location).toEqual(
-        expect.objectContaining({
-            latitude: location.latitude,
-            longitude: location.longitude,
-            address: location.address,
-        })
-    );
-    expect(newPost.description).toEqual('Test post');
-    expect(newPost.photos).toHaveLength(1);
-    const savedPhoto = newPost.photos![0];
-    expect(savedPhoto.id).not.toBeNull();
-    expect(savedPhoto).toEqual(
-        expect.objectContaining({
-            path: photo2.path,
-            type: photo2.type,
-            height: photo2.height,
-            width: photo2.width,
-            order: 0,
-        })
-    );
-    expect(newPost.public).toBeFalsy();
+        const newPostId = (await postService.createPost(userId, location, false, new Date(), 'Test post', [photo2])).id;
+        const newPost = await postService.getPost(newPostId) as Post;
+
+        expect(newPost.id).toEqual(newPostId);
+        expect(newPost.creator.id).toEqual(userId);
+        expect(newPost.location).toEqual(
+            expect.objectContaining({
+                latitude: location.latitude,
+                longitude: location.longitude,
+                address: location.address,
+            })
+        );
+        expect(newPost.description).toEqual('Test post');
+        expect(newPost.photos).toHaveLength(1);
+        const savedPhoto = newPost.photos![0];
+        expect(savedPhoto.id).not.toBeNull();
+        expect(savedPhoto).toEqual(
+            expect.objectContaining({
+                path: photo2.path,
+                type: photo2.type,
+                height: photo2.height,
+                width: photo2.width,
+                order: 0,
+            })
+        );
+        expect(newPost.public).toBeFalsy();
+    });
+
+    it('creates a post with an existing location and photo', async () => {
+        const location2 = MockData.location2();
+        const existingLocation = await locationService.saveLocation({
+            latitude: location2.latitude,
+            longitude: location2.longitude,
+            address: location2.address,
+        });
+
+        photo2.order = 0;
+
+        const newPostId = (await postService.createPost(userId, existingLocation, false, new Date(), 'Test post', [photo2])).id;
+        const newPost = await postService.getPost(newPostId) as Post;
+
+        expect(newPost.id).toEqual(newPostId);
+        expect(newPost.creator.id).toEqual(userId);
+        expect(newPost.location).toEqual(
+            expect.objectContaining({
+                latitude: location2.latitude,
+                longitude: location2.longitude,
+                address: location2.address,
+            })
+        );
+        expect(newPost.description).toEqual('Test post');
+        expect(newPost.photos).toHaveLength(1);
+        const savedPhoto = newPost.photos![0];
+        expect(savedPhoto.id).not.toBeNull();
+        expect(savedPhoto).toEqual(
+            expect.objectContaining({
+                path: photo2.path,
+                type: photo2.type,
+                height: photo2.height,
+                width: photo2.width,
+                order: 0,
+            })
+        );
+        expect(newPost.public).toBeFalsy();
+    });
 });
 
 describe('updates the existing post', () => {
     it('adds a new photo', async () => {
-        photo2.order = 1;
-        photo2.post = post;
-
-        await postService.updatePost(post.id, location, false, post.created, 'Updated post');
-        await postService.updateDBPhotos([photo2], []);
+        await postService.updatePost(post.id, location, false, post.created, 'Updated post', [photo1, photo2]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
@@ -102,10 +144,7 @@ describe('updates the existing post', () => {
     });
 
     it('relaces the existing photo', async () => {
-        photo2.post = post;
-
-        await postService.updatePost(post.id, location, false, post.created, 'Updated post');
-        await postService.updateDBPhotos([photo2], [photo1]);
+        await postService.updatePost(post.id, location, false, post.created, 'Updated post', [photo2]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 
@@ -137,8 +176,7 @@ describe('updates the existing post', () => {
     it('updates other fields', async () => {
         const newLocation = MockData.location2();
 
-        await postService.updatePost(post.id, newLocation, true, post.created, 'Updated post');
-        await postService.updateDBPhotos([], []);
+        await postService.updatePost(post.id, newLocation, true, post.created, 'Updated post', [photo1]);
 
         const updatedPost = await postService.getPost(post.id) as Post;
 

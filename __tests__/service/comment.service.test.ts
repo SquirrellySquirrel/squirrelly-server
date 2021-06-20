@@ -31,7 +31,8 @@ beforeEach(async () => {
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
     const location = MockData.location1();
-    post = await postService.createPost(userId, location, true, new Date(), '', [MockData.photo1()]);
+    const postId = await postService.createPost(userId, location, true, new Date(), '', [MockData.photo1()]);
+    post = await postService.getPost(postId.id);
 });
 
 afterAll(async () => {

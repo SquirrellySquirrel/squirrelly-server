@@ -32,16 +32,6 @@ export default class PhotoService {
         return photos[0];
     }
 
-    // manually update photos as typoeorm doesn't support orphan removal atm (#1351)
-    async updatePhotos(photosToAdd: Photo[], photosToRemove: Photo[]) {
-        if (photosToAdd.length > 0) {
-            await this.photoRepository.save(photosToAdd);
-        }
-        if (photosToRemove.length > 0) {
-            await this.photoRepository.delete(photosToRemove.map((photo) => photo.id));
-        }
-    }
-
     identifyPhotosToAdd(post: Post, photos: Photo[]): Photo[] {
         const photosToAdd: Photo[] = [];
         photos.forEach((photo) => {

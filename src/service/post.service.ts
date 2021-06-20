@@ -10,6 +10,8 @@ import LocationService from './location.service';
 import PhotoService from './photo.service';
 import PostLikeService from './post-like.service';
 
+type PostId = Pick<Post, 'id'>;
+
 @Service()
 export default class PostService {
     constructor(
@@ -92,17 +94,17 @@ export default class PostService {
     }
 
     async createPostAndPhotos(userId: string, location: Location, isPublic: boolean, created: Date,
-        description: string, photos: Photo[]): Promise<any> {
-        const postId = (await this.createPost(userId, location, isPublic, created, description, photos)).id;
+        description: string, photos: Photo[]): Promise<PostId> {
+        const postId = await this.createPost(userId, location, isPublic, created, description, photos);
         await this.savePhotos(photos, postId);
-        return { id: postId };
+        return postId;
     }
 
     async createPost(userId: string, location: Location, isPublic: boolean, created: Date,
-        description: string, photos: Photo[]): Promise<Post> {
+        description: string, photos: Photo[]): Promise<PostId> {
         const locationId = await this.getLocationId(location);
 
-        return await this.postRepository.save({
+        const post = await this.postRepository.save({
             location: { id: locationId },
             creator: { id: userId },
             public: isPublic,
@@ -113,28 +115,32 @@ export default class PostService {
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
+        return { id: post.id };
     }
 
-    private async savePhotos(photos: Photo[], postId: string) {
+    private async savePhotos(photos: Photo[], postId: PostId) {
         const photoPaths = photos.map((photo) => photo.path);
         await this.photoService.addPhotosToStorage(photoPaths).catch((err: Error) => {
             console.warn(`Saving photos to storage failed due to: ${err.message}. Deleting post.`);
-            this.deletePostAndPhotos(postId);
+            this.deletePostAndPhotos(postId.id);
         });
     }
 
     async updatePostAndPhotos(postId: string, location: Location, isPublic: boolean, created: Date,
         description: string, photos: Photo[]) {
         const post = await this.getPost(postId);
+        const photosToAdd = this.photoService.identifyPhotosToAdd(post, photos);
+        const photosToRemove = await this.photoService.identifyPhotosToRemove(post.id, photos);
 
-        await this.updatePost(postId, location, isPublic, created, description);
+        await this.updatePost(postId, location, isPublic, created, description, photos);
 
-        await this.updatePhotos(post, photos);
+        await this.updateStoragePhotos(photosToAdd, photosToRemove);
 
         this.cleanupLocationFromDB(post.location.id);
     }
 
-    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string) {
+    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string,
+        photos: Photo[]) {
         const locationId = await this.getLocationId(location);
 
         await this.postRepository.save({
@@ -144,22 +150,10 @@ export default class PostService {
             created: created,
             updated: new Date(),
             description: description,
+            photos: photos,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
-    }
-
-    async updatePhotos(post: Post, photos: Photo[]) {
-        const photosToAdd = this.photoService.identifyPhotosToAdd(post, photos);
-        const photosToRemove = await this.photoService.identifyPhotosToRemove(post.id, photos);
-
-        await this.updateDBPhotos(photosToAdd, photosToRemove);
-
-        await this.updateStoragePhotos(photosToAdd, photosToRemove);
-    }
-
-    async updateDBPhotos(photosToAdd: Photo[], photosToRemove: Photo[]) {
-        await this.photoService.updatePhotos(photosToAdd, photosToRemove);
     }
 
     private async updateStoragePhotos(photosToAdd: Photo[], photosToRemove: Photo[]) {
