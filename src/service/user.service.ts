@@ -10,6 +10,8 @@ import UserRepository from '../repository/user.repository';
 
 const bcrypt = require('bcrypt');
 
+type UserId = Pick<User, 'id'>;
+
 @Service()
 export default class UserService {
     constructor(
@@ -29,7 +31,7 @@ export default class UserService {
         return await this.userRepository.findOne(userId);
     }
 
-    async authenticate(email: string, pass: string) {
+    async authenticate(email: string, pass: string): Promise<UserId> {
         const user = await this.userRepository.findByEmailWithPassword(email);
         if (!user) {
             throw new UnauthorizedException();
@@ -43,12 +45,13 @@ export default class UserService {
             }).catch((err: Error) => {
                 throw new TypeORMException(err.message);
             });
+            return { id: user.id };
         } else {
             throw new UnauthorizedException();
         }
     }
 
-    async createUser(email: string, pass: string): Promise<any> {
+    async createUser(email: string, pass: string): Promise<UserId> {
         const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
             throw new DuplicateDataException('email', email);

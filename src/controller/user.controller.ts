@@ -44,8 +44,8 @@ export default class UserController implements Controller {
         const email = req.body['email'];
         const password = req.body['password'];
         try {
-            await this.userService.authenticate(email, password);
-            res.sendStatus(200);
+            const userId = await this.userService.authenticate(email, password);
+            res.status(200).json(userId);
         } catch (err) {
             next(err);
         }
