@@ -57,7 +57,8 @@ it('chooses a cover for a post', async () => {
 });
 
 it('identifies photos to add', async () => {
-    const post = (await postService.createPost(userId, location, true, new Date(), '', [photo1]));
+    const postId = await postService.createPost(userId, location, true, new Date(), '', [photo1]);
+    const post = await postService.getPost(postId.id);
 
     const photosToAdd = photoService.identifyPhotosToAdd(post, [photo1, photo2]);
     expect(photosToAdd.length).toEqual(1);
