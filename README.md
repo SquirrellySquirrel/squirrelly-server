@@ -1,6 +1,8 @@
 # squirrelly-server
 
-* node: v15.x
+## Local Development
+
+* node: v16.x
 * npm: 7.x
 * mysql: 8.x
 
@@ -33,5 +35,11 @@ $ npm run start:dev
 6. Run tests:
 
 ```console
-$ npm run test
+$ npm test
+```
+
+7. Run linter:
+
+```console
+$ npm run lint
 ```
