@@ -31,7 +31,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |
           sudo service mysql start
-          sudo mysql < ./db-access.sql
+          sudo mysql < ./docker/mysql/access.sql
           mysql -uroot -ptest -h127.0.0.1 -e 'SHOW DATABASES'
       - run: npm ci
       - run: npm run lint
