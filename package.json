@@ -9,6 +9,7 @@
     "build": "tsc",
     "lint": "eslint . --ext .js,.ts",
     "test": "jest --runInBand",
+    "test:ci": "NODE_ENV=ci jest --runInBand",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage"
   },

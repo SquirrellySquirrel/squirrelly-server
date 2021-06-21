@@ -10,6 +10,7 @@ dist/
 # Config
 .env*
 !.env.example
+!.env.ci
 
 # Test
 coverage
