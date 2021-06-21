@@ -24,9 +24,9 @@
             "unix"
         ],
         "max-len": [
-            "error",
+            "warn",
             {
-                "code": 120,
+                "code": 130,
                 "ignoreUrls": true,
                 "ignoreStrings": true,
                 "ignoreTemplateLiterals": true,
