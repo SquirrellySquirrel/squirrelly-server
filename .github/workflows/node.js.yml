@@ -2,13 +2,12 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
-jobs:    
+jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -25,15 +24,15 @@ jobs:
           - 3306
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v2
-      with:
-        node-version: ${{ matrix.node-version }}
-    - run: |
-        sudo service mysql start
-        mysql -uroot -h127.0.0.1 -e 'SELECT version()'
-    - run: npm ci
-    - run: npm run lint
-    - run: npm run build
-    - run: npm test
+      - uses: actions/checkout@v2
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          sudo service mysql start
+          mysql -uroot -ptest -h127.0.0.1 -e 'SELECT version()'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
