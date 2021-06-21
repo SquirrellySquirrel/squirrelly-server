@@ -70,7 +70,6 @@ it('identifies photos to remove', async () => {
     const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
 
     const photos = await photoService.getPhotosByPost(postId);
-    console.log('saved:' + photos);
     const savedPhoto1 = photos[0];
     const savedPhoto2 = photos[1];
     const photosToRemove = await photoService.identifyPhotosToRemove(postId, [savedPhoto1]);
