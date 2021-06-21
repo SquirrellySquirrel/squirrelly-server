@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
+jobs:    
   build:
 
     runs-on: ubuntu-latest
@@ -15,12 +15,24 @@ jobs:
       matrix:
         node-version: [12.x, 14.x, 16.x]
 
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: test
+          MYSQL_DATABASE: squirrelly_test
+        ports:
+          - 3306
+
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
+    - run: |
+        sudo service mysql start
+        mysql -uroot -h127.0.0.1 -e 'SELECT version()'
     - run: npm ci
     - run: npm run lint
     - run: npm run build
