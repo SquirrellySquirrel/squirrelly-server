@@ -31,8 +31,8 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: |
           sudo service mysql start
-          sudo mysql -e 'ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'test';'
-          mysql -uroot -ptest -h127.0.0.1 -e 'SELECT version()'
+          sudo mysql < ./db-access.sql
+          mysql -uroot -ptest -h127.0.0.1 -e 'SHOW DATABASES'
       - run: npm ci
       - run: npm run lint
       - run: npm run build
