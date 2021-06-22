@@ -30,11 +30,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-      - run: |
-          #sudo service mysql start
-          #sudo mysql < ./docker/mysql/access.sql
-          echo ${{ job.services.mysql.ports['3306'] }}
-          mysql -h 127.0.0.1 -uroot -ptest --port=${{ job.services.mysql.ports['3306'] }} --protocol=TCP -e 'SHOW DATABASES'
+      - run: mysql -h 127.0.0.1 --port=${{ job.services.mysql.ports['3306'] }} --protocol=TCP -uroot -ptest -e 'STATUS'
       - run: npm ci
       - run: npm run lint
       - run: npm run build
