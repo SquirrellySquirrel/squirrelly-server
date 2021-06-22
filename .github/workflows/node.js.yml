@@ -32,7 +32,8 @@ jobs:
       - run: |
           #sudo service mysql start
           #sudo mysql < ./docker/mysql/access.sql
-          mysql -h mysql -uroot -ptest -e 'SHOW DATABASES'
+          echo ${{ job.services.mysql.ports['3306'] }}
+          mysql -h mysql -uroot -ptest --port=${{ job.services.mysql.ports['3306'] }} --protocol=TCP -e 'SHOW DATABASES'
       - run: npm ci
       - run: npm run lint
       - run: npm run build
