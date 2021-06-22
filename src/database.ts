@@ -9,7 +9,14 @@ const connection = {
     },
 
     async close() {
-        await getConnection().close();
+        const connection = getConnection();
+        
+        // TODO: Remove me afterwards
+        console.log(connection.isConnected);
+        
+        if (connection.isConnected) {
+            await connection.close();
+        }
     },
 
     async clear() {
