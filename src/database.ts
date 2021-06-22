@@ -3,6 +3,9 @@ import { createConnection, getConnection } from 'typeorm';
 const connection = {
     async create() {
         await createConnection();
+        const connection = getConnection();
+        // TODO: Remove me afterwards
+        console.log(connection.isConnected);
     },
 
     async close() {
