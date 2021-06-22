@@ -42,7 +42,9 @@ afterAll(async () => {
 });
 
 it('chooses a cover for a post', async () => {
-    photo1.order = 1; // order: [photo2, photo1]
+    // order: [photo2, photo1]
+    photo2.order = 0;
+    photo1.order = 1;
     const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
 
     const cover = await photoService.getPostCover(postId) as Photo;

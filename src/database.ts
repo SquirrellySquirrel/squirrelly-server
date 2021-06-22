@@ -4,16 +4,11 @@ const connection = {
     async create() {
         await createConnection();
         const connection = getConnection();
-        // TODO: Remove me afterwards
-        console.log(connection.isConnected);
     },
 
     async close() {
         const connection = getConnection();
-        
-        // TODO: Remove me afterwards
-        console.log(connection.isConnected);
-        
+
         if (connection.isConnected) {
             await connection.close();
         }
