@@ -25,7 +25,7 @@ jobs:
           --health-timeout=5s
           --health-retries=3
           -e MYSQL_ROOT_PASSWORD=test
-          -e MYSQL_DATABASE=squirrely_test
+          -e MYSQL_DATABASE=squirrelly_test
           -e GITHUB_ACTIONS=true
           -e CI=true
           --entrypoint sh
