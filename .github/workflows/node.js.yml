@@ -32,7 +32,7 @@ jobs:
       - run: |
           sudo service mysql start
           sudo mysql < ./docker/mysql/access.sql
-          mysql -uroot -ptest -e 'SHOW DATABASES'
+          mysql -h mysql -uroot -ptest -e 'SHOW DATABASES'
       - run: npm ci
       - run: npm run lint
       - run: npm run build
