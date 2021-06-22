@@ -28,9 +28,9 @@ jobs:
           -e MYSQL_DATABASE=squirrely_test
           -e GITHUB_ACTIONS=true
           -e CI=true
-          --entrypoint mysqld
+          --entrypoint sh
           mysql:8
-          -c "--default-authentication-plugin=mysql_native_password"
+          -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
 
     steps:
       - uses: actions/checkout@v2
