@@ -3,10 +3,20 @@ import { createConnection, getConnection } from 'typeorm';
 const connection = {
     async create() {
         await createConnection();
+        const connection = getConnection();
+        // TODO: Remove me afterwards
+        console.log(connection.isConnected);
     },
 
     async close() {
-        await getConnection().close();
+        const connection = getConnection();
+        
+        // TODO: Remove me afterwards
+        console.log(connection.isConnected);
+        
+        if (connection.isConnected) {
+            await connection.close();
+        }
     },
 
     async clear() {
