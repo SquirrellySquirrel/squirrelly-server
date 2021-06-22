@@ -18,7 +18,7 @@ jobs:
       mysql:
         image: mysql:8
         env:
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_ROOT_PASSWORD: test
           MYSQL_DATABASE: squirrelly_test
         ports:
           - 3306
@@ -30,8 +30,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - run: |
-          sudo service mysql start
-          sudo mysql < ./docker/mysql/access.sql
+          #sudo service mysql start
+          #sudo mysql < ./docker/mysql/access.sql
           mysql -h mysql -uroot -ptest -e 'SHOW DATABASES'
       - run: npm ci
       - run: npm run lint
