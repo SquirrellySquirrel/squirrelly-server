@@ -105,8 +105,8 @@ export default class PostController implements Controller {
         files.forEach((file, index) => {
             const photo = new Photo();
             photo.id = file['id'];
-            photo.path = file['filename'];
-            photo.type = file['type'] || file['mimetype'];
+            photo.path = file['name'];
+            photo.type = file['type'];
             photo.height = file['height'];
             photo.width = file['width'];
             photo.order = index;
