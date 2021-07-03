@@ -124,6 +124,18 @@ describe('gets all posts', () => {
     });
 });
 
+it('get posts by user', async () => {
+    await postService.savePost(userId, location, false, new Date(), 'Test post');
+    const posts = await postService.getPostsByUser(userId);
+    expect(posts).toHaveLength(2);
+});
+
+it('get posts by location', async () => {
+    await postService.savePost(userId, location, false, new Date(), 'Test post');
+    const posts = await postService.getPostsByLocation(post.location.id);
+    expect(posts).toHaveLength(2);
+});
+
 describe('gets an existing post by id', () => {
     it('gets comments', async () => {
         const commentService = new CommentService(getCustomRepository(CommentRepository));
