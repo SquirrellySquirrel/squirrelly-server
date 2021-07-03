@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
+import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Location from '../entity/location';
-import Photo from '../entity/photo';
 import Post from '../entity/post';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
@@ -135,17 +135,13 @@ export default class PostService {
         await this.deletePost(post.id);
 
         if (post.photos) {
-            this.removePhotos(post.photos);
+            this.photoService.removePhotosFromStorage(post.photos.map((photo) => photo.path))
+                .catch((err: Error) => console.log('Removing photos from storage failed: ' + err.message));
         }
     }
 
-    async deletePost(postId: string) {
-        await this.postRepository.delete(postId);
-    }
-
-    private removePhotos(photos: Photo[]) {
-        this.photoService.removePhotosFromStorage(photos.map((photo) => photo.path))
-            .catch((err: Error) => console.log('Removing photos from storage failed: ' + err.message));
+    async deletePost(postId: string): Promise<DeleteResult> {
+        return await this.postRepository.delete(postId);
     }
 
     private async getLocationId(location: Location): Promise<string> {
