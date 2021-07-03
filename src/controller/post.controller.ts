@@ -12,6 +12,8 @@ import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
 import CreateCommentDTO from './dto/create-comment.dto';
 import CreatePostDTO from './dto/create-post.dto';
+import UpdatePhotoDTO from './dto/update-photo.dto';
+import UpdatePostDTO from './dto/update-post.dto';
 
 const Storage = multer.diskStorage({
     destination(req, file, callback) {
@@ -46,7 +48,8 @@ export default class PostController implements Controller {
         this.router.post(`${this.path}/:id/photos`, upload.single('photo'), this.addPhoto, cleanupMiddleware);
         this.router.post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment);
         this.router.post(`${this.path}/:id/likes`, this.addLike);
-        this.router.put(`${this.path}/:id`, this.updatePost);
+        this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdatePostDTO), this.updatePost);
+        this.router.put(`${this.path}/:id/photos/:photoId`, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto);
         this.router.delete(`${this.path}/:id`, this.deletePost);
         this.router.delete(`${this.path}/:id/photos/:photoId`, this.deletePhoto);
         this.router.delete(`${this.path}/:id/comments/:commentId`, this.deleteComment);
@@ -96,6 +99,18 @@ export default class PostController implements Controller {
             const photoId = await this.photoService.addPhotoToPost(postId, photo);
 
             res.status(201).json(photoId);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private updatePhoto = async (req: Request, res: Response, next: NextFunction) => {
+        const photoId = req.params.photoId;
+        const order = req.body['order'];
+        try {
+            await this.photoService.updatePhoto(photoId, order);
+
+            res.sendStatus(204);
         } catch (err) {
             next(err);
         }

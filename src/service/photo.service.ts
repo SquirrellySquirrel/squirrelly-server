@@ -37,6 +37,13 @@ export default class PhotoService {
         return { id: savedPhoto.id };
     }
 
+    async updatePhoto(photoId: string, order: number) {
+        return await this.photoRepository.save({
+            id: photoId,
+            order: order,
+        });
+    }
+
     async deletePhoto(photoId: string) {
         const photo = await this.getPhoto(photoId);
         if (!photo) return;

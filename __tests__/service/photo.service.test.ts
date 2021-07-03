@@ -74,8 +74,24 @@ it('chooses the photo with the lowest order as cover for a post ', async () => {
     const cover = await photoService.getPostCover(postId) as Photo;
     expect(cover).toEqual(
         expect.objectContaining({
+            id: photoId,
             path: photo.path,
             type: photo.type,
+            order: photo.order,
+        })
+    );
+});
+
+it('updates a photo', async () => {
+    await photoService.updatePhoto(photoId, 1);
+
+    const postWithUpdatedPhoto = await postService.getPost(postId);
+    expect(postWithUpdatedPhoto!.photos![0]).toEqual(
+        expect.objectContaining({
+            id: photoId,
+            path: photo.path,
+            type: photo.type,
+            order: 1,
         })
     );
 });
