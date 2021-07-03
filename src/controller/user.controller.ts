@@ -84,8 +84,8 @@ export default class UserController implements Controller {
     }
 
     private getUserPosts = async (req: Request, res: Response) => {
-        const id = req.params.id;
-        res.json(await this.postService.getPostsByUser(id));
+        const userId = req.params.id;
+        res.json(await this.postService.getPosts(userId));
     }
 
     private getUserCollections = async (req: Request, res: Response) => {
