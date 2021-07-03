@@ -1,5 +1,7 @@
 # squirrelly-server
 
+![](https://github.com/SquirrellySquirrel/squirrelly-server/actions/workflows/node.js.yml/badge.svg)
+
 ## Local Development
 
 * node: v16.x
