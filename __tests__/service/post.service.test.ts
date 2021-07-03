@@ -119,21 +119,29 @@ describe('gets all posts', () => {
     it('more than limit', async () => {
         const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postService.savePost(user2Id, location, true, new Date(), 'Test post');
-        const posts = await postService.getPosts(1); // get one post
+        const posts = await postService.getPosts(undefined, undefined, 1); // get one post
         expect(posts).toHaveLength(1);
     });
-});
 
-it('get posts by user', async () => {
-    await postService.savePost(userId, location, false, new Date(), 'Test post');
-    const posts = await postService.getPostsByUser(userId);
-    expect(posts).toHaveLength(2);
-});
+    it('by user', async () => {
+        await postService.savePost(userId, location, false, new Date(), 'Test post');
+        const posts = await postService.getPosts(userId, undefined);
+        expect(posts).toHaveLength(2);
+    });
 
-it('get posts by location', async () => {
-    await postService.savePost(userId, location, false, new Date(), 'Test post');
-    const posts = await postService.getPostsByLocation(post.location.id);
-    expect(posts).toHaveLength(2);
+    it('by location', async () => {
+        await postService.savePost(userId, location, false, new Date(), 'Test post');
+        const posts = await postService.getPosts(undefined, post.location.id);
+        expect(posts).toHaveLength(2);
+    });
+
+    it('by user and location', async () => {
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
+        const user2PostId = (await postService.savePost(user2Id, location, true, new Date(), 'Test post')).id;
+        const posts = await postService.getPosts(user2Id, post.location.id);
+        expect(posts).toHaveLength(1);
+        expect(posts![0].id).toEqual(user2PostId);
+    });
 });
 
 describe('gets an existing post by id', () => {

@@ -20,4 +20,8 @@ export default class PostRepository extends Repository<Post> {
     findByLocation(locationId: string, count?: number): Promise<Post[]> {
         return this.find({ where: { location: { id: locationId } }, take: count, order: { created: 'DESC' } });
     }
+
+    findByUserAndLocation(userId: string, locationId: string, count?: number) {
+        return this.find({ where: { creator: { id: userId }, location: { id: locationId } }, take: count, order: { created: 'DESC' } });
+    }
 }

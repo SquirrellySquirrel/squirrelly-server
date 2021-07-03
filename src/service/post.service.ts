@@ -21,40 +21,57 @@ export default class PostService {
         private readonly locationService: LocationService
     ) { }
 
-    async getPosts(count?: number, withCover = true): Promise<Post[]> {
-        const posts = await this.postRepository.findLatest(count);
-        if (withCover) {
-            for (const post of posts) {
-                const cover = await this.photoService.getPostCover(post.id);
-                if (cover) {
-                    post.cover = cover;
-                }
+    async getPosts(userId?: string, locationId?: string, count?: number, withCover = true): Promise<Post[]> {
+        if (!userId && !locationId) {
+            const posts = await this.postRepository.findLatest(count);
+            if (withCover) {
+                this.setPostCovers(posts);
             }
+            return posts;
         }
-        return posts;
+
+        if (userId && locationId) {
+            const posts = await this.postRepository.findByUserAndLocation(userId, locationId, count);
+            if (withCover) {
+                this.setPostCovers(posts);
+            }
+            return posts;
+        }
+
+        if (userId) {
+            return await this.getPostsByUser(userId, count, withCover);
+        }
+
+        if (locationId) {
+            return await this.getPostsByLocation(locationId, count, withCover);
+        }
+
+        return [];
     }
 
-    async getPostsByUser(userId: string, count?: number, withCover = true): Promise<Post[]> {
+    private async getPostsByUser(userId: string, count?: number, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.findByUser(userId, count);
         if (withCover) {
-            for (const post of posts) {
-                const cover = await this.photoService.getPostCover(post.id);
-                if (cover) {
-                    post.cover = cover;
-                }
+            if (withCover) {
+                this.setPostCovers(posts);
             }
         }
         return posts;
     }
 
-    async getPostsByLocation(locationId: string, count?: number, withCover = true): Promise<Post[]> {
+    private async getPostsByLocation(locationId: string, count?: number, withCover = true): Promise<Post[]> {
         const posts = await this.postRepository.findByLocation(locationId, count);
         if (withCover) {
-            for (const post of posts) {
-                const cover = await this.photoService.getPostCover(post.id);
-                if (cover) {
-                    post.cover = cover;
-                }
+            this.setPostCovers(posts);
+        }
+        return posts;
+    }
+
+    async setPostCovers(posts: Post[]): Promise<Post[]> {
+        for (const post of posts) {
+            const cover = await this.photoService.getPostCover(post.id);
+            if (cover) {
+                post.cover = cover;
             }
         }
         return posts;

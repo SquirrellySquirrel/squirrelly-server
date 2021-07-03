@@ -57,9 +57,10 @@ export default class PostController implements Controller {
     }
 
     private getPosts = async (req: Request, res: Response) => {
-        const userId = req.query.userId as string;
-        const count = req.query.count as string;
-        res.json(await this.postService.getPostsByUser(userId, Number(count)));
+        const userId = req.query.userId?.toString();
+        const locationId = req.query.locationId?.toString();
+        const count = req.query.count;
+        res.json(await this.postService.getPosts(userId, locationId, (count ? Number(count) : undefined)));
     }
 
     private getPost = async (req: Request, res: Response, next: NextFunction) => {
