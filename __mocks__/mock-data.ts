@@ -27,8 +27,6 @@ export class MockData {
         const photo = new Photo();
         photo.path = '/path/to/photo-1';
         photo.type = 'png';
-        photo.height = 400;
-        photo.width = 600;
         photo.order = 0;
         return photo;
     }
@@ -37,8 +35,6 @@ export class MockData {
         const photo = new Photo();
         photo.path = '/path/to/photo-2';
         photo.type = 'jpeg';
-        photo.height = 800;
-        photo.width = 600;
         photo.order = 1;
         return photo;
     }

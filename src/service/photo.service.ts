@@ -1,13 +1,14 @@
-import fs from 'fs';
+import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Photo from '../entity/photo';
-import Post from '../entity/post';
 import PhotoRepository from '../repository/photo.repository';
 
 const tmpDir = process.env.TMP_DIR as string;
 const fileDir = process.env.FILE_DIR as string;
+
+type PhotoId = Pick<Photo, 'id'>;
 
 @Service()
 export default class PhotoService {
@@ -24,6 +25,28 @@ export default class PhotoService {
         return await this.photoRepository.findByPost(postId);
     }
 
+    async addPhotoToPost(postId: string, photo: Photo): Promise<PhotoId> {
+        const savedPhoto = await this.photoRepository.save({
+            id: photo.id,
+            path: photo.path,
+            type: photo.type,
+            order: photo.order,
+            post: { id: postId },
+        });
+
+        await this.savePhotoToDisk(photo.path);
+
+        return { id: savedPhoto.id };
+    }
+
+    async deletePhoto(photoId: string) {
+        const photo = await this.getPhoto(photoId);
+        if (!photo) return;
+
+        await this.photoRepository.delete(photoId);
+        this.removePhotoFromDisk(photo.path);
+    }
+
     async getPostCover(postId: string): Promise<Photo | undefined> {
         const photos = await this.getPhotosByPost(postId);
         if (photos.length < 1) {
@@ -32,49 +55,20 @@ export default class PhotoService {
         return photos[0];
     }
 
-    identifyPhotosToAdd(post: Post, photos: Photo[]): Photo[] {
-        const photosToAdd: Photo[] = [];
-        photos.forEach((photo) => {
-            if (!photo.id) {
-                photo.post = post;
-                photosToAdd.push(photo);
-            }
-        });
-        return photosToAdd;
-    }
-
-    async identifyPhotosToRemove(postId: string, photos: Photo[]): Promise<Photo[]> {
-        const existingPhotos = (await this.photoRepository.findByPost(postId));
-
-        const photoIdsToUpdate = photos.filter((photo) => photo.id).map((photo) => photo.id);
-        const photoIdsToRemove = existingPhotos.filter((photo) => !photoIdsToUpdate.includes(photo.id))
-            .map((photo) => photo.id);
-
-        return existingPhotos.filter((photo) => photoIdsToRemove.includes(photo.id));
-    }
-
-    async addPhotosToStorage(filenames: string[]) {
-        filenames.forEach((filename) => {
-            fs.rename(path.join(tmpDir, filename), path.join(fileDir, filename), (err) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-            });
-        });
-    }
-
     async removePhotosFromStorage(filenames: string[]) {
-        filenames.forEach((filename) => {
-            const filePath = path.join(fileDir, filename);
-            if (fs.existsSync(filePath)) {
-                fs.unlink(filePath, (err) => {
-                    if (err) {
-                        console.error(err);
-                        return;
-                    }
-                });
-            }
-        });
+        filenames.forEach((name) => this.removePhotoFromDisk(name));
+    }
+
+    private async savePhotoToDisk(name: string): Promise<void> {
+        const srcPath = path.join(tmpDir, name);
+        const destPath = path.join(fileDir, name);
+        return fsPromises.rename(srcPath, destPath);
+    }
+
+    private async removePhotoFromDisk(name: string): Promise<void> {
+        const filePath = path.join(fileDir, name);
+        if (fs.existsSync(filePath)) {
+            return fsPromises.unlink(filePath);
+        }
     }
 }

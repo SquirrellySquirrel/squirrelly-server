@@ -3,7 +3,6 @@ require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
@@ -14,9 +13,9 @@ let photoService: PhotoService;
 let userService: UserService;
 let postService: PostService;
 let userId: string;
-let location: Location;
-let photo1: Photo;
-let photo2: Photo;
+let postId: string;
+let photo: Photo;
+let photoId: string;
 
 beforeAll(async () => {
     useContainer(Container);
@@ -31,51 +30,59 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
+    jest.spyOn(PhotoService.prototype as any, 'savePhotoToDisk').mockImplementation(() => { console.log('Mocking saving photo to disk'); });
+
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
-    location = MockData.location1();
-    photo1 = MockData.photo1();
-    photo2 = MockData.photo2();
+
+    postId = (await postService.savePost(userId, MockData.location1(), true, new Date(), 'Default post')).id;
+
+    photo = MockData.photo1();
+    photoId = (await photoService.addPhotoToPost(postId, photo)).id;
 });
 
 afterAll(async () => {
     await connection.close();
 });
 
-it('chooses a cover for a post', async () => {
-    // order: [photo2, photo1]
-    photo2.order = 0;
-    photo1.order = 1;
-    const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
+it('adds a photo for a post', async () => {
+    const postWithPhoto = await postService.getPost(postId);
+    expect(postWithPhoto!.photos!.length).toEqual(1);
+    expect(postWithPhoto!.photos![0].path).toEqual(photo.path);
+});
 
-    const cover = await photoService.getPostCover(postId) as Photo;
-    expect(cover).toEqual(
+it('fetches a photo by id', async () => {
+    const photoById = await photoService.getPhoto(photoId);
+    expect(photoById).toEqual(
         expect.objectContaining({
-            path: photo2.path,
-            type: photo2.type,
-            height: photo2.height,
-            width: photo2.width,
+            id: photoId,
+            path: photo.path,
+            type: photo.type,
+            order: photo.order,
         })
     );
 });
 
-it('identifies photos to add', async () => {
-    const postId = await postService.createPost(userId, location, true, new Date(), '', [photo1]);
-    const post = await postService.getPost(postId.id);
-
-    const photosToAdd = photoService.identifyPhotosToAdd(post, [photo1, photo2]);
-    expect(photosToAdd.length).toEqual(1);
-    expect(photosToAdd[0]).toEqual(photo2);
-});
-
-it('identifies photos to remove', async () => {
-    photo2.order = 1; // order: [photo1, photo2]
-    const postId = (await postService.createPost(userId, location, true, new Date(), '', [photo1, photo2])).id;
-
+it('fetches all photos of a post', async () => {
+    await photoService.addPhotoToPost(postId, MockData.photo2());
     const photos = await photoService.getPhotosByPost(postId);
-    const savedPhoto1 = photos[0];
-    const savedPhoto2 = photos[1];
-    const photosToRemove = await photoService.identifyPhotosToRemove(postId, [savedPhoto1]);
-    expect(photosToRemove.length).toEqual(1);
-    expect(photosToRemove[0]).toEqual(savedPhoto2);
+    expect(photos.length).toEqual(2);
 });
 
+it('chooses the photo with the lowest order as cover for a post ', async () => {
+    await photoService.addPhotoToPost(postId, MockData.photo2());
+
+    const cover = await photoService.getPostCover(postId) as Photo;
+    expect(cover).toEqual(
+        expect.objectContaining({
+            path: photo.path,
+            type: photo.type,
+        })
+    );
+});
+
+it('deletes a photo by id', async () => {
+    await photoService.deletePhoto(photoId);
+
+    const postWithoutPhoto = await postService.getPost(postId);
+    expect(postWithoutPhoto!.photos!.length).toEqual(0);
+});

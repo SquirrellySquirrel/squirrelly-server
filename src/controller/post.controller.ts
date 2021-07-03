@@ -6,9 +6,11 @@ import Controller from '../interfaces/controller.interface';
 import cleanupMiddleware from '../middleware/cleanup.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CommentService from '../service/comment.service';
+import PhotoService from '../service/photo.service';
 import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
 import CreateCommentDTO from './dto/create-comment.dto';
+import CreatePostDTO from './dto/create-post.dto';
 
 const tmpDir = process.env.TMP_DIR as string;
 
@@ -30,8 +32,9 @@ export default class PostController implements Controller {
 
     constructor(
         private readonly postService: PostService,
+        private readonly photoService: PhotoService,
         private readonly commentService: CommentService,
-        private readonly postLikeService: PostLikeService
+        private readonly postLikeService: PostLikeService,
     ) {
         this.initRoutes();
     }
@@ -40,11 +43,13 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts);
         this.router.get(`${this.path}/:id`, this.getPost);
         this.router.get(`${this.path}/:id/comments`, this.getPostComments);
-        this.router.post(this.path, upload.array('photos', 5), this.createPost, cleanupMiddleware);
+        this.router.post(this.path, requestValidationMiddleware(CreatePostDTO), this.createPost);
+        this.router.post(`${this.path}/:id/photos`, upload.single('photo'), this.addPhoto, cleanupMiddleware);
         this.router.post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment);
         this.router.post(`${this.path}/:id/likes`, this.addLike);
-        this.router.put(`${this.path}/:id`, upload.array('photos', 5), this.updatePost, cleanupMiddleware);
+        this.router.put(`${this.path}/:id`, this.updatePost);
         this.router.delete(`${this.path}/:id`, this.deletePost);
+        this.router.delete(`${this.path}/:id/photos/:photoId`, this.deletePhoto);
         this.router.delete(`${this.path}/:id/comments/:commentId`, this.deleteComment);
         this.router.delete(`${this.path}/:id/likes`, this.deleteLike);
     }
@@ -66,15 +71,13 @@ export default class PostController implements Controller {
     }
 
     private createPost = async (req: Request, res: Response, next: NextFunction) => {
-        const files = req.files as Express.Multer.File[];
         try {
-            const postId = await this.postService.createPostAndPhotos(
+            const postId = await this.postService.savePost(
                 req.body['userId'],
-                JSON.parse(req.body['location']),
-                JSON.parse(req.body['isPublic']),
-                req.body['created'] as Date,
-                req.body['description'],
-                this.convertFilesToPhotos(files));
+                req.body['location'],
+                req.body['isPublic'],
+                req.body['created'],
+                req.body['description']);
 
             res.status(201).json(postId);
         } catch (err) {
@@ -82,17 +85,33 @@ export default class PostController implements Controller {
         }
     }
 
+    private addPhoto = async (req: Request, res: Response, next: NextFunction) => {
+        const postId = req.params.id;
+        const file = req.file;
+        const photo = new Photo();
+        photo.id = req.body['id'];
+        photo.path = file['filename'];
+        photo.type = file['mimetype'];
+        photo.order = req.body['order'];
+        try {
+            const photoId = await this.photoService.addPhotoToPost(postId, photo);
+
+            res.status(201).json(photoId);
+        } catch (err) {
+            next(err);
+        }
+    }
+
     private updatePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
-        const files = req.files as Express.Multer.File[];
         try {
-            await this.postService.updatePostAndPhotos(
+            await this.postService.updatePost(
                 id,
-                JSON.parse(req.body['location']),
-                JSON.parse(req.body['isPublic']),
+                req.body['location'],
+                req.body['isPublic'],
                 req.body['created'],
                 req.body['description'],
-                this.convertFilesToPhotos(files));
+            );
 
             res.sendStatus(204);
         } catch (err) {
@@ -100,25 +119,21 @@ export default class PostController implements Controller {
         }
     }
 
-    private convertFilesToPhotos(files: Express.Multer.File[]): Photo[] {
-        const photos: Photo[] = [];
-        files.forEach((file, index) => {
-            const photo = new Photo();
-            photo.id = file['id'];
-            photo.path = file['originalname'];
-            photo.type = file['mimetype'];
-            photo.height = file['height'];
-            photo.width = file['width'];
-            photo.order = index;
-            photos.push(photo);
-        });
-        return photos;
-    }
-
     private deletePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
             await this.postService.deletePostAndPhotos(id);
+
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private deletePhoto = async (req: Request, res: Response, next: NextFunction) => {
+        const id = req.params.photoId;
+        try {
+            await this.photoService.deletePhoto(id);
 
             res.sendStatus(204);
         } catch (err) {

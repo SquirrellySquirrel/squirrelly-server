@@ -93,15 +93,8 @@ export default class PostService {
         return post;
     }
 
-    async createPostAndPhotos(userId: string, location: Location, isPublic: boolean, created: Date,
-        description: string, photos: Photo[]): Promise<PostId> {
-        const postId = await this.createPost(userId, location, isPublic, created, description, photos);
-        await this.savePhotos(photos, postId);
-        return postId;
-    }
-
-    async createPost(userId: string, location: Location, isPublic: boolean, created: Date,
-        description: string, photos: Photo[]): Promise<PostId> {
+    async savePost(userId: string, location: Location, isPublic: boolean, created: Date, description: string):
+        Promise<PostId> {
         const locationId = await this.getLocationId(location);
 
         const post = await this.postRepository.save({
@@ -111,56 +104,27 @@ export default class PostService {
             created: created,
             updated: new Date(),
             description: description,
-            photos: photos,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
         return { id: post.id };
     }
 
-    private async savePhotos(photos: Photo[], postId: PostId) {
-        const photoPaths = photos.map((photo) => photo.path);
-        await this.photoService.addPhotosToStorage(photoPaths).catch((err: Error) => {
-            console.warn(`Saving photos to storage failed due to: ${err.message}. Deleting post.`);
-            this.deletePostAndPhotos(postId.id);
-        });
-    }
-
-    async updatePostAndPhotos(postId: string, location: Location, isPublic: boolean, created: Date,
-        description: string, photos: Photo[]) {
-        const post = await this.getPost(postId);
-        const photosToAdd = this.photoService.identifyPhotosToAdd(post, photos);
-        const photosToRemove = await this.photoService.identifyPhotosToRemove(post.id, photos);
-
-        await this.updatePost(postId, location, isPublic, created, description, photos);
-
-        await this.updateStoragePhotos(photosToAdd, photosToRemove);
-
-        this.cleanupLocationFromDB(post.location.id);
-    }
-
-    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string,
-        photos: Photo[]) {
+    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string):
+        Promise<PostId> {
         const locationId = await this.getLocationId(location);
 
-        await this.postRepository.save({
+        const post = await this.postRepository.save({
             id: postId,
             location: { id: locationId },
             public: isPublic,
             created: created,
             updated: new Date(),
             description: description,
-            photos: photos,
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
-    }
-
-    private async updateStoragePhotos(photosToAdd: Photo[], photosToRemove: Photo[]) {
-        await this.photoService.addPhotosToStorage(photosToAdd.map((photo) => photo.path))
-            .catch((err: Error) => console.log('Saving photos to storage failed: ' + err.message));
-        this.photoService.removePhotosFromStorage(photosToRemove.map((photo) => photo.path))
-            .catch((err: Error) => console.log('Removing photos from storage failed: ' + err.message));
+        return { id: post.id };
     }
 
     // ignore if post does not exist
@@ -191,11 +155,5 @@ export default class PostService {
         const existingLocation = await this.locationService.getLocationByCoordinate(
             location.latitude, location.longitude);
         return existingLocation ? existingLocation.id : (await this.locationService.saveLocation(location)).id;
-    }
-
-    private async cleanupLocationFromDB(locationId: string) {
-        if ((await this.getPostsByLocation(locationId, undefined, false)).length == 0) {
-            this.locationService.deleteLocation(locationId);
-        }
     }
 }

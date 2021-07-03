@@ -49,8 +49,8 @@ describe('creates a collection', () => {
     it('creates a collection with existing posts', async () => {
         const location1 = MockData.location1();
         const location2 = MockData.location2();
-        const post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
-        const post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
+        const post1 = await postService.savePost(userId, location1, true, new Date(), '');
+        const post2 = await postService.savePost(userId, location2, true, new Date(), '');
 
         const collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         const newCollection = await collectionService.getCollection(collectionId) as Collection;
@@ -77,8 +77,8 @@ describe('updates a collection', () => {
     it('updates posts', async () => {
         const location1 = MockData.location1();
         const location2 = MockData.location2();
-        const post1 = await postService.createPost(userId, location1, true, new Date(), '', [MockData.photo1()]);
-        const post2 = await postService.createPost(userId, location2, true, new Date(), '', [MockData.photo2()]);
+        const post1 = await postService.savePost(userId, location1, true, new Date(), '');
+        const post2 = await postService.savePost(userId, location2, true, new Date(), '');
 
         const collectionId = (await collectionService.createCollection([post1.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         await collectionService.updateCollection(collectionId, [post2.id], { name: 'my cooler collection', description: 'cooler squirrel' });

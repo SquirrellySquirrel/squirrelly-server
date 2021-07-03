@@ -1,7 +1,8 @@
-type SystemName = 'Android|iOS|iPhone OS'; // documentation: https://github.com/react-native-device-info/react-native-device-info#getsystemname
+import { IsEmail } from 'class-validator';
 
 export default class CreateUserDTO {
-    public deviceId!: string;
+    @IsEmail()
+    public email!: string;
 
-    public systemName!: SystemName;
+    public password!: string;
 }
