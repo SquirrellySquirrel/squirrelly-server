@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import multer from 'multer';
 import { Service } from 'typedi';
+import { TMP_DIR } from '../config';
 import Photo from '../entity/photo';
 import Controller from '../interfaces/controller.interface';
 import cleanupMiddleware from '../middleware/cleanup.middleware';
@@ -12,11 +13,9 @@ import PostService from '../service/post.service';
 import CreateCommentDTO from './dto/create-comment.dto';
 import CreatePostDTO from './dto/create-post.dto';
 
-const tmpDir = process.env.TMP_DIR as string;
-
 const Storage = multer.diskStorage({
     destination(req, file, callback) {
-        callback(null, tmpDir);
+        callback(null, TMP_DIR);
     },
     filename(req, file, callback) {
         callback(null, `${file.fieldname}_${Date.now()}_${file.originalname}`);

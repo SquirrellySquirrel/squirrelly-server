@@ -2,11 +2,9 @@ import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
+import { FILE_DIR, TMP_DIR } from '../config';
 import Photo from '../entity/photo';
 import PhotoRepository from '../repository/photo.repository';
-
-const tmpDir = process.env.TMP_DIR as string;
-const fileDir = process.env.FILE_DIR as string;
 
 type PhotoId = Pick<Photo, 'id'>;
 
@@ -60,13 +58,13 @@ export default class PhotoService {
     }
 
     private async savePhotoToDisk(name: string): Promise<void> {
-        const srcPath = path.join(tmpDir, name);
-        const destPath = path.join(fileDir, name);
+        const srcPath = path.join(TMP_DIR, name);
+        const destPath = path.join(FILE_DIR, name);
         return fsPromises.rename(srcPath, destPath);
     }
 
     private async removePhotoFromDisk(name: string): Promise<void> {
-        const filePath = path.join(fileDir, name);
+        const filePath = path.join(FILE_DIR, name);
         if (fs.existsSync(filePath)) {
             return fsPromises.unlink(filePath);
         }
