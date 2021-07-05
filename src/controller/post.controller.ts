@@ -93,7 +93,7 @@ export default class PostController implements Controller {
         const file = req.file;
         const photo = new Photo();
         photo.id = req.body['id'];
-        photo.path = file['filename'];
+        photo.name = file['filename'];
         photo.type = file['mimetype'];
         photo.order = req.body['order'];
         try {

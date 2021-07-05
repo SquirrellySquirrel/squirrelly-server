@@ -25,16 +25,16 @@ export class MockData {
 
     static photo1(): Photo {
         const photo = new Photo();
-        photo.path = '/path/to/photo-1';
-        photo.type = 'png';
+        photo.name = 'photo-1';
+        photo.type = 'images/png';
         photo.order = 0;
         return photo;
     }
 
     static photo2(): Photo {
         const photo = new Photo();
-        photo.path = '/path/to/photo-2';
-        photo.type = 'jpeg';
+        photo.name = 'photo-2';
+        photo.type = 'image/jpeg';
         photo.order = 1;
         return photo;
     }

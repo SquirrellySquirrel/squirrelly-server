@@ -26,13 +26,13 @@ export default class PhotoService {
     async addPhotoToPost(postId: string, photo: Photo): Promise<PhotoId> {
         const savedPhoto = await this.photoRepository.save({
             id: photo.id,
-            path: photo.path,
+            name: photo.name,
             type: photo.type,
             order: photo.order,
             post: { id: postId },
         });
 
-        await this.savePhotoToDisk(photo.path);
+        await this.savePhotoToDisk(photo.name);
 
         return { id: savedPhoto.id };
     }
@@ -49,7 +49,7 @@ export default class PhotoService {
         if (!photo) return;
 
         await this.photoRepository.delete(photoId);
-        this.removePhotoFromDisk(photo.path);
+        this.removePhotoFromDisk(photo.name);
     }
 
     async getPostCover(postId: string): Promise<Photo | undefined> {
@@ -60,8 +60,8 @@ export default class PhotoService {
         return photos[0];
     }
 
-    async removePhotosFromStorage(filenames: string[]) {
-        filenames.forEach((name) => this.removePhotoFromDisk(name));
+    async removePhotosFromStorage(names: string[]) {
+        names.forEach((name) => this.removePhotoFromDisk(name));
     }
 
     private async savePhotoToDisk(name: string): Promise<void> {

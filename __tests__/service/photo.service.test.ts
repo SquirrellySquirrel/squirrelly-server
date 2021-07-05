@@ -47,7 +47,7 @@ afterAll(async () => {
 it('adds a photo for a post', async () => {
     const postWithPhoto = await postService.getPost(postId);
     expect(postWithPhoto!.photos!.length).toEqual(1);
-    expect(postWithPhoto!.photos![0].path).toEqual(photo.path);
+    expect(postWithPhoto!.photos![0].name).toEqual(photo.name);
 });
 
 it('fetches a photo by id', async () => {
@@ -55,7 +55,7 @@ it('fetches a photo by id', async () => {
     expect(photoById).toEqual(
         expect.objectContaining({
             id: photoId,
-            path: photo.path,
+            name: photo.name,
             type: photo.type,
             order: photo.order,
         })
@@ -75,7 +75,7 @@ it('chooses the photo with the lowest order as cover for a post ', async () => {
     expect(cover).toEqual(
         expect.objectContaining({
             id: photoId,
-            path: photo.path,
+            name: photo.name,
             type: photo.type,
             order: photo.order,
         })
@@ -89,7 +89,7 @@ it('updates a photo', async () => {
     expect(postWithUpdatedPhoto!.photos![0]).toEqual(
         expect.objectContaining({
             id: photoId,
-            path: photo.path,
+            name: photo.name,
             type: photo.type,
             order: 1,
         })

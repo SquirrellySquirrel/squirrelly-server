@@ -139,7 +139,7 @@ export default class PostService {
         await this.deletePost(post.id);
 
         if (post.photos) {
-            this.photoService.removePhotosFromStorage(post.photos.map((photo) => photo.path))
+            this.photoService.removePhotosFromStorage(post.photos.map((photo) => photo.name))
                 .catch((err: Error) => console.log('Removing photos from storage failed: ' + err.message));
         }
     }

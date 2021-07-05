@@ -7,7 +7,7 @@ export default class Photo {
     id!: string;
 
     @Column('text')
-    path!: string;
+    name!: string;
 
     @Column()
     type!: string;
