@@ -32,7 +32,14 @@ export default class PhotoService {
             post: { id: postId },
         });
 
-        await this.savePhotoToDisk(photo.name);
+        try {
+            await this.savePhotoToStorage(photo.name);
+        } catch (err) {
+            console.error(err);
+            await this.photoRepository.delete(savedPhoto.id);
+            this.removeTempPhoto(photo.name);
+            throw err;
+        }
 
         return { id: savedPhoto.id };
     }
@@ -49,7 +56,7 @@ export default class PhotoService {
         if (!photo) return;
 
         await this.photoRepository.delete(photoId);
-        this.removePhotoFromDisk(photo.name);
+        this.removePhotoFromStorage(photo.name);
     }
 
     async getPostCover(postId: string): Promise<Photo | undefined> {
@@ -60,18 +67,25 @@ export default class PhotoService {
         return photos[0];
     }
 
-    async removePhotosFromStorage(names: string[]) {
-        names.forEach((name) => this.removePhotoFromDisk(name));
+    async removePhotosFromStorage(names: string[]): Promise<void> {
+        return names.forEach((name) => this.removePhotoFromStorage(name));
     }
 
-    private async savePhotoToDisk(name: string): Promise<void> {
+    private async savePhotoToStorage(name: string): Promise<void> {
         const srcPath = path.join(TMP_DIR, name);
         const destPath = path.join(FILE_DIR, name);
         return fsPromises.rename(srcPath, destPath);
     }
 
-    private async removePhotoFromDisk(name: string): Promise<void> {
-        const filePath = path.join(FILE_DIR, name);
+    private async removePhotoFromStorage(name: string): Promise<void> {
+        return this.removePhoto(path.join(FILE_DIR, name));
+    }
+
+    private async removeTempPhoto(name: string): Promise<void> {
+        return this.removePhoto(path.join(TMP_DIR, name));
+    }
+
+    private async removePhoto(filePath: string): Promise<void> {
         if (fs.existsSync(filePath)) {
             return fsPromises.unlink(filePath);
         }

@@ -4,7 +4,6 @@ import { Service } from 'typedi';
 import { TMP_DIR } from '../config';
 import Photo from '../entity/photo';
 import Controller from '../interfaces/controller.interface';
-import cleanupMiddleware from '../middleware/cleanup.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CommentService from '../service/comment.service';
 import PhotoService from '../service/photo.service';
@@ -45,7 +44,7 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}/:id`, this.getPost);
         this.router.get(`${this.path}/:id/comments`, this.getPostComments);
         this.router.post(this.path, requestValidationMiddleware(CreatePostDTO), this.createPost);
-        this.router.post(`${this.path}/:id/photos`, upload.single('photo'), this.addPhoto, cleanupMiddleware);
+        this.router.post(`${this.path}/:id/photos`, upload.single('photo'), this.addPhoto);
         this.router.post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment);
         this.router.post(`${this.path}/:id/likes`, this.addLike);
         this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdatePostDTO), this.updatePost);
@@ -100,6 +99,7 @@ export default class PostController implements Controller {
             const photoId = await this.photoService.addPhotoToPost(postId, photo);
 
             res.status(201).json(photoId);
+            next();
         } catch (err) {
             next(err);
         }
