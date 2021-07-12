@@ -3,7 +3,7 @@ require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import DuplicateDataException from '../../src/exception/duplicate-data.exception';
+import DuplicateDataException from '../../src/exception/conflicting-data.exception';
 import NotFoundException from '../../src/exception/not-found.exception';
 import UnauthorizedException from '../../src/exception/unauthorized.exception';
 import UserService from '../../src/service/user.service';
