@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
 import Token from '../interfaces/token.interface';
+import authMiddleware from '../middleware/auth.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
 import PostService from '../service/post.service';
@@ -22,14 +23,14 @@ export default class UserController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}/:id`, this.getUser);
-        this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
-        this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
-        this.router.post(`${this.path}/login`, this.login);
-        this.router.post(`${this.path}/logout`, this.logout);
+        this.router.get(`${this.path}/:id`, authMiddleware, this.getUser);
+        this.router.get(`${this.path}/:id/posts`, authMiddleware, this.getUserPosts);
+        this.router.get(`${this.path}/:id/collections`, authMiddleware, this.getUserCollections);
+        this.router.post(`${this.path}/login`, authMiddleware, this.login);
+        this.router.post(`${this.path}/logout`, authMiddleware, this.logout);
         this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.register);
-        this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
-        this.router.delete(`${this.path}/:id`, this.deleteUser);
+        this.router.put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
+        this.router.delete(`${this.path}/:id`, authMiddleware, this.deleteUser);
     }
 
     private getUser = async (req: Request, res: Response, next: NextFunction) => {
