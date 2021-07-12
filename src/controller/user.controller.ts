@@ -25,6 +25,7 @@ export default class UserController implements Controller {
         this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
         this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
         this.router.post(`${this.path}/login`, this.login);
+        this.router.post(`${this.path}/logout`, this.logout);
         this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.register);
         this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
         this.router.delete(`${this.path}/:id`, this.deleteUser);
@@ -60,6 +61,11 @@ export default class UserController implements Controller {
         } catch (err) {
             next(err);
         }
+    }
+
+    private logout = async (req: Request, res: Response) => {
+        res.setHeader('Set-Cookie', ['Authorization=;Max-age=0']);
+        res.sendStatus(204);
     }
 
     private updateUser = async (req: Request, res: Response, next: NextFunction) => {
