@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
+import authMiddleware from '../middleware/auth.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
 import CreateCollectionDTO from './dto/create-collection.dto';
@@ -16,10 +17,11 @@ export default class CollectionController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}/:id`, this.getCollection);
-        this.router.post(this.path, requestValidationMiddleware(CreateCollectionDTO), this.createCollection);
-        this.router.put(`${this.path}/:id`, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection);
-        this.router.delete(`${this.path}/:id`, this.deleteCollection);
+        this.router.all(`${this.path}/*`, authMiddleware)
+            .get(`${this.path}/:id`, this.getCollection)
+            .post(this.path, requestValidationMiddleware(CreateCollectionDTO), this.createCollection)
+            .put(`${this.path}/:id`, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection)
+            .delete(`${this.path}/:id`, this.deleteCollection);
     }
 
     private getCollection = async (req: Request, res: Response, next: NextFunction) => {
