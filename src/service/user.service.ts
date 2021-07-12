@@ -4,7 +4,7 @@ import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { JWT_SECRET, TOKEN_TTL } from '../config';
 import User from '../entity/user';
-import DuplicateDataException from '../exception/duplicate-data.exception';
+import ConflictingDataException from '../exception/conflicting-data.exception';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
 import UnauthorizedException from '../exception/unauthorized.exception';
@@ -63,7 +63,7 @@ export default class UserService {
     async createUser(email: string, pass: string): Promise<UserToken> {
         const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
-            throw new DuplicateDataException('email', email);
+            throw new ConflictingDataException('email', email);
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
@@ -84,7 +84,7 @@ export default class UserService {
         await this.getUserById(userId);
         const user = await this.userRepository.findByDisplayName(displayName);
         if (user && user.id != userId) {
-            throw new DuplicateDataException('displayName', displayName);
+            throw new ConflictingDataException('displayName', displayName);
         }
 
         await this.userRepository.save({
