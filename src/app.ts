@@ -1,4 +1,5 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import errorHandlingMiddleware from './middleware/error-handling.middleware';
@@ -25,6 +26,7 @@ class App {
     private initMiddlewares() {
         this.app.use(cors());
         this.app.use(express.json());
+        this.app.use(cookieParser());
     }
 
     private initControllers(controllers) {

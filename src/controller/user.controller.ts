@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
+import Token from '../interfaces/token.interface';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
 import PostService from '../service/post.service';
@@ -45,8 +46,10 @@ export default class UserController implements Controller {
         const email = req.body['email'];
         const password = req.body['password'];
         try {
-            const userId = await this.userService.authenticate(email, password);
-            res.status(200).json(userId);
+            const userToken = await this.userService.authenticate(email, password);
+            const cookie = this.createCookie(userToken.token);
+            res.setHeader('Set-Cookie', [cookie]);
+            res.status(200).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
@@ -56,8 +59,10 @@ export default class UserController implements Controller {
         const email = req.body['email'];
         const password = req.body['password'];
         try {
-            const userId = await this.userService.createUser(email, password);
-            res.status(201).json(userId);
+            const userToken = await this.userService.createUser(email, password);
+            const cookie = this.createCookie(userToken.token);
+            res.setHeader('Set-Cookie', [cookie]);
+            res.status(201).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
@@ -97,5 +102,9 @@ export default class UserController implements Controller {
     private getUserCollections = async (req: Request, res: Response) => {
         const id = req.params.id;
         res.json(await this.collectionService.getCollectionsByUser(id));
+    }
+
+    private createCookie(token: Token) {
+        return `Authorization=${token.token}; HttpOnly; Max-Age=${token.ttl}`;
     }
 }

@@ -1,16 +1,23 @@
+import jwt from 'jsonwebtoken';
 import { Service } from 'typedi';
 import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
+import { JWT_SECRET, TOKEN_TTL } from '../config';
 import User from '../entity/user';
 import DuplicateDataException from '../exception/duplicate-data.exception';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
 import UnauthorizedException from '../exception/unauthorized.exception';
+import TokenData from '../interfaces/token-data.interface';
+import Token from '../interfaces/token.interface';
 import UserRepository from '../repository/user.repository';
 
 const bcrypt = require('bcrypt');
 
-type UserId = Pick<User, 'id'>;
+type UserToken = {
+    id: string,
+    token: Token
+};
 
 @Service()
 export default class UserService {
@@ -31,7 +38,7 @@ export default class UserService {
         return await this.userRepository.findOne(userId);
     }
 
-    async authenticate(email: string, pass: string): Promise<UserId> {
+    async authenticate(email: string, pass: string): Promise<UserToken> {
         const user = await this.userRepository.findByEmailWithPassword(email);
         if (!user) {
             throw new UnauthorizedException();
@@ -45,13 +52,15 @@ export default class UserService {
             }).catch((err: Error) => {
                 throw new TypeORMException(err.message);
             });
-            return { id: user.id };
+
+            const token = this.createToken(user.id);
+            return { id: user.id, token };
         } else {
             throw new UnauthorizedException();
         }
     }
 
-    async createUser(email: string, pass: string): Promise<UserId> {
+    async createUser(email: string, pass: string): Promise<UserToken> {
         const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
             throw new DuplicateDataException('email', email);
@@ -66,7 +75,9 @@ export default class UserService {
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
-        return { id: savedUser.id };
+
+        const token = this.createToken(savedUser.id);
+        return { id: savedUser.id, token };
     }
 
     async updateUser(userId: string, displayName: string) {
@@ -90,5 +101,16 @@ export default class UserService {
             .catch((err: Error) => {
                 throw new TypeORMException(err.message);
             });
+    }
+
+    private createToken(userId: string): Token {
+        const data: TokenData = {
+            _id: userId,
+        };
+        const expiresIn = TOKEN_TTL;
+        return {
+            token: jwt.sign(data, JWT_SECRET, { expiresIn }),
+            ttl: expiresIn,
+        };
     }
 }
