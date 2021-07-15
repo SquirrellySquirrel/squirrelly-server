@@ -26,7 +26,7 @@ export default class UserController implements Controller {
         this.router.get(`${this.path}/:id`, authMiddleware, this.getUser);
         this.router.get(`${this.path}/:id/posts`, authMiddleware, this.getUserPosts);
         this.router.get(`${this.path}/:id/collections`, authMiddleware, this.getUserCollections);
-        this.router.post(`${this.path}/login`, authMiddleware, this.login);
+        this.router.post(`${this.path}/login`, this.login);
         this.router.post(`${this.path}/logout`, authMiddleware, this.logout);
         this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.register);
         this.router.put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdateUserDTO), this.updateUser);
