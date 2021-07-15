@@ -5,9 +5,15 @@ import express from 'express';
 import errorHandlingMiddleware from './middleware/error-handling.middleware';
 
 const PORT = Number(process.env.PORT) || 3000;
+const ORIGIN = process.env.CLIENTS || '*';
 
 class App {
     public app: express.Application;
+
+    corsOptions = {
+        origin: ORIGIN,
+        credentials: true,
+    }
 
     constructor(controllers) {
         this.app = express();
@@ -24,7 +30,7 @@ class App {
     }
 
     private initMiddlewares() {
-        this.app.use(cors());
+        this.app.use(cors(this.corsOptions));
         this.app.use(express.json());
         this.app.use(cookieParser());
     }
