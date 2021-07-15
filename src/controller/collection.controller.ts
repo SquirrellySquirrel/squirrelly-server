@@ -17,11 +17,10 @@ export default class CollectionController implements Controller {
     }
 
     private initRoutes() {
-        this.router.all(`${this.path}*`, authMiddleware)
-            .get(`${this.path}/:id`, this.getCollection)
-            .post(this.path, requestValidationMiddleware(CreateCollectionDTO), this.createCollection)
-            .put(`${this.path}/:id`, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection)
-            .delete(`${this.path}/:id`, this.deleteCollection);
+        this.router.get(`${this.path}/:id`, this.getCollection)
+            .post(this.path, authMiddleware, requestValidationMiddleware(CreateCollectionDTO), this.createCollection)
+            .put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection)
+            .delete(`${this.path}/:id`, authMiddleware, this.deleteCollection);
     }
 
     private getCollection = async (req: Request, res: Response, next: NextFunction) => {

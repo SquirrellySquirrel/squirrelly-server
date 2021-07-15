@@ -41,20 +41,19 @@ export default class PostController implements Controller {
     }
 
     private initRoutes() {
-        this.router.all(`${this.path}*`, authMiddleware)
-            .get(`${this.path}`, this.getPosts)
+        this.router.get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
-            .post(this.path, requestValidationMiddleware(CreatePostDTO), this.createPost)
-            .post(`${this.path}/:id/photos`, upload.single('photo'), this.addPhoto)
-            .post(`${this.path}/:id/comments`, requestValidationMiddleware(CreateCommentDTO), this.createComment)
-            .post(`${this.path}/:id/likes`, this.addLike)
-            .put(`${this.path}/:id`, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
-            .put(`${this.path}/:id/photos/:photoId`, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto)
-            .delete(`${this.path}/:id`, this.deletePost)
-            .delete(`${this.path}/:id/photos/:photoId`, this.deletePhoto)
-            .delete(`${this.path}/:id/comments/:commentId`, this.deleteComment)
-            .delete(`${this.path}/:id/likes`, this.deleteLike);
+            .post(this.path, authMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
+            .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
+            .post(`${this.path}/:id/comments`, authMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
+            .post(`${this.path}/:id/likes`, authMiddleware, this.addLike)
+            .put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
+            .put(`${this.path}/:id/photos/:photoId`, authMiddleware, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto)
+            .delete(`${this.path}/:id`, authMiddleware, this.deletePost)
+            .delete(`${this.path}/:id/photos/:photoId`, authMiddleware, this.deletePhoto)
+            .delete(`${this.path}/:id/comments/:commentId`, authMiddleware, this.deleteComment)
+            .delete(`${this.path}/:id/likes`, authMiddleware, this.deleteLike);
     }
 
     private getPosts = async (req: Request, res: Response) => {
