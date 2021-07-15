@@ -41,7 +41,7 @@ export default class PostController implements Controller {
     }
 
     private initRoutes() {
-        this.router.all(`${this.path}/*`, authMiddleware)
+        this.router.all(`${this.path}*`, authMiddleware)
             .get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)

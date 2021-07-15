@@ -17,7 +17,7 @@ export default class CollectionController implements Controller {
     }
 
     private initRoutes() {
-        this.router.all(`${this.path}/*`, authMiddleware)
+        this.router.all(`${this.path}*`, authMiddleware)
             .get(`${this.path}/:id`, this.getCollection)
             .post(this.path, requestValidationMiddleware(CreateCollectionDTO), this.createCollection)
             .put(`${this.path}/:id`, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection)
