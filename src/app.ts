@@ -5,7 +5,7 @@ import express from 'express';
 import errorHandlingMiddleware from './middleware/error-handling.middleware';
 
 const PORT = Number(process.env.PORT) || 3000;
-const ORIGIN = process.env.CLIENTS || '*';
+const ORIGIN = process.env.ALLOWED_ORIGINS || '*';
 
 class App {
     public app: express.Application;
@@ -13,6 +13,8 @@ class App {
     corsOptions = {
         origin: ORIGIN,
         credentials: true,
+        methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['X-Requested-With', 'X-HTTP-Method-Override', 'Content-Type', 'Accept'],
     }
 
     constructor(controllers) {
