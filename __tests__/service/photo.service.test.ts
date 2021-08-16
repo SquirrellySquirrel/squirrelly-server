@@ -1,5 +1,6 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
+import path from 'path';
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
@@ -8,6 +9,7 @@ import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
+import { FILE_DIR } from '../config';
 
 let photoService: PhotoService;
 let userService: UserService;
@@ -50,16 +52,9 @@ it('adds a photo for a post', async () => {
     expect(postWithPhoto!.photos![0].name).toEqual(photo.name);
 });
 
-it('fetches a photo by id', async () => {
-    const photoById = await photoService.getPhoto(photoId);
-    expect(photoById).toEqual(
-        expect.objectContaining({
-            id: photoId,
-            name: photo.name,
-            type: photo.type,
-            order: photo.order,
-        })
-    );
+it('fetches photo path by id', async () => {
+    const photoPath = await photoService.getPhotoPath(photoId);
+    expect(photoPath).toEqual(path.join(FILE_DIR, photo.name));
 });
 
 it('fetches all photos of a post', async () => {
