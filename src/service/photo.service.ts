@@ -4,6 +4,7 @@ import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { FILE_DIR, TMP_DIR } from '../config';
 import Photo from '../entity/photo';
+import NotFoundException from '../exception/not-found.exception';
 import PhotoRepository from '../repository/photo.repository';
 
 type PhotoId = Pick<Photo, 'id'>;
@@ -15,8 +16,12 @@ export default class PhotoService {
         private readonly photoRepository: PhotoRepository
     ) { }
 
-    async getPhoto(id: string): Promise<Photo | undefined> {
-        return await this.photoRepository.findOne(id);
+    async getPhotoPath(id: string): Promise<string> {
+        const photo = await this.getPhoto(id);
+        if (!photo) {
+            throw new NotFoundException('Photo', id);
+        }
+        return path.join(FILE_DIR, photo.name);
     }
 
     async getPhotosByPost(postId: string): Promise<Photo[]> {
@@ -69,6 +74,10 @@ export default class PhotoService {
 
     async removePhotosFromStorage(names: string[]): Promise<void> {
         return names.forEach((name) => this.removePhotoFromStorage(name));
+    }
+
+    private async getPhoto(id: string): Promise<Photo | undefined> {
+        return await this.photoRepository.findOne(id);
     }
 
     private async savePhotoToStorage(name: string): Promise<void> {

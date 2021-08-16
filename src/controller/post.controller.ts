@@ -44,6 +44,7 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
+            .get(`${this.path}/:id/photos/:photoId`, this.getPhoto)
             .post(this.path, authMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
@@ -81,7 +82,6 @@ export default class PostController implements Controller {
                 req.body['isPublic'],
                 req.body['created'],
                 req.body['description']);
-
             res.status(201).json(postId);
         } catch (err) {
             next(err);
@@ -113,6 +113,17 @@ export default class PostController implements Controller {
             await this.photoService.updatePhoto(photoId, order);
 
             res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private getPhoto = async (req: Request, res: Response, next: NextFunction) => {
+        const photoId = req.params.photoId;
+        try {
+            const photoPath = await this.photoService.getPhotoPath(photoId);
+
+            res.sendFile(photoPath);
         } catch (err) {
             next(err);
         }
