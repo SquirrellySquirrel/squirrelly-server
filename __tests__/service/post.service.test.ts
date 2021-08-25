@@ -4,12 +4,14 @@ import { getCustomRepository, useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Location from '../../src/entity/location';
+import Photo from '../../src/entity/photo';
 import Post from '../../src/entity/post';
 import NotFoundException from '../../src/exception/not-found.exception';
 import CommentRepository from '../../src/repository/comment.repository';
 import PostLikeRepository from '../../src/repository/post-like.repository';
 import CommentService from '../../src/service/comment.service';
 import LocationService from '../../src/service/location.service';
+import PhotoService from '../../src/service/photo.service';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -18,9 +20,11 @@ import { MockData } from '../../__mocks__/mock-data';
 let postService: PostService;
 let userService: UserService;
 let locationService: LocationService;
+let photoService: PhotoService;
 let userId: string;
 let post: Post;
 let location: Location;
+let photo: Photo;
 
 beforeAll(async () => {
     useContainer(Container);
@@ -30,14 +34,18 @@ beforeAll(async () => {
     postService = Container.get(PostService);
     userService = Container.get(UserService);
     locationService = Container.get(LocationService);
+    photoService = Container.get(PhotoService);
 });
 
 beforeEach(async () => {
     await connection.clear();
 
+    jest.spyOn(PhotoService.prototype as any, 'savePhotoToStorage').mockImplementation(() => { console.trace('Mocking saving photo to disk'); });
+
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
     location = MockData.location1();
     const postId = await postService.savePost(userId, location, false, new Date(), 'Default post');
+    photo = MockData.photo1();
     post = await postService.getPost(postId.id);
 });
 
@@ -124,15 +132,31 @@ describe('gets all posts', () => {
     });
 
     it('by user', async () => {
-        await postService.savePost(userId, location, false, new Date(), 'Test post');
+        // wait 1s to create another post with photo
+        await new Promise((f) => setTimeout(f, 1000));
+        const post2Id = (await postService.savePost(userId, location, false, new Date(), 'Test post')).id;
+        const photoId = (await photoService.addPhotoToPost(post2Id, photo)).id;
+        photo.id = photoId;
+        photoService.addPhotoToPost(post2Id, photo);
+
         const posts = await postService.getPosts(userId, undefined);
         expect(posts).toHaveLength(2);
+        expect(posts[0].id).toEqual(post2Id);
+        expect(posts[0].cover.id).toEqual(photoId);
     });
 
     it('by location', async () => {
-        await postService.savePost(userId, location, false, new Date(), 'Test post');
+        // wait 1s to create another post with photo
+        await new Promise((f) => setTimeout(f, 1000));
+        const post2Id = (await postService.savePost(userId, location, false, new Date(), 'Test post')).id;
+        const photoId = (await photoService.addPhotoToPost(post2Id, photo)).id;
+        photo.id = photoId;
+        photoService.addPhotoToPost(post2Id, photo);
+
         const posts = await postService.getPosts(undefined, post.location.id);
         expect(posts).toHaveLength(2);
+        expect(posts[0].id).toEqual(post2Id);
+        expect(posts[0].cover.id).toEqual(photoId);
     });
 
     it('by user and location', async () => {
@@ -140,7 +164,7 @@ describe('gets all posts', () => {
         const user2PostId = (await postService.savePost(user2Id, location, true, new Date(), 'Test post')).id;
         const posts = await postService.getPosts(user2Id, post.location.id);
         expect(posts).toHaveLength(1);
-        expect(posts![0].id).toEqual(user2PostId);
+        expect(posts[0].id).toEqual(user2PostId);
     });
 });
 

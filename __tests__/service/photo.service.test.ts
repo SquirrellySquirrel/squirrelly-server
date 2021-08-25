@@ -32,7 +32,7 @@ beforeAll(async () => {
 beforeEach(async () => {
     await connection.clear();
 
-    jest.spyOn(PhotoService.prototype as any, 'savePhotoToStorage').mockImplementation(() => { console.log('Mocking saving photo to disk'); });
+    jest.spyOn(PhotoService.prototype as any, 'savePhotoToStorage').mockImplementation(() => { console.trace('Mocking saving photo to disk'); });
 
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
