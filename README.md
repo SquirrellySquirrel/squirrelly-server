@@ -4,43 +4,45 @@
 
 ## Local Development
 
-* node: v16.x
-* npm: 7.x
-* mysql: 8.x
+- node: v16.x
+- npm: 7.x
+- mysql: 8.x
+- (optional) docker and docker-compose
+
+### Setup
 
 1. Copy `.env.example` to `.env[.profile]` (e.g. `.env.dev`) with actual environment variables.
 
-2. Install dependencies:
+2. If using docker, run `docker-compose up -d` to start MySQL and create databases; otherwise manually run `./docker/mysql/createdb.sql`.
+
+3. Install dependencies:
 
 ```console
 $ npm install
 ```
 
-3. Build:
+### Commands
+
+- Build and start server:
 
 ```console
 $ npm run build
-```
-
-4. Start server:
-
-```console
 $ npm run start
 ```
 
-5. Start server locally (no need to build):
+- Start server locally (no need to build):
 
 ```console
 $ npm run start:dev
 ```
 
-6. Run tests:
+- Run tests:
 
 ```console
 $ npm test
 ```
 
-7. Run linter:
+- Run linter:
 
 ```console
 $ npm run lint
