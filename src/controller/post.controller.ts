@@ -44,7 +44,6 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
-            .get(`${this.path}/:id/photos/:photoId`, this.getPhoto)
             .post(this.path, authMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
@@ -52,7 +51,6 @@ export default class PostController implements Controller {
             .put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
             .put(`${this.path}/:id/photos/:photoId`, authMiddleware, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto)
             .delete(`${this.path}/:id`, authMiddleware, this.deletePost)
-            .delete(`${this.path}/:id/photos/:photoId`, authMiddleware, this.deletePhoto)
             .delete(`${this.path}/:id/comments/:commentId`, authMiddleware, this.deleteComment)
             .delete(`${this.path}/:id/likes`, authMiddleware, this.deleteLike);
     }
@@ -106,29 +104,6 @@ export default class PostController implements Controller {
         }
     }
 
-    private updatePhoto = async (req: Request, res: Response, next: NextFunction) => {
-        const photoId = req.params.photoId;
-        const order = req.body['order'];
-        try {
-            await this.photoService.updatePhoto(photoId, order);
-
-            res.sendStatus(204);
-        } catch (err) {
-            next(err);
-        }
-    }
-
-    private getPhoto = async (req: Request, res: Response, next: NextFunction) => {
-        const photoId = req.params.photoId;
-        try {
-            const photoPath = await this.photoService.getPhotoPath(photoId);
-
-            res.sendFile(photoPath);
-        } catch (err) {
-            next(err);
-        }
-    }
-
     private updatePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
@@ -139,6 +114,18 @@ export default class PostController implements Controller {
                 req.body['created'],
                 req.body['description'],
             );
+
+            res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private updatePhoto = async (req: Request, res: Response, next: NextFunction) => {
+        const photoId = req.params.photoId;
+        const order = req.body['order'];
+        try {
+            await this.photoService.updatePhoto(photoId, order);
 
             res.sendStatus(204);
         } catch (err) {
@@ -157,16 +144,7 @@ export default class PostController implements Controller {
         }
     }
 
-    private deletePhoto = async (req: Request, res: Response, next: NextFunction) => {
-        const id = req.params.photoId;
-        try {
-            await this.photoService.deletePhoto(id);
 
-            res.sendStatus(204);
-        } catch (err) {
-            next(err);
-        }
-    }
 
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
