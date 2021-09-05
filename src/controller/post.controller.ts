@@ -3,6 +3,7 @@ import multer from 'multer';
 import { Service } from 'typedi';
 import { TMP_DIR } from '../config';
 import Photo from '../entity/photo';
+import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authMiddleware from '../middleware/auth.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
@@ -45,6 +46,7 @@ export default class PostController implements Controller {
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
             .post(this.path, authMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
+            .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
             .post(`${this.path}/:id/likes`, authMiddleware, this.addLike)
@@ -89,18 +91,22 @@ export default class PostController implements Controller {
     private addPhoto = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         const file = req.file;
-        const photo = new Photo();
-        photo.id = req.body['id'];
-        photo.name = file['filename'];
-        photo.type = file['mimetype'];
-        photo.order = req.body['order'];
-        try {
-            const photoId = await this.photoService.addPhotoToPost(postId, photo);
+        if (!file) {
+            next(new HttpException(400, 'Photo file required but not provided'));
+        } else {
+            const photo = new Photo();
+            photo.id = req.body['id'];
+            photo.name = file['filename'];
+            photo.type = file['mimetype'];
+            photo.order = req.body['order'];
+            try {
+                const photoId = await this.photoService.addPhotoToPost(postId, photo);
 
-            res.status(201).json(photoId);
-            next();
-        } catch (err) {
-            next(err);
+                res.status(201).json(photoId);
+                next();
+            } catch (err) {
+                next(err);
+            }
         }
     }
 
@@ -143,8 +149,6 @@ export default class PostController implements Controller {
             next(err);
         }
     }
-
-
 
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
