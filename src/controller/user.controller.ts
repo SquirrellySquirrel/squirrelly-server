@@ -112,6 +112,6 @@ export default class UserController implements Controller {
     }
 
     private createCookie(token: Token) {
-        return `Authorization=${token.token}; HttpOnly; Max-Age=${token.ttl}`;
+        return `Authorization=${token.token}; HttpOnly; Max-Age=${token.ttl}; Path=/`;
     }
 }
