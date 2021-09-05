@@ -4,8 +4,8 @@ import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import DuplicateDataException from '../../src/exception/conflicting-data.exception';
+import InvalidCredentialsException from '../../src/exception/invalid-credentials.exception';
 import NotFoundException from '../../src/exception/not-found.exception';
-import UnauthorizedException from '../../src/exception/unauthorized.exception';
 import UserService from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
 
@@ -52,12 +52,12 @@ describe('authenticates a user', () => {
 
     it('authentication fails due to non-existent user', async () => {
         await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
-            .rejects.toThrow(UnauthorizedException);
+            .rejects.toThrow(InvalidCredentialsException);
     });
 
     it('authentication fails due to invalid credentials', async () => {
         await expect(userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
-            .rejects.toThrow(UnauthorizedException);
+            .rejects.toThrow(InvalidCredentialsException);
     });
 });
 
