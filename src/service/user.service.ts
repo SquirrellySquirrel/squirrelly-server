@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import ms from 'ms';
 import { Service } from 'typedi';
 import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
@@ -7,7 +8,7 @@ import User from '../entity/user';
 import ConflictingDataException from '../exception/conflicting-data.exception';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
-import UnauthorizedException from '../exception/unauthorized.exception';
+import InvalidCredentialsException from '../exception/invalid-credentials.exception';
 import TokenData from '../interfaces/token-data.interface';
 import Token from '../interfaces/token.interface';
 import UserRepository from '../repository/user.repository';
@@ -41,7 +42,7 @@ export default class UserService {
     async authenticate(email: string, pass: string): Promise<UserToken> {
         const user = await this.userRepository.findByEmailWithPassword(email);
         if (!user) {
-            throw new UnauthorizedException();
+            throw new InvalidCredentialsException();
         }
 
         const matching = await bcrypt.compare(pass, user.password);
@@ -56,7 +57,7 @@ export default class UserService {
             const token = this.createToken(user.id);
             return { id: user.id, token };
         } else {
-            throw new UnauthorizedException();
+            throw new InvalidCredentialsException();
         }
     }
 
@@ -110,7 +111,7 @@ export default class UserService {
         const expiresIn = TOKEN_TTL;
         return {
             token: jwt.sign(data, JWT_SECRET, { expiresIn }),
-            ttl: expiresIn,
+            ttl: ms(expiresIn) / 1000,
         };
     }
 }
