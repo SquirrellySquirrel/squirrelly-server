@@ -8,7 +8,7 @@ export default class CreatePostDTO {
 
     public isPublic!: boolean;
 
-    @Length(1, 250)
+    @Length(0, 250)
     public description?: string;
 
     public created!: Date;
