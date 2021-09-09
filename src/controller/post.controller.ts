@@ -101,9 +101,7 @@ export default class PostController implements Controller {
             photo.order = req.body['order'];
             try {
                 const photoId = await this.photoService.addPhotoToPost(postId, photo);
-
                 res.status(201).json(photoId);
-                next();
             } catch (err) {
                 next(err);
             }
