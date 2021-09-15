@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
-import Token from '../interfaces/token.interface';
 import authMiddleware from '../middleware/auth.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
@@ -48,9 +47,8 @@ export default class UserController implements Controller {
         const password = req.body['password'];
         try {
             const userToken = await this.userService.authenticate(email, password);
-            const cookie = this.createCookie(userToken.token);
-            res.setHeader('Set-Cookie', [cookie]);
-            res.status(200).json({ id: userToken.id });
+            const token = userToken.token;
+            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000, httpOnly: true }).status(200).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
@@ -61,9 +59,8 @@ export default class UserController implements Controller {
         const password = req.body['password'];
         try {
             const userToken = await this.userService.createUser(email, password);
-            const cookie = this.createCookie(userToken.token);
-            res.setHeader('Set-Cookie', [cookie]);
-            res.status(201).json({ id: userToken.id });
+            const token = userToken.token;
+            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000, httpOnly: true }).status(201).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
@@ -73,8 +70,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         try {
             await this.userService.getUserById(id);
-            res.setHeader('Set-Cookie', ['Authorization=;Max-age=0']);
-            res.sendStatus(204);
+            res.clearCookie('Authorization').sendStatus(204);
         } catch (err) {
             next(err);
         }
@@ -109,9 +105,5 @@ export default class UserController implements Controller {
     private getUserCollections = async (req: Request, res: Response) => {
         const id = req.params.id;
         res.json(await this.collectionService.getCollectionsByUser(id));
-    }
-
-    private createCookie(token: Token) {
-        return `Authorization=${token.token}; HttpOnly; Max-Age=${token.ttl}; Path=/`;
     }
 }
