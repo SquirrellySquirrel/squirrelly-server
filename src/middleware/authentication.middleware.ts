@@ -6,7 +6,7 @@ import InvalidTokenException from '../exception/invalid-token.exception';
 import TokenData from '../interfaces/token-data.interface';
 import UserRepository from '../repository/user.repository';
 
-async function authMiddleware(req: Request, _res: Response, next: NextFunction) {
+async function authenticationMiddleware(req: Request, _res: Response, next: NextFunction) {
     const cookies = req.cookies;
     if (cookies && cookies.Authorization) {
         try {
@@ -27,4 +27,4 @@ async function authMiddleware(req: Request, _res: Response, next: NextFunction) 
     }
 }
 
-export default authMiddleware;
+export default authenticationMiddleware;

@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
-import authMiddleware from '../middleware/auth.middleware';
+import authenticationMiddleware from '../middleware/authentication.middleware';
 import PhotoService from '../service/photo.service';
 
 @Service()
@@ -15,7 +15,7 @@ export default class PhotoController implements Controller {
 
     private initRoutes() {
         this.router.get(`${this.path}/:id`, this.getPhoto)
-            .delete(`${this.path}/:id`, authMiddleware, this.deletePhoto);
+            .delete(`${this.path}/:id`, authenticationMiddleware, this.deletePhoto);
     }
 
     private getPhoto = async (req: Request, res: Response, next: NextFunction) => {

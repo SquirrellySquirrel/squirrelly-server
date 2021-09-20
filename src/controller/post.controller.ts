@@ -5,7 +5,7 @@ import { TMP_DIR } from '../config';
 import Photo from '../entity/photo';
 import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
-import authMiddleware from '../middleware/auth.middleware';
+import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CommentService from '../service/comment.service';
 import PhotoService from '../service/photo.service';
@@ -45,16 +45,16 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
-            .post(this.path, authMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
-            .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
-            .post(`${this.path}/:id/photos`, authMiddleware, upload.single('photo'), this.addPhoto)
-            .post(`${this.path}/:id/comments`, authMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
-            .post(`${this.path}/:id/likes`, authMiddleware, this.addLike)
-            .put(`${this.path}/:id`, authMiddleware, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
-            .put(`${this.path}/:id/photos/:photoId`, authMiddleware, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto)
-            .delete(`${this.path}/:id`, authMiddleware, this.deletePost)
-            .delete(`${this.path}/:id/comments/:commentId`, authMiddleware, this.deleteComment)
-            .delete(`${this.path}/:id/likes`, authMiddleware, this.deleteLike);
+            .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
+            .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
+            .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
+            .post(`${this.path}/:id/comments`, authenticationMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
+            .post(`${this.path}/:id/likes`, authenticationMiddleware, this.addLike)
+            .put(`${this.path}/:id`, authenticationMiddleware, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
+            .put(`${this.path}/:id/photos/:photoId`, authenticationMiddleware, requestValidationMiddleware(UpdatePhotoDTO), this.updatePhoto)
+            .delete(`${this.path}/:id`, authenticationMiddleware, this.deletePost)
+            .delete(`${this.path}/:id/comments/:commentId`, authenticationMiddleware, this.deleteComment)
+            .delete(`${this.path}/:id/likes`, authenticationMiddleware, this.deleteLike);
     }
 
     private getPosts = async (req: Request, res: Response) => {
