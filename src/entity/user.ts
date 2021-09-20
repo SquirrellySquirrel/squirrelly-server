@@ -11,6 +11,7 @@ export default class User {
     @Column({ nullable: false, unique: true })
     email!: string;
 
+    // won't be included in SELECT queries by default
     @Column({ nullable: false, select: false })
     password!: string;
 
@@ -26,6 +27,13 @@ export default class User {
     @Column({ name: 'display_name', length: 50, nullable: false })
     @Index()
     displayName!: string;
+
+    @Column({
+        type: 'enum',
+        enum: ['contributor', 'admin'],
+        default: 'contributor',
+    })
+    role!: string;
 
     @OneToMany(() => Post, (post) => post.creator)
     posts?: Post[];
