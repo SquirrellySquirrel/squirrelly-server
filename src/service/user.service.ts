@@ -6,16 +6,16 @@ import { InjectRepository } from 'typeorm-typedi-extensions';
 import { JWT_SECRET, TOKEN_TTL } from '../config';
 import User from '../entity/user';
 import ConflictingDataException from '../exception/conflicting-data.exception';
+import InvalidCredentialsException from '../exception/invalid-credentials.exception';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
-import InvalidCredentialsException from '../exception/invalid-credentials.exception';
 import TokenData from '../interfaces/token-data.interface';
 import Token from '../interfaces/token.interface';
 import UserRepository from '../repository/user.repository';
 
 const bcrypt = require('bcrypt');
 
-type UserToken = {
+export type UserToken = {
     id: string,
     token: Token
 };
@@ -40,7 +40,7 @@ export default class UserService {
     }
 
     async authenticate(email: string, pass: string): Promise<UserToken> {
-        const user = await this.userRepository.findByEmailWithPassword(email);
+        const user = await this.userRepository.findByEmailForAuthentication(email);
         if (!user) {
             throw new InvalidCredentialsException();
         }
@@ -54,7 +54,7 @@ export default class UserService {
                 throw new TypeORMException(err.message);
             });
 
-            const token = this.createToken(user.id);
+            const token = this.createToken(user);
             return { id: user.id, token };
         } else {
             throw new InvalidCredentialsException();
@@ -73,11 +73,12 @@ export default class UserService {
             password: encryptedPassword,
             created: new Date(),
             displayName: email.split('@', 1)[0],
+            role: 'contributor',
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
         });
 
-        const token = this.createToken(savedUser.id);
+        const token = this.createToken(savedUser);
         return { id: savedUser.id, token };
     }
 
@@ -104,9 +105,10 @@ export default class UserService {
             });
     }
 
-    private createToken(userId: string): Token {
+    private createToken(user: User): Token {
         const data: TokenData = {
-            _id: userId,
+            _id: user.id,
+            role: user.role,
         };
         const expiresIn = TOKEN_TTL;
         return {
