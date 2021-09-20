@@ -1,13 +1,17 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
+import jwt from 'jsonwebtoken';
+import ms from 'ms';
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import DuplicateDataException from '../../src/exception/conflicting-data.exception';
 import InvalidCredentialsException from '../../src/exception/invalid-credentials.exception';
 import NotFoundException from '../../src/exception/not-found.exception';
-import UserService from '../../src/service/user.service';
+import TokenData from '../../src/interfaces/token-data.interface';
+import UserService, { UserToken } from '../../src/service/user.service';
 import { MockData } from '../../__mocks__/mock-data';
+import { JWT_SECRET, TOKEN_TTL } from '../config';
 
 let userService: UserService;
 
@@ -28,9 +32,10 @@ afterAll(async () => {
 });
 
 describe('creates a user', () => {
-    it('creating user succeeds', async () => {
-        const user = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
-        expect(user.id).not.toBeNull();
+    it('creating user succeeds, generates user token', async () => {
+        const userToken = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        expect(userToken.id).not.toBeNull;
+        verifyUserToken(userToken);
     });
 
     it('creating user fails due to conflicting email', async () => {
@@ -41,9 +46,11 @@ describe('creates a user', () => {
 });
 
 describe('authenticates a user', () => {
-    it('authentication succeeds, saves default display name and last login', async () => {
+    it('authentication succeeds, saves default display name and last login, generates user token', async () => {
         const user = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
-        await userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        const userToken = await userService.authenticate(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        expect(userToken.id).toEqual(user.id);
+        verifyUserToken(userToken);
 
         const authenticatedUser = await userService.getUserById(user.id);
         expect(authenticatedUser.displayName).toEqual(MockData.DEFAULT_DISPLAY_NAME);
@@ -90,3 +97,10 @@ describe('deletes a user', () => {
         await expect(userService.getUserById(user.id)).rejects.toThrow(NotFoundException);
     });
 });
+
+function verifyUserToken(userToken: UserToken) {
+    const tokenData = jwt.verify(userToken.token.token, JWT_SECRET) as TokenData;
+    expect(tokenData._id).toEqual(userToken.id);
+    expect(tokenData.role).toEqual('contributor');
+    expect(userToken.token.ttl).toEqual(ms(TOKEN_TTL) / 1000);
+}
