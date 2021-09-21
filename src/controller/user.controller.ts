@@ -48,7 +48,7 @@ export default class UserController implements Controller {
         try {
             const userToken = await this.userService.authenticate(email, password);
             const token = userToken.token;
-            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000, httpOnly: true }).status(200).json({ id: userToken.id });
+            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000 }).status(200).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
@@ -60,7 +60,7 @@ export default class UserController implements Controller {
         try {
             const userToken = await this.userService.createUser(email, password);
             const token = userToken.token;
-            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000, httpOnly: true }).status(201).json({ id: userToken.id });
+            res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000 }).status(201).json({ id: userToken.id });
         } catch (err) {
             next(err);
         }
