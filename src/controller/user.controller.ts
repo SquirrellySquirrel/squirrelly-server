@@ -99,7 +99,10 @@ export default class UserController implements Controller {
 
     private getUserPosts = async (req: Request, res: Response) => {
         const userId = req.params.id;
-        res.json(await this.postService.getPosts(userId));
+        const count = req.query.count ? Number(req.query.count) : undefined;
+        const withCover = req.query.withCover != undefined ? JSON.parse(req.query.withCover as string) : true;
+        const publicOnly = req.query.publicOnly != undefined ? JSON.parse(req.query.publicOnly as string) : false;
+        res.json(await this.postService.getPosts({ userId: userId, count: count, withCover: withCover, publicOnly: publicOnly }));
     }
 
     private getUserCollections = async (req: Request, res: Response) => {

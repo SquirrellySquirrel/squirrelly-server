@@ -12,6 +12,14 @@ import PostLikeService from './post-like.service';
 
 type PostId = Pick<Post, 'id'>;
 
+type GetPostsParams = {
+    userId?: string;
+    locationId?: string;
+    count?: number;
+    withCover: boolean;
+    publicOnly: boolean;
+}
+
 @Service()
 export default class PostService {
     constructor(
@@ -21,44 +29,46 @@ export default class PostService {
         private readonly locationService: LocationService
     ) { }
 
-    async getPosts(userId?: string, locationId?: string, count?: number, withCover = true): Promise<Post[]> {
-        if (!userId && !locationId) {
-            const posts = await this.postRepository.findLatest(count);
-            if (withCover) {
+    async getPosts(params: GetPostsParams): Promise<Post[]> {
+        if (!params.userId && !params.locationId) {
+            const posts = await this.postRepository.findLatest(params.publicOnly, params.count);
+            if (params.withCover) {
                 return this.withPostCovers(posts);
             }
             return posts;
         }
 
-        if (userId && locationId) {
-            const posts = await this.postRepository.findByUserAndLocation(userId, locationId, count);
-            if (withCover) {
+        if (params.userId && params.locationId) {
+            const posts = await this.postRepository
+                .findByUserAndLocation(params.userId, params.locationId, params.publicOnly, params.count);
+            if (params.withCover) {
                 return this.withPostCovers(posts);
             }
             return posts;
         }
 
-        if (userId) {
-            return await this.getPostsByUser(userId, count, withCover);
+        if (params.userId) {
+            return await this.getPostsByUser(params.userId, params.withCover, params.publicOnly, params.count);
         }
 
-        if (locationId) {
-            return await this.getPostsByLocation(locationId, count, withCover);
+        if (params.locationId) {
+            return await this.getPostsByLocation(params.locationId, params.withCover, params.publicOnly, params.count);
         }
 
         return [];
     }
 
-    private async getPostsByUser(userId: string, count?: number, withCover = true): Promise<Post[]> {
-        const posts = await this.postRepository.findByUser(userId, count);
+    private async getPostsByUser(userId: string, withCover: boolean, publicOnly: boolean, count?: number): Promise<Post[]> {
+        const posts = await this.postRepository.findByUser(userId, publicOnly, count);
         if (withCover) {
             return this.withPostCovers(posts);
         }
         return posts;
     }
 
-    private async getPostsByLocation(locationId: string, count?: number, withCover = true): Promise<Post[]> {
-        const posts = await this.postRepository.findByLocation(locationId, count);
+    private async getPostsByLocation(locationId: string, withCover: boolean, publicOnly: boolean, count?: number)
+        : Promise<Post[]> {
+        const posts = await this.postRepository.findByLocation(locationId, publicOnly, count);
         if (withCover) {
             return this.withPostCovers(posts);
         }

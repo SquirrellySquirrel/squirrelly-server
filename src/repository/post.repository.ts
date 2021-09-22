@@ -9,19 +9,31 @@ export default class PostRepository extends Repository<Post> {
         return this.findOne({ where: { id: postId }, relations: ['creator', 'location', 'photos', 'comments', 'comments.creator'], order: { created: 'DESC' } });
     }
 
-    findLatest(count?: number): Promise<Post[]> {
+    findLatest(publicOnly: boolean, count?: number): Promise<Post[]> {
+        if (publicOnly) {
+            return this.find({ where: { public: true }, take: count, order: { created: 'DESC' } });
+        }
         return this.find({ take: count, order: { created: 'DESC' } });
     }
 
-    findByUser(userId: string, count?: number): Promise<Post[]> {
+    findByUser(userId: string, publicOnly: boolean, count?: number): Promise<Post[]> {
+        if (publicOnly) {
+            return this.find({ where: { creator: { id: userId }, public: true }, take: count, order: { created: 'DESC' } });
+        }
         return this.find({ where: { creator: { id: userId } }, take: count, order: { created: 'DESC' } });
     }
 
-    findByLocation(locationId: string, count?: number): Promise<Post[]> {
+    findByLocation(locationId: string, publicOnly: boolean, count?: number): Promise<Post[]> {
+        if (publicOnly) {
+            return this.find({ where: { location: { id: locationId }, public: true }, take: count, order: { created: 'DESC' } });
+        }
         return this.find({ where: { location: { id: locationId } }, take: count, order: { created: 'DESC' } });
     }
 
-    findByUserAndLocation(userId: string, locationId: string, count?: number) {
+    findByUserAndLocation(userId: string, locationId: string, publicOnly: boolean, count?: number) {
+        if (publicOnly) {
+            return this.find({ where: { creator: { id: userId }, location: { id: locationId, public: true } }, take: count, order: { created: 'DESC' } });
+        }
         return this.find({ where: { creator: { id: userId }, location: { id: locationId } }, take: count, order: { created: 'DESC' } });
     }
 }

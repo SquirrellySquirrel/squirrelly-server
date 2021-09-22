@@ -117,17 +117,17 @@ it('updates a post', async () => {
 });
 
 describe('gets all posts', () => {
-    it('less than limit', async () => {
+    it('without limit', async () => {
         const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postService.savePost(user2Id, location, true, new Date(), 'Test post');
-        const posts = await postService.getPosts(); // get all posts
+        const posts = await postService.getPosts({ withCover: true, publicOnly: false }); // get all posts
         expect(posts).toHaveLength(2);
     });
 
-    it('more than limit', async () => {
+    it('with limit', async () => {
         const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         await postService.savePost(user2Id, location, true, new Date(), 'Test post');
-        const posts = await postService.getPosts(undefined, undefined, 1); // get one post
+        const posts = await postService.getPosts({ count: 1, withCover: true, publicOnly: false }); // get one post
         expect(posts).toHaveLength(1);
     });
 
@@ -139,7 +139,7 @@ describe('gets all posts', () => {
         photo.id = photoId;
         photoService.addPhotoToPost(post2Id, photo);
 
-        const posts = await postService.getPosts(userId, undefined);
+        const posts = await postService.getPosts({ userId: userId, withCover: true, publicOnly: false });
         expect(posts).toHaveLength(2);
         expect(posts[0].id).toEqual(post2Id);
         expect(posts[0].cover.id).toEqual(photoId);
@@ -153,7 +153,7 @@ describe('gets all posts', () => {
         photo.id = photoId;
         photoService.addPhotoToPost(post2Id, photo);
 
-        const posts = await postService.getPosts(undefined, post.location.id);
+        const posts = await postService.getPosts({ locationId: post.location.id, withCover: true, publicOnly: false });
         expect(posts).toHaveLength(2);
         expect(posts[0].id).toEqual(post2Id);
         expect(posts[0].cover.id).toEqual(photoId);
@@ -162,9 +162,17 @@ describe('gets all posts', () => {
     it('by user and location', async () => {
         const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
         const user2PostId = (await postService.savePost(user2Id, location, true, new Date(), 'Test post')).id;
-        const posts = await postService.getPosts(user2Id, post.location.id);
+        const posts = await postService
+            .getPosts({ userId: user2Id, locationId: post.location.id, withCover: true, publicOnly: false });
         expect(posts).toHaveLength(1);
         expect(posts[0].id).toEqual(user2PostId);
+    });
+
+    it('public only', async () => {
+        const newPostId = (await postService.savePost(userId, location, true, new Date(), 'Test post')).id;
+        const posts = await postService.getPosts({ withCover: false, publicOnly: true });
+        expect(posts).toHaveLength(1);
+        expect(posts[0].id).toEqual(newPostId);
     });
 });
 

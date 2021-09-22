@@ -60,8 +60,10 @@ export default class PostController implements Controller {
     private getPosts = async (req: Request, res: Response) => {
         const userId = req.query.userId as string | undefined;
         const locationId = req.query.locationId as string | undefined;
-        const count = req.query.count;
-        res.json(await this.postService.getPosts(userId, locationId, (count ? Number(count) : undefined)));
+        const count = req.query.count ? Number(req.query.count) : undefined;
+        const withCover = req.query.withCover != undefined ? JSON.parse(req.query.withCover as string) : true;
+        const publicOnly = req.query.publicOnly != undefined ? JSON.parse(req.query.publicOnly as string) : false;
+        res.json(await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly }));
     }
 
     private getPost = async (req: Request, res: Response, next: NextFunction) => {
