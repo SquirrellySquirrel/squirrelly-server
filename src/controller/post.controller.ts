@@ -11,6 +11,7 @@ import CommentService from '../service/comment.service';
 import PhotoService from '../service/photo.service';
 import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
+import { stringAsBoolean, stringAsNumber } from '../util/param-parser';
 import CreateCommentDTO from './dto/create-comment.dto';
 import CreatePostDTO from './dto/create-post.dto';
 import UpdatePhotoDTO from './dto/update-photo.dto';
@@ -57,13 +58,20 @@ export default class PostController implements Controller {
             .delete(`${this.path}/:id/likes`, authenticationMiddleware, this.deleteLike);
     }
 
-    private getPosts = async (req: Request, res: Response) => {
-        const userId = req.query.userId as string | undefined;
-        const locationId = req.query.locationId as string | undefined;
-        const count = req.query.count ? Number(req.query.count) : undefined;
-        const withCover = req.query.withCover != undefined ? JSON.parse(req.query.withCover as string) : true;
-        const publicOnly = req.query.publicOnly != undefined ? JSON.parse(req.query.publicOnly as string) : false;
-        res.json(await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly }));
+    private getPosts = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.query.userId as string | undefined;
+            const locationId = req.query.locationId as string | undefined;
+            const count = stringAsNumber(req.query.count as string | undefined);
+            const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
+            const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
+            res.json(await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly }));
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                next(new HttpException(400, 'Invalid request parameter'));
+            }
+            next(err);
+        }
     }
 
     private getPost = async (req: Request, res: Response, next: NextFunction) => {

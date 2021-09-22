@@ -1,11 +1,13 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
+import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
 import PostService from '../service/post.service';
 import UserService from '../service/user.service';
+import { stringAsNumber } from '../util/param-parser';
 import CreateUserDTO from './dto/create-user.dto';
 import UpdateUserDTO from './dto/update-user.dto';
 
@@ -97,12 +99,27 @@ export default class UserController implements Controller {
         }
     }
 
-    private getUserPosts = async (req: Request, res: Response) => {
-        const userId = req.params.id;
-        const count = req.query.count ? Number(req.query.count) : undefined;
-        const withCover = req.query.withCover != undefined ? JSON.parse(req.query.withCover as string) : true;
-        const publicOnly = req.query.publicOnly != undefined ? JSON.parse(req.query.publicOnly as string) : false;
-        res.json(await this.postService.getPosts({ userId: userId, count: count, withCover: withCover, publicOnly: publicOnly }));
+    private getUserPosts = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const userId = req.params.id;
+            const count = stringAsNumber(req.query.count as string | undefined);
+            const withCover = this.getParamAsBoolean(req.query.withCover as string | undefined, true);
+            const publicOnly = this.getParamAsBoolean(req.query.publicOnly as string | undefined, false);
+            res.json(await this.postService.getPosts(
+                { userId: userId, count: count, withCover: withCover, publicOnly: publicOnly }));
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                next(new HttpException(400, 'Invalid request parameter'));
+            }
+            next(err);
+        }
+    }
+
+    private getParamAsBoolean(param: string | undefined, defaultVal: boolean) {
+        if (param && param.trim().length > 0) {
+            return JSON.parse(param);
+        }
+        return defaultVal;
     }
 
     private getUserCollections = async (req: Request, res: Response) => {
