@@ -7,7 +7,7 @@ import requestValidationMiddleware from '../middleware/request-validation.middle
 import CollectionService from '../service/collection.service';
 import PostService from '../service/post.service';
 import UserService from '../service/user.service';
-import { stringAsNumber } from '../util/param-parser';
+import { stringAsBoolean, stringAsNumber } from '../util/param-parser';
 import CreateUserDTO from './dto/create-user.dto';
 import UpdateUserDTO from './dto/update-user.dto';
 
@@ -103,8 +103,8 @@ export default class UserController implements Controller {
         try {
             const userId = req.params.id;
             const count = stringAsNumber(req.query.count as string | undefined);
-            const withCover = this.getParamAsBoolean(req.query.withCover as string | undefined, true);
-            const publicOnly = this.getParamAsBoolean(req.query.publicOnly as string | undefined, false);
+            const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
+            const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
             res.json(await this.postService.getPosts(
                 { userId: userId, count: count, withCover: withCover, publicOnly: publicOnly }));
         } catch (err) {
@@ -113,13 +113,6 @@ export default class UserController implements Controller {
             }
             next(err);
         }
-    }
-
-    private getParamAsBoolean(param: string | undefined, defaultVal: boolean) {
-        if (param && param.trim().length > 0) {
-            return JSON.parse(param);
-        }
-        return defaultVal;
     }
 
     private getUserCollections = async (req: Request, res: Response) => {
