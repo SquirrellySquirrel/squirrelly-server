@@ -15,6 +15,7 @@ async function authenticationMiddleware(req: Request, _res: Response, next: Next
             const userRepository = getCustomRepository(UserRepository);
             const user = await userRepository.findOne(id);
             if (user) {
+                req.user = user;
                 next();
             } else {
                 next(new InvalidTokenException());

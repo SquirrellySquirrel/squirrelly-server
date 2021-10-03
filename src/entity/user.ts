@@ -3,6 +3,10 @@ import Collection from './collection';
 import Comment from './comment';
 import Post from './post';
 
+export enum UserRole {
+    ADMIN = 'admin', CONTRIBUTOR = 'contributor'
+}
+
 @Entity(({ name: 'users' }))
 export default class User {
     @PrimaryGeneratedColumn('uuid')
@@ -30,7 +34,7 @@ export default class User {
 
     @Column({
         type: 'enum',
-        enum: ['contributor', 'admin'],
+        enum: Object.values(UserRole),
         default: 'contributor',
     })
     role!: string;
