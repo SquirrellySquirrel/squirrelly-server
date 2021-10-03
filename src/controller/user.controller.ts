@@ -5,6 +5,7 @@ import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
+import PermissionService from '../service/permission.service';
 import PostService from '../service/post.service';
 import UserService from '../service/user.service';
 import { stringAsBoolean, stringAsNumber } from '../util/param-parser';
@@ -17,6 +18,7 @@ export default class UserController implements Controller {
     public router = Router();
 
     constructor(
+        private readonly permissionService: PermissionService,
         private readonly userService: UserService,
         private readonly postService: PostService,
         private readonly collectionService: CollectionService) {
@@ -71,6 +73,7 @@ export default class UserController implements Controller {
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
+            this.permissionService.verifyPermission(req.user, id);
             await this.userService.getUserById(id);
             res.clearCookie('Authorization').sendStatus(204);
         } catch (err) {
@@ -82,6 +85,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         const displayName = req.body['displayName'];
         try {
+            this.permissionService.verifyPermission(req.user, id);
             await this.userService.updateUser(id, displayName);
             res.sendStatus(204);
         } catch (err) {
@@ -92,6 +96,7 @@ export default class UserController implements Controller {
     private deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
+            this.permissionService.verifyPermission(req.user, id);
             await this.userService.deleteUser(id);
             res.sendStatus(204);
         } catch (err) {
