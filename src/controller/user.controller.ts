@@ -73,7 +73,7 @@ export default class UserController implements Controller {
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            this.permissionService.verifyPermission(req.user, id);
+            this.permissionService.verifyUserAction(req.user, id);
             await this.userService.getUserById(id);
             res.clearCookie('Authorization').sendStatus(204);
         } catch (err) {
@@ -85,7 +85,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         const displayName = req.body['displayName'];
         try {
-            this.permissionService.verifyPermission(req.user, id);
+            this.permissionService.verifyUserAction(req.user, id);
             await this.userService.updateUser(id, displayName);
             res.sendStatus(204);
         } catch (err) {
@@ -96,7 +96,7 @@ export default class UserController implements Controller {
     private deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            this.permissionService.verifyPermission(req.user, id);
+            this.permissionService.verifyUserAction(req.user, id);
             await this.userService.deleteUser(id);
             res.sendStatus(204);
         } catch (err) {

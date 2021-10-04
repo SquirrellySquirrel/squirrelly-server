@@ -4,6 +4,7 @@ import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
+import PermissionService from '../service/permission.service';
 import CreateCollectionDTO from './dto/create-collection.dto';
 import UpdateCollectionDTO from './dto/update-collection.dto';
 
@@ -12,7 +13,8 @@ export default class CollectionController implements Controller {
     public path = '/collections';
     public router = Router();
 
-    constructor(private readonly collectionService: CollectionService) {
+    constructor(private readonly collectionService: CollectionService,
+        private readonly permissionService: PermissionService) {
         this.initRoutes();
     }
 
@@ -40,6 +42,8 @@ export default class CollectionController implements Controller {
         const descrption = req.body['description'];
 
         try {
+            this.permissionService.verifyUserAction(req.user, userId);
+
             res.status(201)
                 .json(await this.collectionService.createCollection(
                     postIds, userId, { name: name, description: descrption }));
@@ -55,6 +59,8 @@ export default class CollectionController implements Controller {
         const descrption = req.body['description'];
 
         try {
+            await this.permissionService.verifyCollectionAction(req.user, id);
+
             res.json(await this.collectionService.updateCollection(
                 id, postIds, { name: name, description: descrption }));
         } catch (err) {
@@ -65,6 +71,8 @@ export default class CollectionController implements Controller {
     private deleteCollection = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
+            await this.permissionService.verifyCollectionAction(req.user, id);
+
             await this.collectionService.deleteCollection(id);
             res.sendStatus(204);
         } catch (err) {

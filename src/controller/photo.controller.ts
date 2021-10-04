@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
-import authenticationMiddleware from '../middleware/authentication.middleware';
 import PhotoService from '../service/photo.service';
 
 @Service()
@@ -14,8 +13,7 @@ export default class PhotoController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}/:id`, this.getPhoto)
-            .delete(`${this.path}/:id`, authenticationMiddleware, this.deletePhoto);
+        this.router.get(`${this.path}/:id`, this.getPhoto);
     }
 
     private getPhoto = async (req: Request, res: Response, next: NextFunction) => {
@@ -28,16 +26,4 @@ export default class PhotoController implements Controller {
             next(err);
         }
     }
-
-    private deletePhoto = async (req: Request, res: Response, next: NextFunction) => {
-        const id = req.params.photoId;
-        try {
-            await this.photoService.deletePhoto(id);
-
-            res.sendStatus(204);
-        } catch (err) {
-            next(err);
-        }
-    }
-
 }
