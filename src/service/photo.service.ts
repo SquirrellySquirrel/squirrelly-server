@@ -5,6 +5,7 @@ import { InjectRepository } from 'typeorm-typedi-extensions';
 import { FILE_DIR, TMP_DIR } from '../config';
 import Photo from '../entity/photo';
 import NotFoundException from '../exception/not-found.exception';
+import UnprocessableEntityException from '../exception/unprocessable-entity.exception';
 import PhotoRepository from '../repository/photo.repository';
 
 type PhotoId = Pick<Photo, 'id'>;
@@ -49,16 +50,29 @@ export default class PhotoService {
         return { id: savedPhoto.id };
     }
 
-    async updatePhoto(photoId: string, order: number) {
+    async updatePhoto(postId: string, photoId: string, order: number) {
+        const photo = await this.photoRepository.findOneWithPost(photoId);
+        if (!photo) {
+            throw new NotFoundException('photo', photoId);
+        }
+
+        if (photo.post.id != postId) {
+            throw new UnprocessableEntityException(`Photo ${photoId} doesn't belong to post ${postId}`);
+        }
+
         return await this.photoRepository.save({
             id: photoId,
             order: order,
         });
     }
 
-    async deletePhoto(photoId: string) {
-        const photo = await this.getPhoto(photoId);
+    async deletePhoto(postId: string, photoId: string) {
+        const photo = await this.photoRepository.findOneWithPost(photoId);
         if (!photo) return;
+
+        if (photo.post.id != postId) {
+            throw new UnprocessableEntityException(`Photo ${photoId} doesn't belong to post ${postId}`);
+        }
 
         await this.photoRepository.delete(photoId);
         this.removePhotoFromStorage(photo.name);

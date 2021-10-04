@@ -5,6 +5,7 @@ import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Photo from '../../src/entity/photo';
+import UnprocessableEntityException from '../../src/exception/unprocessable-entity.exception';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -77,23 +78,35 @@ it('chooses the photo with the lowest order as cover for a post ', async () => {
     );
 });
 
-it('updates a photo', async () => {
-    await photoService.updatePhoto(photoId, 1);
+describe('updates a photo', () => {
+    it('updates photo by id successfully', async () => {
+        await photoService.updatePhoto(postId, photoId, 1);
 
-    const postWithUpdatedPhoto = await postService.getPost(postId);
-    expect(postWithUpdatedPhoto!.photos![0]).toEqual(
-        expect.objectContaining({
-            id: photoId,
-            name: photo.name,
-            type: photo.type,
-            order: 1,
-        })
-    );
+        const postWithUpdatedPhoto = await postService.getPost(postId);
+        expect(postWithUpdatedPhoto!.photos![0]).toEqual(
+            expect.objectContaining({
+                id: photoId,
+                name: photo.name,
+                type: photo.type,
+                order: 1,
+            })
+        );
+    });
+
+    it('photo does not match post id', async () => {
+        await expect(photoService.updatePhoto(photoId, photoId, 1)).rejects.toThrow(UnprocessableEntityException);
+    });
 });
 
-it('deletes a photo by id', async () => {
-    await photoService.deletePhoto(photoId);
+describe('deletes a photo', () => {
+    it('deletes photo by id successfully', async () => {
+        await photoService.deletePhoto(postId, photoId);
 
-    const postWithoutPhoto = await postService.getPost(postId);
-    expect(postWithoutPhoto!.photos!.length).toEqual(0);
+        const postWithoutPhoto = await postService.getPost(postId);
+        expect(postWithoutPhoto!.photos!.length).toEqual(0);
+    });
+
+    it('photo does not match post id', async () => {
+        await expect(photoService.deletePhoto(photoId, photoId)).rejects.toThrow(UnprocessableEntityException);
+    });
 });
