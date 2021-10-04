@@ -10,8 +10,8 @@ import PostRepository from '../repository/post.repository';
 export default class PermissionService {
     constructor(
         @InjectRepository() private readonly postRepository: PostRepository,
-        private readonly commentRepository: CommentRepository,
-        private readonly collectionRepository: CollectionRepository,
+        @InjectRepository() private readonly commentRepository: CommentRepository,
+        @InjectRepository() private readonly collectionRepository: CollectionRepository,
     ) { }
 
     verifyUserAction(user: User, ownerId: string) {
