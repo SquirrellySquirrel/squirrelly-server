@@ -5,7 +5,11 @@ import Collection from '../entity/collection';
 @Service()
 @EntityRepository(Collection)
 export default class CollectionRepository extends Repository<Collection> {
-    findOneWithRelations(collectionId: string) {
+    findOneWithCreator(collectionId: string): Promise<Collection | undefined> {
+        return this.findOne({ where: { id: collectionId }, relations: ['creator'] });
+    }
+
+    findOneWithRelations(collectionId: string): Promise<Collection | undefined> {
         return this.findOne({ where: { id: collectionId }, relations: ['creator', 'posts'] });
     }
 
