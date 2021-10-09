@@ -39,7 +39,7 @@ describe('creates a user', () => {
         verifyUserToken(userToken);
 
         const user = await userService.getUserByIdOrEmail(userToken.id);
-        expect(user.displayName).toMatch(new RegExp(`${MockData.DEFAULT_DISPLAY_NAME}\\d{3}`));
+        expect(user.displayName).toMatch(new RegExp(`${MockData.DEFAULT_DISPLAY_NAME}\\d{1,3}`));
     });
 
     it('creating user fails due to conflicting email', async () => {
