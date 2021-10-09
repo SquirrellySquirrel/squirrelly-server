@@ -3,6 +3,7 @@ import path from 'path';
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { FILE_DIR, TMP_DIR } from '../config';
+import { EntityType } from '../entity/entity-type';
 import Photo from '../entity/photo';
 import NotFoundException from '../exception/not-found.exception';
 import UnprocessableEntityException from '../exception/unprocessable-entity.exception';
@@ -20,7 +21,7 @@ export default class PhotoService {
     async getPhotoPath(id: string): Promise<string> {
         const photo = await this.getPhoto(id);
         if (!photo) {
-            throw new NotFoundException('Photo', id);
+            throw new NotFoundException(EntityType.PHOTO, { key: 'id', value: id });
         }
         return path.join(FILE_DIR, photo.name);
     }
@@ -53,7 +54,7 @@ export default class PhotoService {
     async updatePhoto(postId: string, photoId: string, order: number) {
         const photo = await this.photoRepository.findOneWithPost(photoId);
         if (!photo) {
-            throw new NotFoundException('photo', photoId);
+            throw new NotFoundException(EntityType.PHOTO, { key: 'id', value: photoId });
         }
 
         if (photo.post.id != postId) {

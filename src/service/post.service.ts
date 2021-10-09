@@ -1,6 +1,7 @@
 import { Service } from 'typedi';
 import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
+import { EntityType } from '../entity/entity-type';
 import Location from '../entity/location';
 import Post from '../entity/post';
 import NotFoundException from '../exception/not-found.exception';
@@ -88,7 +89,7 @@ export default class PostService {
     async getPost(postId: string): Promise<Post> {
         const post = await this.postRepository.findOneWithRelations(postId);
         if (!post) {
-            throw new NotFoundException('Post', postId);
+            throw new NotFoundException(EntityType.POST, { key: 'id', value: postId });
         }
 
         post.likes = (await this.postLikeService.getPostLikes(postId)).length;

@@ -1,7 +1,9 @@
+import { EntityType } from '../entity/entity-type';
+import { KeyValuePair } from '../util/types';
 import HttpException from './http.exception';
 
 export default class NotFoundException extends HttpException {
-    constructor(entity: string, id: string) {
-        super(404, `${entity} not found by id: ${id}`);
+    constructor(entity: EntityType, identifier: KeyValuePair) {
+        super(404, `${entity.toString()} not found by: ${identifier.key}=${identifier.value}`);
     }
 }

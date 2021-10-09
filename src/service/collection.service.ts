@@ -2,6 +2,7 @@ import { Service } from 'typedi';
 import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import Collection from '../entity/collection';
+import { EntityType } from '../entity/entity-type';
 import NotFoundException from '../exception/not-found.exception';
 import TypeORMException from '../exception/typeorm.exception';
 import CollectionRepository from '../repository/collection.repository';
@@ -22,7 +23,7 @@ export default class CollectionService {
     async getCollection(collectionId: string): Promise<Collection> {
         const collection = await this.collectionRepository.findOneWithRelations(collectionId);
         if (!collection) {
-            throw new NotFoundException('Collection', collectionId);
+            throw new NotFoundException(EntityType.COLLECTION, { key: 'id', value: collectionId });
         }
         return collection;
     }
