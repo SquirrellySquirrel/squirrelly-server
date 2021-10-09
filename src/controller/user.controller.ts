@@ -37,9 +37,8 @@ export default class UserController implements Controller {
     }
 
     private getUser = async (req: Request, res: Response, next: NextFunction) => {
-        const id = req.params.id;
         try {
-            const user = await this.userService.getUserById(id);
+            const user = await this.userService.getUserByIdOrEmail(req.params.id);
             res.json(user);
         } catch (err) {
             next(err);

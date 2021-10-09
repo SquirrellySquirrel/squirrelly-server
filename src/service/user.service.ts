@@ -4,6 +4,7 @@ import { Service } from 'typedi';
 import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { JWT_SECRET, TOKEN_TTL } from '../config';
+import { EntityType } from '../entity/entity-type';
 import User from '../entity/user';
 import ConflictingDataException from '../exception/conflicting-data.exception';
 import InvalidCredentialsException from '../exception/invalid-credentials.exception';
@@ -27,16 +28,32 @@ export default class UserService {
         private readonly userRepository: UserRepository
     ) { }
 
+    async getUserByIdOrEmail(idOrEmail: string): Promise<User> {
+        if (idOrEmail.includes('@')) {
+            return this.getUserByEmail(idOrEmail);
+        } else {
+            return this.getUserById(idOrEmail);
+        }
+    }
+
     async getUserById(userId: string): Promise<User> {
         const user = await this.userRepository.findOne(userId);
         if (!user) {
-            throw new NotFoundException('User', userId);
+            throw new NotFoundException(EntityType.USER, { key: 'id', value: userId });
         }
         return user;
     }
 
     async getUserByIdUnsafe(userId: string): Promise<Partial<User> | undefined> {
         return await this.userRepository.findOne(userId);
+    }
+
+    async getUserByEmail(email: string): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { email: email } });
+        if (!user) {
+            throw new NotFoundException(EntityType.USER, { key: 'email', value: email });
+        }
+        return user;
     }
 
     async authenticate(email: string, pass: string): Promise<UserToken> {
@@ -64,7 +81,7 @@ export default class UserService {
     async createUser(email: string, pass: string): Promise<UserToken> {
         const userByEmail = await this.userRepository.findByEmail(email);
         if (userByEmail) {
-            throw new ConflictingDataException('email', email);
+            throw new ConflictingDataException(EntityType.USER, { key: 'email', value: email });
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
@@ -72,7 +89,7 @@ export default class UserService {
             email: email,
             password: encryptedPassword,
             created: new Date(),
-            displayName: email.split('@', 1)[0],
+            displayName: this.generateDisplayName(email),
             role: 'contributor',
         }).catch((err: Error) => {
             throw new TypeORMException(err.message);
@@ -82,11 +99,15 @@ export default class UserService {
         return { id: savedUser.id, token };
     }
 
+    private generateDisplayName(email: string) {
+        return email.split('@', 1)[0] + ~~(Math.random() * 1000);
+    }
+
     async updateUser(userId: string, displayName: string) {
         await this.getUserById(userId);
         const user = await this.userRepository.findByDisplayName(displayName);
         if (user && user.id != userId) {
-            throw new ConflictingDataException('displayName', displayName);
+            throw new ConflictingDataException(EntityType.USER, { key: 'displayName', value: displayName });
         }
 
         await this.userRepository.save({

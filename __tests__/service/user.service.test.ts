@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import ms from 'ms';
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
+import { v4 as uuidv4 } from 'uuid';
 import connection from '../../src/database';
 import DuplicateDataException from '../../src/exception/conflicting-data.exception';
 import InvalidCredentialsException from '../../src/exception/invalid-credentials.exception';
@@ -32,16 +33,33 @@ afterAll(async () => {
 });
 
 describe('creates a user', () => {
-    it('creating user succeeds, generates user token', async () => {
+    it('creating user succeeds, generates user token und display name', async () => {
         const userToken = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
         expect(userToken.id).not.toBeNull;
         verifyUserToken(userToken);
+
+        const user = await userService.getUserByIdOrEmail(userToken.id);
+        expect(user.displayName).toMatch(new RegExp(`${MockData.DEFAULT_DISPLAY_NAME}\\d{3}`));
     });
 
     it('creating user fails due to conflicting email', async () => {
         await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
         await expect(userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD))
             .rejects.toThrow(DuplicateDataException);
+    });
+});
+
+describe('gets a user', () => {
+    it('by id', async () => {
+        const userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id;
+        const user = await userService.getUserByIdOrEmail(userId);
+        expect(user.email).toEqual(MockData.DEFAULT_EMAIL);
+    });
+
+    it('by email', async () => {
+        const userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id;
+        const user = await userService.getUserByIdOrEmail(MockData.DEFAULT_EMAIL);
+        expect(user.id).toEqual(userId);
     });
 });
 
@@ -53,7 +71,6 @@ describe('authenticates a user', () => {
         verifyUserToken(userToken);
 
         const authenticatedUser = await userService.getUserById(user.id);
-        expect(authenticatedUser.displayName).toEqual(MockData.DEFAULT_DISPLAY_NAME);
         expect(authenticatedUser.lastLogin).not.toBeNull();
     });
 
@@ -69,8 +86,9 @@ describe('authenticates a user', () => {
 });
 
 describe('updates a user', () => {
+    const displayName = 'cool squirrel';
+
     it('updates user display name', async () => {
-        const displayName = 'cool squirrel';
         const user = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
         await userService.updateUser(user.id, displayName);
         const updatedUser = await userService.getUserById(user.id);
@@ -78,15 +96,14 @@ describe('updates a user', () => {
     });
 
     it('updating user fails due to non-existent user', async () => {
-        const displayName = 'cool squirrel';
-        await expect(userService.updateUser('00000000-1111-2222-3333-444444444444', displayName)).rejects.toThrow(NotFoundException);
+        await expect(userService.updateUser(uuidv4(), displayName)).rejects.toThrow(NotFoundException);
     });
 
     it('updating user fails due to existent display name', async () => {
-        await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        const user = await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD);
+        await userService.updateUser(user.id, displayName);
         const user2 = await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD);
-        await expect(userService.updateUser(user2.id, MockData.DEFAULT_DISPLAY_NAME))
-            .rejects.toThrow(DuplicateDataException);
+        await expect(userService.updateUser(user2.id, displayName)).rejects.toThrow(DuplicateDataException);
     });
 });
 
