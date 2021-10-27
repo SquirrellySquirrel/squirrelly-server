@@ -50,7 +50,6 @@ export default class PostController implements Controller {
             .get(`${this.path}/:id/comments`, this.getPostComments)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
-            .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authenticationMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
             .post(`${this.path}/:id/likes`, authenticationMiddleware, this.addLike)
             .put(`${this.path}/:id`, authenticationMiddleware, requestValidationMiddleware(UpdatePostDTO), this.updatePost)
