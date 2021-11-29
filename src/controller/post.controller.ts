@@ -190,8 +190,7 @@ export default class PostController implements Controller {
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            const post = await this.postService.getPost(id);
-            res.json(post.comments);
+            res.json(await this.commentService.getComments(id));
         } catch (err) {
             next(err);
         }

@@ -1,14 +1,12 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
-import { getCustomRepository, useContainer } from 'typeorm';
+import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
 import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
 import Post from '../../src/entity/post';
 import NotFoundException from '../../src/exception/not-found.exception';
-import CommentRepository from '../../src/repository/comment.repository';
-import PostLikeRepository from '../../src/repository/post-like.repository';
 import CommentService from '../../src/service/comment.service';
 import LocationService from '../../src/service/location.service';
 import PhotoService from '../../src/service/photo.service';
@@ -21,6 +19,8 @@ let postService: PostService;
 let userService: UserService;
 let locationService: LocationService;
 let photoService: PhotoService;
+let commentService: CommentService;
+let postLikeService: PostLikeService;
 let userId: string;
 let post: Post;
 let location: Location;
@@ -35,6 +35,8 @@ beforeAll(async () => {
     userService = Container.get(UserService);
     locationService = Container.get(LocationService);
     photoService = Container.get(PhotoService);
+    commentService = Container.get(CommentService);
+    postLikeService = Container.get(PostLikeService);
 });
 
 beforeEach(async () => {
@@ -177,19 +179,18 @@ describe('gets all posts', () => {
 });
 
 describe('gets an existing post by id', () => {
-    it('gets comments', async () => {
-        const commentService = new CommentService(getCustomRepository(CommentRepository));
-        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
+    it('with comments', async () => {
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id;
         await commentService.addComment(post.id, user2Id, 'aww');
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.comments).toHaveLength(1);
         expect(existingPost.comments![0].id).not.toBeNull();
+        expect(existingPost.comments![0].creator.id).toEqual(user2Id);
         expect(existingPost.comments![0].content).toEqual('aww');
     });
 
-    it('gets likes', async () => {
-        const postLikeService = new PostLikeService(getCustomRepository(PostLikeRepository));
-        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
+    it('with likes', async () => {
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id
         await postLikeService.addPostLike(post.id, user2Id);
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.likes).toBe(1);

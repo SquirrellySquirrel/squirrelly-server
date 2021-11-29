@@ -32,4 +32,8 @@ export default class CommentService {
                 throw new TypeORMException(err.message);
             });
     }
+
+    async getComments(postId: string): Promise<Comment[]> {
+        return await this.commentRepository.findByPostId(postId);
+    }
 }

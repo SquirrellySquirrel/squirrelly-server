@@ -14,6 +14,7 @@ let userService: UserService;
 let postService: PostService;
 let userId: string;
 let post: Post;
+let commentId: string;
 
 beforeAll(async () => {
     useContainer(Container);
@@ -33,6 +34,7 @@ beforeEach(async () => {
     const location = MockData.location1();
     const postId = await postService.savePost(userId, location, true, new Date(), '');
     post = await postService.getPost(postId.id);
+    commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
 });
 
 afterAll(async () => {
@@ -40,8 +42,8 @@ afterAll(async () => {
 });
 
 it('adds a comment', async () => {
-    const commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
     const postWithComment = await postService.getPost(post.id) as Post;
+
     expect(postWithComment.comments).toHaveLength(1);
     expect(postWithComment.comments![0]).toEqual(
         expect.objectContaining({
@@ -52,10 +54,30 @@ it('adds a comment', async () => {
 });
 
 it('deletes a comment', async () => {
-    const commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
     await commentService.deleteComment(commentId);
-
     const postWithComment = await postService.getPost(post.id) as Post;
+
     expect(postWithComment.comments).toHaveLength(0);
 });
 
+it('gets all comments of a post ordered by created descendingly', async () => {
+    // wait 1s to create another comment
+    await new Promise((f) => setTimeout(f, 1000));
+
+    const comment2Id = (await commentService.addComment(post.id, userId, 'another sweet squirrel')).id;
+    const comments = await commentService.getComments(post.id);
+
+    expect(comments).toHaveLength(2);
+    expect(comments[0]).toEqual(
+        expect.objectContaining({
+            id: comment2Id,
+            content: 'another sweet squirrel',
+            creator: expect.objectContaining({ id: userId }),
+        }));
+    expect(comments[1]).toEqual(
+        expect.objectContaining({
+            id: commentId,
+            content: 'sweet squirrel',
+            creator: expect.objectContaining({ id: userId }),
+        }));
+});
