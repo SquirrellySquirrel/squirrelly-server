@@ -190,7 +190,7 @@ describe('gets an existing post by id', () => {
     });
 
     it('with likes', async () => {
-        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id
+        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id;
         await postLikeService.addPostLike(post.id, user2Id);
         const existingPost = await postService.getPost(post.id) as Post;
         expect(existingPost.likes).toBe(1);
