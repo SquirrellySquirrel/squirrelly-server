@@ -207,10 +207,11 @@ export default class PostController implements Controller {
     }
 
     private deleteComment = async (req: Request, res: Response, next: NextFunction) => {
+        const postId = req.params.id;
         const commentId = req.params.commentId;
 
         try {
-            await this.permissionService.verifyCommentAction(req.user, commentId);
+            await this.permissionService.verifyCommentAction(req.user, commentId, postId);
 
             await this.commentService.deleteComment(commentId);
             res.sendStatus(204);

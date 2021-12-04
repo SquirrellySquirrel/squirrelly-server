@@ -52,7 +52,11 @@ export default class PermissionService {
         throw new PermissionDeniedException(user.id);
     }
 
-    async verifyCommentAction(user: User, commentId: string) {
+    async verifyCommentAction(user: User, commentId: string, postId: string) {
+        const post = await this.postRepository.findOneWithCreator(postId);
+        if (user.id == post?.creator.id) {
+            return;
+        }
         const comment = await this.commentRepository.findOneWithCreator(commentId);
         if (!comment || !comment.creator) {
             throw new PermissionDeniedException(user.id);
