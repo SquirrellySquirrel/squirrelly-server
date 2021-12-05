@@ -27,7 +27,7 @@ export default class PostService {
         @InjectRepository() private readonly postRepository: PostRepository,
         private readonly photoService: PhotoService,
         private readonly postLikeService: PostLikeService,
-        private readonly locationService: LocationService
+        private readonly locationService: LocationService,
     ) { }
 
     async getPosts(params: GetPostsParams): Promise<Post[]> {
@@ -92,7 +92,7 @@ export default class PostService {
             throw new NotFoundException(EntityType.POST, { key: 'id', value: postId });
         }
 
-        post.likes = await this.postLikeService.getPostLikes(postId);
+        post.likes = (await this.postLikeService.getPostLikes(postId)).likes;
         return post;
     }
 
@@ -102,7 +102,7 @@ export default class PostService {
             return undefined;
         }
 
-        post.likes = await this.postLikeService.getPostLikes(postId);
+        post.likes = (await this.postLikeService.getPostLikes(postId)).likes;
         return post;
     }
 

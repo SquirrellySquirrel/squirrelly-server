@@ -235,8 +235,8 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const userId = req.body['userId'];
         try {
-            res.status(201)
-                .json(await this.postLikeService.addPostLike(postId, userId));
+            await this.postLikeService.addPostLike(postId, userId);
+            res.sendStatus(201);
         } catch (err) {
             next(err);
         }

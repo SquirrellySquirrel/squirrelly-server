@@ -42,17 +42,19 @@ it('gets post likes', async () => {
     const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
     await postLikeService.addPostLike(postId, user2Id);
 
-    const likes = await postLikeService.getPostLikes(postId);
-    expect(likes).toBe(2);
+    const postLikes = await postLikeService.getPostLikes(postId);
+    expect(postLikes.likes).toBe(2);
 });
 
 it('adds and deletes a like', async () => {
     await postLikeService.addPostLike(postId, userId);
-    let likes = await postLikeService.getPostLikes(postId);
-    expect(likes).toBe(1);
+    let postLikes = await postLikeService.getPostLikes(postId);
+    expect(postLikes.likes).toBe(1);
+    expect(postLikes.likers).toContainEqual(userId);
 
     await postLikeService.deletePostLike(postId, userId);
-    likes = await postLikeService.getPostLikes(postId);
-    expect(likes).toBe(0);
+    postLikes = await postLikeService.getPostLikes(postId);
+    expect(postLikes.likes).toBe(0);
+    expect(postLikes.likers).toHaveLength(0);
 });
 
