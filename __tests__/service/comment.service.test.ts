@@ -42,10 +42,10 @@ afterAll(async () => {
 });
 
 it('adds a comment', async () => {
-    const postWithComment = await postService.getPost(post.id) as Post;
+    const comments = await commentService.getComments(post.id);
 
-    expect(postWithComment.comments).toHaveLength(1);
-    expect(postWithComment.comments![0]).toEqual(
+    expect(comments).toHaveLength(1);
+    expect(comments[0]).toEqual(
         expect.objectContaining({
             id: commentId,
             content: 'sweet squirrel',
@@ -55,9 +55,9 @@ it('adds a comment', async () => {
 
 it('deletes a comment', async () => {
     await commentService.deleteComment(commentId);
-    const postWithComment = await postService.getPost(post.id) as Post;
+    const comments = await commentService.getComments(post.id);
 
-    expect(postWithComment.comments).toHaveLength(0);
+    expect(comments).toHaveLength(0);
 });
 
 it('gets all comments of a post ordered by created descendingly', async () => {

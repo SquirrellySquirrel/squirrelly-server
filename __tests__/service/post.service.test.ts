@@ -7,7 +7,6 @@ import Location from '../../src/entity/location';
 import Photo from '../../src/entity/photo';
 import Post from '../../src/entity/post';
 import NotFoundException from '../../src/exception/not-found.exception';
-import CommentService from '../../src/service/comment.service';
 import LocationService from '../../src/service/location.service';
 import PhotoService from '../../src/service/photo.service';
 import PostLikeService from '../../src/service/post-like.service';
@@ -19,7 +18,6 @@ let postService: PostService;
 let userService: UserService;
 let locationService: LocationService;
 let photoService: PhotoService;
-let commentService: CommentService;
 let postLikeService: PostLikeService;
 let userId: string;
 let post: Post;
@@ -35,7 +33,6 @@ beforeAll(async () => {
     userService = Container.get(UserService);
     locationService = Container.get(LocationService);
     photoService = Container.get(PhotoService);
-    commentService = Container.get(CommentService);
     postLikeService = Container.get(PostLikeService);
 });
 
@@ -179,16 +176,6 @@ describe('gets all posts', () => {
 });
 
 describe('gets an existing post by id', () => {
-    it('with comments', async () => {
-        const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id;
-        await commentService.addComment(post.id, user2Id, 'aww');
-        const existingPost = await postService.getPost(post.id) as Post;
-        expect(existingPost.comments).toHaveLength(1);
-        expect(existingPost.comments![0].id).not.toBeNull();
-        expect(existingPost.comments![0].creator.id).toEqual(user2Id);
-        expect(existingPost.comments![0].content).toEqual('aww');
-    });
-
     it('with likes', async () => {
         const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id;
         await postLikeService.addPostLike(post.id, user2Id);
