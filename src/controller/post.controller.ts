@@ -199,6 +199,8 @@ export default class PostController implements Controller {
     private createComment = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         try {
+            await this.permissionService.verifyCommentCreateAction(req.user, postId);
+
             res.status(201)
                 .json(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
         } catch (err) {
@@ -209,9 +211,8 @@ export default class PostController implements Controller {
     private deleteComment = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         const commentId = req.params.commentId;
-
         try {
-            await this.permissionService.verifyCommentAction(req.user, commentId, postId);
+            await this.permissionService.verifyCommentDeleteAction(req.user, commentId, postId);
 
             await this.commentService.deleteComment(commentId);
             res.sendStatus(204);
