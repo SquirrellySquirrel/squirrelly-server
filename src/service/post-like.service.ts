@@ -12,8 +12,8 @@ export default class PostLikeService {
         private readonly postLikeRepository: PostLikeRepository
     ) { }
 
-    getPostLikes(postId: string): Promise<PostLike[]> {
-        return this.postLikeRepository.find({ where: { post: { id: postId } }, relations: ['post'] });
+    async getPostLikes(postId: string): Promise<number> {
+        return (await this.postLikeRepository.find({ where: { post: { id: postId } }, relations: ['post'] })).length;
     }
 
     async addPostLike(postId: string, userId: string): Promise<PostLike> {

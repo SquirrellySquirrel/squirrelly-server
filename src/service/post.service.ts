@@ -92,7 +92,7 @@ export default class PostService {
             throw new NotFoundException(EntityType.POST, { key: 'id', value: postId });
         }
 
-        post.likes = (await this.postLikeService.getPostLikes(postId)).length;
+        post.likes = await this.postLikeService.getPostLikes(postId);
         return post;
     }
 
@@ -102,7 +102,7 @@ export default class PostService {
             return undefined;
         }
 
-        post.likes = (await this.postLikeService.getPostLikes(postId)).length;
+        post.likes = await this.postLikeService.getPostLikes(postId);
         return post;
     }
 

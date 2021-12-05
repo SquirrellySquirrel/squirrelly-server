@@ -3,7 +3,6 @@ require('reflect-metadata');
 import { useContainer } from 'typeorm';
 import { Container } from 'typeorm-typedi-extensions';
 import connection from '../../src/database';
-import Post from '../../src/entity/post';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
@@ -13,7 +12,7 @@ let postLikeService: PostLikeService;
 let userService: UserService;
 let postService: PostService;
 let userId: string;
-let post: Post;
+let postId: string;
 
 beforeAll(async () => {
     useContainer(Container);
@@ -31,20 +30,29 @@ beforeEach(async () => {
     userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
 
     const location = MockData.location1();
-    const postId = await postService.savePost(userId, location, true, new Date(), '');
-    post = await postService.getPost(postId.id);
+    postId = (await postService.savePost(userId, location, true, new Date(), '')).id;
 });
 
 afterAll(async () => {
     await connection.close();
 });
 
-it('deletes a like', async () => {
+it('gets post likes', async () => {
+    await postLikeService.addPostLike(postId, userId);
     const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
-    await postLikeService.addPostLike(post.id, user2Id);
-    await postLikeService.deletePostLike(post.id, user2Id);
+    await postLikeService.addPostLike(postId, user2Id);
 
-    const existingPost = await postService.getPost(post.id) as Post;
-    expect(existingPost.likes).toBe(0);
+    const likes = await postLikeService.getPostLikes(postId);
+    expect(likes).toBe(2);
+});
+
+it('adds and deletes a like', async () => {
+    await postLikeService.addPostLike(postId, userId);
+    let likes = await postLikeService.getPostLikes(postId);
+    expect(likes).toBe(1);
+
+    await postLikeService.deletePostLike(postId, userId);
+    likes = await postLikeService.getPostLikes(postId);
+    expect(likes).toBe(0);
 });
 

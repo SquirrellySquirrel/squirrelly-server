@@ -48,6 +48,7 @@ export default class PostController implements Controller {
         this.router.get(`${this.path}`, this.getPosts)
             .get(`${this.path}/:id`, this.getPost)
             .get(`${this.path}/:id/comments`, this.getPostComments)
+            .get(`${this.path}/:id/likes`, this.getPostLikes)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authenticationMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
@@ -216,6 +217,15 @@ export default class PostController implements Controller {
 
             await this.commentService.deleteComment(commentId);
             res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private getPostLikes = async (req: Request, res: Response, next: NextFunction) => {
+        const id = req.params.id;
+        try {
+            res.json(await this.postLikeService.getPostLikes(id));
         } catch (err) {
             next(err);
         }
