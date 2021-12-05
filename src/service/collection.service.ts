@@ -4,12 +4,13 @@ import { InjectRepository } from 'typeorm-typedi-extensions';
 import Collection from '../entity/collection';
 import { EntityType } from '../entity/entity-type';
 import NotFoundException from '../exception/not-found.exception';
-import TypeORMException from '../exception/typeorm.exception';
 import CollectionRepository from '../repository/collection.repository';
 import PostService from './post.service';
+import { mapError } from './service-error-handler';
 import UserService from './user.service';
 
 type CollectionParams = Pick<Collection, 'name' | 'description'>;
+type CollectionId = Pick<Collection, 'id'>;
 
 @Service()
 export default class CollectionService {
@@ -34,32 +35,37 @@ export default class CollectionService {
         return await this.collectionRepository.findByUser(userId);
     }
 
-    async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams): Promise<Collection> {
+    async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams):
+        Promise<CollectionId> {
         await this.verifyUser(userId);
         await this.verifyPosts(postIds);
 
-        return this.collectionRepository.save({
-            creator: { id: userId },
-            posts: postIds.map((id) => ({ id: id })),
-            name: collectionParams.name,
-            description: collectionParams.description,
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
+        try {
+            const collection = await this.collectionRepository.save({
+                creator: { id: userId },
+                posts: postIds.map((id) => ({ id: id })),
+                name: collectionParams.name,
+                description: collectionParams.description,
+            });
+            return { id: collection.id };
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
-    async updateCollection(collectionId: string, postIds: string[],
-        collectionParams: CollectionParams): Promise<Collection> {
+    async updateCollection(collectionId: string, postIds: string[], collectionParams: CollectionParams) {
         await this.verifyPosts(postIds);
 
-        return this.collectionRepository.save({
-            id: collectionId,
-            posts: postIds.map((id) => ({ id: id })),
-            name: collectionParams.name,
-            description: collectionParams.description,
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
+        try {
+            await this.collectionRepository.save({
+                id: collectionId,
+                posts: postIds.map((id) => ({ id: id })),
+                name: collectionParams.name,
+                description: collectionParams.description,
+            });
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
     // ignore if collection does not exist

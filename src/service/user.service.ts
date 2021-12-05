@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import ms from 'ms';
 import { Service } from 'typedi';
-import { DeleteResult } from 'typeorm';
 import { InjectRepository } from 'typeorm-typedi-extensions';
 import { JWT_SECRET, TOKEN_TTL } from '../config';
 import { EntityType } from '../entity/entity-type';
@@ -9,10 +8,10 @@ import User from '../entity/user';
 import ConflictingDataException from '../exception/conflicting-data.exception';
 import InvalidCredentialsException from '../exception/invalid-credentials.exception';
 import NotFoundException from '../exception/not-found.exception';
-import TypeORMException from '../exception/typeorm.exception';
 import TokenData from '../interfaces/token-data.interface';
 import Token from '../interfaces/token.interface';
 import UserRepository from '../repository/user.repository';
+import { mapError } from './service-error-handler';
 
 const bcrypt = require('bcrypt');
 
@@ -64,12 +63,14 @@ export default class UserService {
 
         const matching = await bcrypt.compare(pass, user.password);
         if (matching) {
-            await this.userRepository.save({
-                id: user.id,
-                lastLogin: new Date(),
-            }).catch((err: Error) => {
-                throw new TypeORMException(err.message);
-            });
+            try {
+                await this.userRepository.save({
+                    id: user.id,
+                    lastLogin: new Date(),
+                });
+            } catch (err) {
+                mapError(err);
+            }
 
             const token = this.createToken(user);
             return { id: user.id, token };
@@ -85,18 +86,20 @@ export default class UserService {
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
-        const savedUser = await this.userRepository.save({
-            email: email,
-            password: encryptedPassword,
-            created: new Date(),
-            displayName: this.generateDisplayName(email),
-            role: 'contributor',
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
+        try {
+            const savedUser = await this.userRepository.save({
+                email: email,
+                password: encryptedPassword,
+                created: new Date(),
+                displayName: this.generateDisplayName(email),
+                role: 'contributor',
 
-        const token = this.createToken(savedUser);
-        return { id: savedUser.id, token };
+            });
+            const token = this.createToken(savedUser);
+            return { id: savedUser.id, token };
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
     private generateDisplayName(email: string) {
@@ -110,20 +113,23 @@ export default class UserService {
             throw new ConflictingDataException(EntityType.USER, { key: 'displayName', value: displayName });
         }
 
-        await this.userRepository.save({
-            id: userId,
-            displayName: displayName,
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
+        try {
+            await this.userRepository.save({
+                id: userId,
+                displayName: displayName,
+            });
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
     // ignore if user does not exist
-    async deleteUser(userId: string): Promise<DeleteResult> {
-        return this.userRepository.delete(userId)
-            .catch((err: Error) => {
-                throw new TypeORMException(err.message);
-            });
+    async deleteUser(userId: string) {
+        try {
+            await this.userRepository.delete(userId);
+        } catch (err) {
+            mapError(err);
+        }
     }
 
     private createToken(user: User): Token {

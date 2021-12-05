@@ -5,11 +5,11 @@ import { EntityType } from '../entity/entity-type';
 import Location from '../entity/location';
 import Post from '../entity/post';
 import NotFoundException from '../exception/not-found.exception';
-import TypeORMException from '../exception/typeorm.exception';
 import PostRepository from '../repository/post.repository';
 import LocationService from './location.service';
 import PhotoService from './photo.service';
 import PostLikeService from './post-like.service';
+import { mapError } from './service-error-handler';
 
 type PostId = Pick<Post, 'id'>;
 
@@ -110,34 +110,36 @@ export default class PostService {
         Promise<PostId> {
         const locationId = await this.getLocationId(location);
 
-        const post = await this.postRepository.save({
-            location: { id: locationId },
-            creator: { id: userId },
-            public: isPublic,
-            created: created,
-            updated: new Date(),
-            description: description,
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
-        return { id: post.id };
+        try {
+            const post = await this.postRepository.save({
+                location: { id: locationId },
+                creator: { id: userId },
+                public: isPublic,
+                created: created,
+                updated: new Date(),
+                description: description,
+            });
+            return { id: post.id };
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
-    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string):
-        Promise<PostId> {
+    async updatePost(postId: string, location: Location, isPublic: boolean, created: Date, description: string) {
         const locationId = await this.getLocationId(location);
 
-        const post = await this.postRepository.save({
-            id: postId,
-            location: { id: locationId },
-            public: isPublic,
-            created: created,
-            updated: new Date(),
-            description: description,
-        }).catch((err: Error) => {
-            throw new TypeORMException(err.message);
-        });
-        return { id: post.id };
+        try {
+            await this.postRepository.save({
+                id: postId,
+                location: { id: locationId },
+                public: isPublic,
+                created: created,
+                updated: new Date(),
+                description: description,
+            });
+        } catch (err) {
+            throw mapError(err);
+        }
     }
 
     // ignore if post does not exist
@@ -148,8 +150,11 @@ export default class PostService {
         await this.deletePost(post.id);
 
         if (post.photos) {
-            this.photoService.removePhotosFromStorage(post.photos.map((photo) => photo.name))
-                .catch((err: Error) => console.log('Removing photos from storage failed: ' + err.message));
+            try {
+                this.photoService.removePhotosFromStorage(post.photos.map((photo) => photo.name));
+            } catch (err) {
+                console.log('Removing photos from storage failed.', err);
+            }
         }
     }
 

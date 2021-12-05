@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import { InjectRepository } from 'typeorm-typedi-extensions';
-import TypeORMException from '../exception/typeorm.exception';
 import PostLikeRepository from '../repository/post-like.repository';
+import { mapError } from './service-error-handler';
 
 type PostLikes = {
     likes: number,
@@ -30,13 +30,7 @@ export default class PostLikeService {
                 post: { id: postId },
             });
         } catch (err) {
-            if (typeof err === 'string') {
-                throw new TypeORMException(err);
-            }
-
-            if (err instanceof Error) {
-                throw new TypeORMException(err.message);
-            }
+            throw mapError(err);
         }
     }
 
@@ -47,13 +41,7 @@ export default class PostLikeService {
                 post: { id: postId },
             });
         } catch (err) {
-            if (typeof err === 'string') {
-                throw new TypeORMException(err);
-            }
-
-            if (err instanceof Error) {
-                throw new TypeORMException(err.message);
-            }
+            throw mapError(err);
         }
     }
 }
