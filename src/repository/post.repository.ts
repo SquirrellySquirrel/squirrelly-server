@@ -10,7 +10,7 @@ export default class PostRepository extends Repository<Post> {
     }
 
     findOneWithRelations(postId: string): Promise<Post | undefined> {
-        return this.findOne({ where: { id: postId }, relations: ['creator', 'location', 'photos', 'comments', 'comments.creator'] });
+        return this.findOne({ where: { id: postId }, relations: ['creator', 'location', 'photos'] });
     }
 
     findLatest(publicOnly: boolean, count?: number): Promise<Post[]> {
