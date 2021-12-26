@@ -19,7 +19,8 @@ let commentService: CommentService;
 let collectionService: CollectionService;
 let requestUser: User;
 let postCreator: User;
-let postId: string;
+let publicPostId: string;
+let privatePostId: string;
 let collectionId: string;
 let postCreatorCommentId: string;
 const location = MockData.location1();
@@ -45,10 +46,12 @@ beforeEach(async () => {
     const postCreatorId = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id;
     postCreator = await userService.getUserById(postCreatorId);
 
-    postId = (await postService.savePost(postCreator.id, location, true, new Date(), 'Public post')).id;
-    collectionId = (await collectionService.createCollection([postId], postCreator.id, { name: 'my collection' })).id;
+    publicPostId = (await postService.savePost(postCreator.id, location, true, new Date(), 'Public post')).id;
+    privatePostId = (await postService.savePost(postCreator.id, location, false, new Date(), 'Private post')).id;
 
-    postCreatorCommentId = (await commentService.addComment(postId, postCreator.id, 'my sweet squirrel')).id;
+    collectionId = (await collectionService.createCollection([publicPostId], postCreator.id, { name: 'my collection' })).id;
+
+    postCreatorCommentId = (await commentService.addComment(publicPostId, postCreator.id, 'my sweet squirrel')).id;
 });
 
 afterAll(async () => {
@@ -56,86 +59,108 @@ afterAll(async () => {
 });
 
 describe('verifies user action', () => {
-    it('allows all access for admin user', () => {
+    it('allows all access for admin user', async () => {
         requestUser.role = UserRole.ADMIN;
-        expect(() => permissionService.verifyUserAction(requestUser, postCreator.id)).not.toThrowError();
+        await expect(permissionService.verifyUserAction(requestUser, postCreator.id)).resolves.toBeUndefined();
     });
 
-    it('allows own access for contributor user', () => {
-        expect(() => permissionService.verifyUserAction(requestUser, requestUser.id)).not.toThrowError();
+    it('allows own access for contributor user', async () => {
+        await expect(permissionService.verifyUserAction(requestUser, requestUser.id)).resolves.toBeUndefined();
     });
 
-    it('denies all access for contributor user', () => {
-        expect(() => permissionService.verifyUserAction(requestUser, postCreator.id)).toThrow(PermissionDeniedException);
+    it('denies all access for contributor user', async () => {
+        await expect(permissionService.verifyUserAction(requestUser, postCreator.id)).rejects.toThrow(PermissionDeniedException);
     });
 });
 
 describe('verifies post action', () => {
-    it('allows all access for admin user', () => {
+    it('allows all access for admin user', async () => {
         requestUser.role = UserRole.ADMIN;
-        expect(() => permissionService.verifyPostAction(requestUser, postId)).not.toThrowError();
+        await expect(permissionService.verifyPostAction(requestUser, publicPostId)).resolves.toBeUndefined();
     });
 
-    it('allows own access for contributor user', () => {
-        expect(() => permissionService.verifyPostAction(postCreator, postId)).not.toThrowError();
+    it('allows own access for contributor user', async () => {
+        await expect(permissionService.verifyPostAction(postCreator, publicPostId)).resolves.toBeUndefined();
     });
 
     it('denies all access for contributor user', async () => {
-        await expect(() => permissionService.verifyPostAction(requestUser, postId)).rejects.toThrow(PermissionDeniedException);
+        await expect(permissionService.verifyPostAction(requestUser, publicPostId)).rejects.toThrow(PermissionDeniedException);
     });
 });
 
 describe('verifies collection action', () => {
-    it('allows all access for admin user', () => {
+    it('allows all access for admin user', async () => {
         requestUser.role = UserRole.ADMIN;
-        expect(() => permissionService.verifyCollectionAction(requestUser, collectionId)).not.toThrowError();
+        await expect(permissionService.verifyCollectionAction(requestUser, collectionId)).resolves.toBeUndefined();
     });
 
-    it('allows own access for user contributor', () => {
-        expect(() => permissionService.verifyCollectionAction(postCreator, collectionId)).not.toThrowError();
+    it('allows own access for user contributor', async () => {
+        await expect(permissionService.verifyCollectionAction(postCreator, collectionId)).resolves.toBeUndefined();
     });
 
     it('denies all access for contributor user', async () => {
-        await expect(() => permissionService.verifyCollectionAction(requestUser, collectionId))
+        await expect(permissionService.verifyCollectionAction(requestUser, collectionId))
             .rejects.toThrow(PermissionDeniedException);
     });
 });
 
-describe('verifies comment action', () => {
-    it('allows any users to create comments for public post', () => {
-        expect(() => permissionService.verifyCommentCreateAction(requestUser, postId)).not.toThrowError();
-        expect(() => permissionService.verifyCommentCreateAction(postCreator, postId)).not.toThrowError();
+describe('verifies comment action permission denied', () => {
+    it('denies contributor user to create comments for other private post', async () => {
+        await expect(permissionService.verifyCommentCreateAction(requestUser, privatePostId))
+            .rejects.toThrow(PermissionDeniedException);
     });
 
-    it('denies any users to create comments for private post', async () => {
-        const privatePostId = (await postService.savePost(postCreator.id, location, false, new Date(), 'Private post')).id;
-        await expect(() => permissionService.verifyCommentCreateAction(requestUser, privatePostId))
+    it('denies contributor user to delete comments of other private post', async () => {
+        await expect(permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, privatePostId))
             .rejects.toThrow(PermissionDeniedException);
+    });
 
+    it('denies contributor user to delete other comments of other public post', async () => {
+        await expect(permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, publicPostId))
+            .rejects.toThrow(PermissionDeniedException);
+    });
+});
+
+describe('verifies comment action authorized', () => {
+    it('allows users to create comments for any public posts', async () => {
+        await expect(permissionService.verifyCommentCreateAction(requestUser, publicPostId)).resolves.toBeUndefined();
+        await expect(permissionService.verifyCommentCreateAction(postCreator, publicPostId)).resolves.toBeUndefined();
+    });
+
+    it('allows contributor user to delete his own comments of any public posts', async () => {
+        await expect(permissionService.verifyCommentDeleteAction(postCreator, postCreatorCommentId, publicPostId))
+            .resolves.toBeUndefined();
+    });
+
+    it('allows contributor user to delete any comments of his own public posts', async () => {
+        const requestUserCommentId = (await commentService.addComment(publicPostId, requestUser.id, 'your sweet squirrel')).id;
+        await expect(permissionService.verifyCommentDeleteAction(postCreator, requestUserCommentId, publicPostId))
+            .resolves.toBeUndefined();
+    });
+
+    it('allows contributor user to create comments of his own private post', async () => {
+        await expect(permissionService.verifyCommentCreateAction(postCreator, privatePostId)).resolves.toBeUndefined();
+    });
+
+    it('allows contributor user to delete comments of his own private post', async () => {
+        await expect(permissionService.verifyCommentDeleteAction(postCreator, postCreatorCommentId, privatePostId))
+            .resolves.toBeUndefined();
+    });
+
+    it('allows admin user to delete comments of any public posts', async () => {
         requestUser.role = UserRole.ADMIN;
-        await expect(() => permissionService.verifyCommentCreateAction(requestUser, privatePostId))
-            .rejects.toThrow(PermissionDeniedException);
-
-        await expect(() => permissionService.verifyCommentCreateAction(postCreator, privatePostId))
-            .rejects.toThrow(PermissionDeniedException);
+        await expect(permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, publicPostId))
+            .resolves.toBeUndefined();
     });
 
-    it('allows admin user to delete any comments for public post', () => {
+    it('allows admin user to create comments for any private posts', async () => {
         requestUser.role = UserRole.ADMIN;
-        expect(() => permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, postId)).not.toThrowError();
+        await expect(permissionService.verifyCommentCreateAction(requestUser, privatePostId)).resolves.toBeUndefined();
     });
 
-    it('allows contributor user to delete his own comments', () => {
-        expect(() => permissionService.verifyCommentDeleteAction(postCreator, postCreatorCommentId, postId)).not.toThrowError();
-    });
-
-    it('allows contributor user to delete any comments of his own post', async () => {
-        const requestUserCommentId = (await commentService.addComment(postId, requestUser.id, 'your sweet squirrel')).id;
-        expect(() => permissionService.verifyCommentDeleteAction(postCreator, requestUserCommentId, postId)).not.toThrowError();
-    });
-
-    it('denies contributor user to delete other comments of other post', async () => {
-        await expect(() => permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, postId))
-            .rejects.toThrow(PermissionDeniedException);
+    it('allows admin user to delete comments of any private posts', async () => {
+        requestUser.role = UserRole.ADMIN;
+        await expect(permissionService.verifyCommentDeleteAction(requestUser, postCreatorCommentId, privatePostId))
+            .resolves.toBeUndefined();
     });
 });
