@@ -19,17 +19,30 @@ export default class PermissionService {
     ) { }
 
     async verifyUserAction(user: User, ownerId: string) {
-        await this.verifyUser(user.id);
-        await this.verifyUser(ownerId);
+        const owner = await this.userService.getUserById(ownerId);
+        if (!owner) {
+            throw new UnprocessableEntityException(`User ${ownerId} does not exist`);
+        }
 
         if (user.role != UserRole.ADMIN && (user.role == UserRole.CONTRIBUTOR && user.id != ownerId)) {
             throw new PermissionDeniedException(user.id);
         }
     }
 
-    async verifyPostAction(user: User, postId: string) {
-        await this.verifyUser(user.id);
+    async verifyPostReadAction(postId: string, user?: User) {
+        const post = await this.postRepository.findOneWithCreator(postId);
+        this.verifyPost(postId, post);
 
+        if (!user) {
+            if (!post!.public) {
+                throw new PermissionDeniedException();
+            }
+        } else {
+            this.verifyPrivatePostAction(user, post!);
+        }
+    }
+
+    async verifyPostAction(user: User, postId: string) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
 
@@ -39,8 +52,6 @@ export default class PermissionService {
     }
 
     async verifyCollectionAction(user: User, collectionId: string) {
-        await this.verifyUser(user.id);
-
         const collection = await this.collectionRepository.findOneWithCreator(collectionId);
         if (!collection || !collection.creator) {
             throw new UnprocessableEntityException(`Collection ${collectionId} does not exist or has no creator`);
@@ -51,30 +62,31 @@ export default class PermissionService {
         }
     }
 
-    async verifyCommentCreateAction(user: User, postId: string) {
-        await this.verifyUser(user.id);
-
+    async verifyCommentReadAction(postId: string, user?: User) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
 
-        if (!post!.public) {
-            if (user.role != UserRole.ADMIN && (user.role == UserRole.CONTRIBUTOR && user.id != post!.creator.id)) {
-                throw new PermissionDeniedException(user.id);
+        if (!user) {
+            if (!post!.public) {
+                throw new PermissionDeniedException();
             }
+        } else {
+            this.verifyPrivatePostAction(user, post!);
         }
     }
 
-    async verifyCommentDeleteAction(user: User, commentId: string, postId: string) {
-        await this.verifyUser(user.id);
-
+    async verifyCommentCreateAction(user: User, postId: string) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
 
-        if (!post!.public) {
-            if (user.role != UserRole.ADMIN && (user.role == UserRole.CONTRIBUTOR && user.id != post!.creator.id)) {
-                throw new PermissionDeniedException(user.id);
-            }
-        }
+        this.verifyPrivatePostAction(user, post!);
+    }
+
+    async verifyCommentDeleteAction(user: User, commentId: string, postId: string) {
+        const post = await this.postRepository.findOneWithCreator(postId);
+        this.verifyPost(postId, post);
+
+        this.verifyPrivatePostAction(user, post!);
 
         const comment = await this.commentRepository.findOneWithCreator(commentId);
         if (!comment || !comment.creator) {
@@ -87,16 +99,17 @@ export default class PermissionService {
         }
     }
 
-    private async verifyUser(userId: string) {
-        const user = await this.userService.getUserById(userId);
-        if (!user) {
-            throw new UnprocessableEntityException(`User ${userId} does not exist`);
-        }
-    }
-
     private verifyPost(postId: string, post?: Post) {
         if (!post || !post.creator) {
             throw new UnprocessableEntityException(`Post ${postId} does not exist or has no creator`);
+        }
+    }
+
+    private verifyPrivatePostAction(user: User, post: Post) {
+        if (!post.public) {
+            if (user.role != UserRole.ADMIN && (user.role == UserRole.CONTRIBUTOR && user.id != post!.creator.id)) {
+                throw new PermissionDeniedException(user.id);
+            }
         }
     }
 }

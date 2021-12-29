@@ -7,6 +7,7 @@ import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
+import userIdResolverMiddleware from '../middleware/user-id-resolver.middleware';
 import CommentService from '../service/comment.service';
 import PermissionService from '../service/permission.service';
 import PhotoService from '../service/photo.service';
@@ -45,10 +46,10 @@ export default class PostController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}`, this.getPosts)
-            .get(`${this.path}/:id`, this.getPost)
-            .get(`${this.path}/:id/comments`, this.getPostComments)
-            .get(`${this.path}/:id/likes`, this.getPostLikes)
+        this.router.get(`${this.path}`, userIdResolverMiddleware, this.getPosts)
+            .get(`${this.path}/:id`, userIdResolverMiddleware, this.getPost)
+            .get(`${this.path}/:id/comments`, userIdResolverMiddleware, this.getPostComments)
+            .get(`${this.path}/:id/likes`, userIdResolverMiddleware, this.getPostLikes)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
             .post(`${this.path}/:id/comments`, authenticationMiddleware, requestValidationMiddleware(CreateCommentDTO), this.createComment)
@@ -68,7 +69,13 @@ export default class PostController implements Controller {
             const count = stringAsNumber(req.query.count as string | undefined);
             const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
             const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
-            res.json(await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly }));
+            const posts = await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly });
+            if (!publicOnly) {
+                posts.forEach((post) => {
+                    this.permissionService.verifyPostReadAction(post.id, req.user);
+                });
+            }
+            res.json(posts);
         } catch (err) {
             if (err instanceof SyntaxError) {
                 next(new HttpException(400, 'Invalid request parameter'));
@@ -80,6 +87,8 @@ export default class PostController implements Controller {
     private getPost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
+            await this.permissionService.verifyPostReadAction(id, req.user);
+
             const post = await this.postService.getPost(id);
             res.json(post);
         } catch (err) {
@@ -90,7 +99,7 @@ export default class PostController implements Controller {
     private createPost = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userId = req.body['userId'];
-            this.permissionService.verifyUserAction(req.user, userId);
+            await this.permissionService.verifyUserAction(req.user, userId);
 
             const postId = await this.postService.savePost(
                 userId,
@@ -189,9 +198,11 @@ export default class PostController implements Controller {
     }
 
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
-        const id = req.params.id;
+        const postId = req.params.id;
         try {
-            res.json(await this.commentService.getComments(id));
+            await this.permissionService.verifyCommentReadAction(postId, req.user);
+
+            res.json(await this.commentService.getComments(postId));
         } catch (err) {
             next(err);
         }
