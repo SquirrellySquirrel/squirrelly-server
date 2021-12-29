@@ -7,9 +7,9 @@ import TokenData from '../interfaces/token-data.interface';
 import UserRepository from '../repository/user.repository';
 
 /*
-Resovle required user id in cookies
+Resovle optional user id in cookies
 */
-async function authenticationMiddleware(req: Request, _res: Response, next: NextFunction) {
+async function userIdResolverMiddleware(req: Request, _res: Response, next: NextFunction) {
     const cookies = req.cookies;
     if (cookies && cookies.Authorization) {
         try {
@@ -27,8 +27,8 @@ async function authenticationMiddleware(req: Request, _res: Response, next: Next
             next(new InvalidTokenException());
         }
     } else {
-        next(new InvalidTokenException());
+        next();
     }
 }
 
-export default authenticationMiddleware;
+export default userIdResolverMiddleware;
