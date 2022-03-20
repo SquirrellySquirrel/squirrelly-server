@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response, Router } from 'express';
+import fs from 'fs';
+import Sharp from 'sharp';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
 import PhotoService from '../service/photo.service';
+import { stringAsNumber } from '../util/param-parser';
 
 @Service()
 export default class PhotoController implements Controller {
@@ -18,10 +21,25 @@ export default class PhotoController implements Controller {
 
     private getPhoto = async (req: Request, res: Response, next: NextFunction) => {
         const photoId = req.params.id;
+        const width = stringAsNumber(req.query.w as string | undefined);
+        const height = stringAsNumber(req.query.h as string | undefined);
+        const format = req.query.format ? req.query.format : 'webp';
+        const fit = req.query.fit ? req.query.fit : 'cover';
         try {
+            // cache for 3d
+            res.set('Cache-Control', 'public, max-age=259200');
+
             const photoPath = await this.photoService.getPhotoPath(photoId);
 
-            res.sendFile(photoPath);
+            const stream = fs.createReadStream(photoPath);
+            const transform = Sharp().resize(width, height, {
+                fit: fit,
+            }).toFormat(format, {
+                quality: 100,
+            });
+            res.set('Content-Type', `image/${format}`);
+            stream.pipe(transform).pipe(res);
+            return stream;
         } catch (err) {
             next(err);
         }
