@@ -6,6 +6,7 @@ import Photo from '../entity/photo';
 import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
+import cacheMiddleware from '../middleware/cache.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import userIdResolverMiddleware from '../middleware/user-id-resolver.middleware';
 import CommentService from '../service/comment.service';
@@ -13,6 +14,7 @@ import PermissionService from '../service/permission.service';
 import PhotoService from '../service/photo.service';
 import PostLikeService from '../service/post-like.service';
 import PostService from '../service/post.service';
+import { putCache } from '../util/cache';
 import { stringAsBoolean, stringAsNumber } from '../util/param-parser';
 import CreateCommentDTO from './dto/create-comment.dto';
 import CreatePostDTO from './dto/create-post.dto';
@@ -46,9 +48,9 @@ export default class PostController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}`, userIdResolverMiddleware, this.getPosts)
-            .get(`${this.path}/:id`, userIdResolverMiddleware, this.getPost)
-            .get(`${this.path}/:id/comments`, userIdResolverMiddleware, this.getPostComments)
+        this.router.get(`${this.path}`, userIdResolverMiddleware, cacheMiddleware, this.getPosts)
+            .get(`${this.path}/:id`, userIdResolverMiddleware, cacheMiddleware, this.getPost)
+            .get(`${this.path}/:id/comments`, userIdResolverMiddleware, cacheMiddleware, this.getPostComments)
             .get(`${this.path}/:id/likes`, userIdResolverMiddleware, this.getPostLikes)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
             .post(`${this.path}/:id/photos`, authenticationMiddleware, upload.single('photo'), this.addPhoto)
@@ -75,6 +77,7 @@ export default class PostController implements Controller {
                     this.permissionService.verifyPostReadAction(post.id, req.user);
                 });
             }
+            putCache(req.url, posts, 30);
             res.json(posts);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -90,6 +93,7 @@ export default class PostController implements Controller {
             await this.permissionService.verifyPostReadAction(id, req.user);
 
             const post = await this.postService.getPost(id);
+            putCache(req.url, post, 30);
             res.json(post);
         } catch (err) {
             next(err);
@@ -201,8 +205,9 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         try {
             await this.permissionService.verifyCommentReadAction(postId, req.user);
-
-            res.json(await this.commentService.getComments(postId));
+            const comments = await this.commentService.getComments(postId);
+            putCache(req.url, comments, 30);
+            res.json(comments);
         } catch (err) {
             next(err);
         }

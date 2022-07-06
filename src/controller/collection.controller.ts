@@ -2,9 +2,11 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
+import cacheMiddleware from '../middleware/cache.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
 import CollectionService from '../service/collection.service';
 import PermissionService from '../service/permission.service';
+import { putCache } from '../util/cache';
 import CreateCollectionDTO from './dto/create-collection.dto';
 import UpdateCollectionDTO from './dto/update-collection.dto';
 
@@ -19,7 +21,7 @@ export default class CollectionController implements Controller {
     }
 
     private initRoutes() {
-        this.router.get(`${this.path}/:id`, this.getCollection)
+        this.router.get(`${this.path}/:id`, cacheMiddleware, this.getCollection)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreateCollectionDTO), this.createCollection)
             .put(`${this.path}/:id`, authenticationMiddleware, requestValidationMiddleware(UpdateCollectionDTO), this.updateCollection)
             .delete(`${this.path}/:id`, authenticationMiddleware, this.deleteCollection);
@@ -28,8 +30,9 @@ export default class CollectionController implements Controller {
     private getCollection = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            const post = await this.collectionService.getCollection(id);
-            res.json(post);
+            const collection = await this.collectionService.getCollection(id);
+            putCache(req.url, collection, 30);
+            res.json(collection);
         } catch (err) {
             next(err);
         }
