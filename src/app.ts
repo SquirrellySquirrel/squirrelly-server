@@ -3,6 +3,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import errorHandlingMiddleware from './middleware/error-handling.middleware';
+import swaggerUi from 'swagger-ui-express';
+import apiSpec from '../docs/swagger.json';
 
 const PORT = Number(process.env.PORT) || 3000;
 const ORIGIN = process.env.ALLOWED_ORIGINS || '*';
@@ -23,6 +25,8 @@ class App {
         this.initMiddlewares();
         this.initControllers(controllers);
         this.initErrorHandling();
+
+        this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(apiSpec));
     }
 
     public listen() {
