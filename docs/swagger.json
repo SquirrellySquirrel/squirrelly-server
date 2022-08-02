@@ -1,52 +1,481 @@
 {
-    "swagger": "2.0",
-    "info": {
-      "title": "Squirrelly API Docs",
-      "version": "v1",
-      "basePath": "/api",
-      "consumes": [
-        "application/json"
-      ],
-      "produces": [
-        "application/json"
-      ]
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Squirrelly API",
+    "version": "1.0.0",
+    "description": "API documentation for Squirrelly server"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:{port}/{basePath}",
+      "description": "Local development server",
+      "variables": {
+        "port": {
+          "default": "8000"
+        },
+        "basePath": {
+          "default": "api"
+        }
+      }
+    }
+  ],
+  "paths": {
+    "/users/{userIdOrEmail}": {
+      "get": {
+        "description": "Get a user by id or email",
+        "parameters": [
+          {
+            "name": "userIdOrEmail",
+            "in": "path",
+            "description": "user id or email",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found by id or email"
+          }
+        }
+      }
     },
-    "paths": {
-      "/users": {
-        "get": {
-          "description": "Get a user by id or email",
-          "responses": {
-            "200": {
-              "examples": {
-                "application/json": "{}"
-              }
+    "/users/{userId}/posts": {
+      "get": {
+        "description": "Get all posts of a user by filter parameters",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "user id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
+          },
+          {
+            "name": "publicOnly",
+            "$ref": "#/components/parameters/publicOnly"
+          },
+          {
+            "name": "withCover",
+            "$ref": "#/components/parameters/withCover"
+          },
+          {
+            "name": "count",
+            "$ref": "#/components/parameters/count"
           }
-        }
-      },
-      "/posts": {
-        "get": {
-          "description": "Get all posts (of a user) by filter parameters",
-          "responses": {
-            "200": {
-              "examples": {
-                "application/json": "{}"
-              }
-            }
-          }
-        }
-      },
-      "/collections": {
-        "get": {
-          "description": "Get all collections (of a user) by filter parameters",
-          "responses": {
-            "200": {
-              "examples": {
-                "application/json": "{}"
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Post"
+                  }
+                }
               }
             }
           }
         }
       }
+    },
+    "/posts": {
+      "get": {
+        "description": "Get all posts (of a user) by filter parameters",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "user id",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "publicOnly",
+            "$ref": "#/components/parameters/publicOnly"
+          },
+          {
+            "name": "withCover",
+            "$ref": "#/components/parameters/withCover"
+          },
+          {
+            "name": "count",
+            "$ref": "#/components/parameters/count"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Post"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}": {
+      "get": {
+        "description": "Get a post by id",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Post"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post not found by id"
+          }
+        }
+      }
+    },
+    "/posts/{postId}/comments": {
+      "get": {
+        "description": "Get comments of a post",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Comment"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Add a comment for a post",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "content": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "New comment id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/likes": {
+      "get": {
+        "description": "Get likes of a post",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "likes": {
+                      "type": "integer"
+                    },
+                    "likers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Add a like for a post",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Added a like for the post successfully"
+          }
+        }
+      },
+      "delete": {
+        "description": "Remove a like for a post",
+        "parameters": [
+          {
+            "name": "postId",
+            "$ref": "#/components/parameters/postId"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Removed a like for the post successfully"
+          }
+        }
+      }
+    },
+    "/collections": {
+      "get": {
+        "description": "Get all collections (of a user) by filter parameters",
+        "responses": {
+          "200": {
+            "examples": {
+              "application/json": "{}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "validated": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastLogin": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["contributor", "admin"]
+          }
+        }
+      },
+      "Post": {
+        "type": "object",
+        "properties": {
+          "public": {
+            "type": "boolean"
+          },
+          "likes": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "description": {
+            "type": "string"
+          },
+          "cover": {
+            "$ref": "#/components/schemas/Cover"
+          }
+        }
+      },
+      "Cover": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "order": {
+            "type": "integer"
+          }
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "content": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creator": {
+            "$ref": "#/components/schemas/User"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "postId": {
+        "name": "postId",
+        "in": "path",
+        "description": "post id",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "publicOnly": {
+        "name": "publicOnly",
+        "in": "query",
+        "description": "If only public posts should be fetched",
+        "required": false,
+        "schema": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "withCover": {
+        "name": "withCover",
+        "in": "query",
+        "description": "If posts should be fetched with covers",
+        "required": false,
+        "schema": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "count": {
+        "name": "count",
+        "in": "query",
+        "description": "How many posts should be fetched",
+        "required": false,
+        "schema": {
+          "type": "integer"
+        }
+      }
     }
   }
+}
