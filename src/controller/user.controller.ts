@@ -8,6 +8,7 @@ import CollectionService from '../service/collection.service';
 import PermissionService from '../service/permission.service';
 import PostService from '../service/post.service';
 import UserService from '../service/user.service';
+import { putCache } from '../util/cache';
 import { stringAsBoolean, stringAsNumber } from '../util/param-parser';
 import CreateUserDTO from './dto/create-user.dto';
 import UpdateUserDTO from './dto/update-user.dto';
@@ -73,6 +74,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         try {
             this.permissionService.verifyUserAction(req.user, id);
+
             await this.userService.getUserById(id);
             res.clearCookie('Authorization').sendStatus(204);
         } catch (err) {
@@ -85,6 +87,7 @@ export default class UserController implements Controller {
         const displayName = req.body['displayName'];
         try {
             this.permissionService.verifyUserAction(req.user, id);
+
             await this.userService.updateUser(id, displayName);
             res.sendStatus(204);
         } catch (err) {
@@ -96,6 +99,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         try {
             this.permissionService.verifyUserAction(req.user, id);
+
             await this.userService.deleteUser(id);
             res.sendStatus(204);
         } catch (err) {
@@ -109,8 +113,18 @@ export default class UserController implements Controller {
             const count = stringAsNumber(req.query.count as string | undefined);
             const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
             const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
-            res.json(await this.postService.getPosts(
-                { userId: userId, count: count, withCover: withCover, publicOnly: publicOnly }));
+
+            const posts = await this.postService.getPosts(
+                { userId: userId, count: count, withCover: withCover, publicOnly: publicOnly });
+            if (!publicOnly) {
+                posts.forEach((post) => {
+                    this.permissionService.verifyPostReadAction(post.id, req.user);
+                });
+            }
+
+            putCache(req.url, posts, 30);
+
+            res.json(posts);
         } catch (err) {
             if (err instanceof SyntaxError) {
                 next(new HttpException(400, 'Invalid request parameter'));

@@ -58,3 +58,12 @@ it('adds and deletes a like', async () => {
     expect(postLikes.likers).toHaveLength(0);
 });
 
+it('can add a like only once', async () => {
+    await postLikeService.addPostLike(postId, userId);
+    await postLikeService.addPostLike(postId, userId);
+
+    const postLikes = await postLikeService.getPostLikes(postId);
+    expect(postLikes.likes).toBe(1);
+    expect(postLikes.likers).toContainEqual(userId);
+});
+

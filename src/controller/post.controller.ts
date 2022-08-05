@@ -71,13 +71,16 @@ export default class PostController implements Controller {
             const count = stringAsNumber(req.query.count as string | undefined);
             const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
             const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
+
             const posts = await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly });
             if (!publicOnly) {
                 posts.forEach((post) => {
                     this.permissionService.verifyPostReadAction(post.id, req.user);
                 });
             }
+
             putCache(req.url, posts, 30);
+
             res.json(posts);
         } catch (err) {
             if (err instanceof SyntaxError) {
@@ -93,7 +96,9 @@ export default class PostController implements Controller {
             await this.permissionService.verifyPostReadAction(id, req.user);
 
             const post = await this.postService.getPost(id);
+
             putCache(req.url, post, 30);
+
             res.json(post);
         } catch (err) {
             next(err);
@@ -101,8 +106,8 @@ export default class PostController implements Controller {
     }
 
     private createPost = async (req: Request, res: Response, next: NextFunction) => {
+        const userId = req.body['userId'];
         try {
-            const userId = req.body['userId'];
             await this.permissionService.verifyUserAction(req.user, userId);
 
             const postId = await this.postService.savePost(
@@ -204,9 +209,12 @@ export default class PostController implements Controller {
     private getPostComments = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         try {
-            await this.permissionService.verifyCommentReadAction(postId, req.user);
+            await this.permissionService.verifyPostReadAction(postId, req.user);
+
             const comments = await this.commentService.getComments(postId);
+
             putCache(req.url, comments, 30);
+
             res.json(comments);
         } catch (err) {
             next(err);
@@ -239,9 +247,11 @@ export default class PostController implements Controller {
     }
 
     private getPostLikes = async (req: Request, res: Response, next: NextFunction) => {
-        const id = req.params.id;
+        const postId = req.params.id;
         try {
-            res.json(await this.postLikeService.getPostLikes(id));
+            await this.permissionService.verifyPostReadAction(postId, req.user);
+
+            res.json(await this.postLikeService.getPostLikes(postId));
         } catch (err) {
             next(err);
         }
@@ -251,6 +261,8 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const userId = req.body['userId'];
         try {
+            await this.permissionService.verifyPostAction(req.user, postId);
+
             await this.postLikeService.addPostLike(postId, userId);
             res.sendStatus(201);
         } catch (err) {

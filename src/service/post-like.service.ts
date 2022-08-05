@@ -12,7 +12,7 @@ type PostLikes = {
 export default class PostLikeService {
     constructor(
         @InjectRepository()
-        private readonly postLikeRepository: PostLikeRepository,
+        private readonly postLikeRepository: PostLikeRepository
     ) { }
 
     async getPostLikes(postId: string): Promise<PostLikes> {
@@ -25,10 +25,12 @@ export default class PostLikeService {
 
     async addPostLike(postId: string, userId: string) {
         try {
-            await this.postLikeRepository.save({
-                user: { id: userId },
-                post: { id: postId },
-            });
+            if (!(await this.getPostLikes(postId)).likers.includes(userId)) {
+                await this.postLikeRepository.save({
+                    user: { id: userId },
+                    post: { id: postId },
+                });
+            }
         } catch (err) {
             throw mapError(err);
         }
@@ -36,10 +38,12 @@ export default class PostLikeService {
 
     async deletePostLike(postId: string, userId: string) {
         try {
-            await this.postLikeRepository.delete({
-                user: { id: userId },
-                post: { id: postId },
-            });
+            if ((await this.getPostLikes(postId)).likers.includes(userId)) {
+                await this.postLikeRepository.delete({
+                    user: { id: userId },
+                    post: { id: postId },
+                });
+            }
         } catch (err) {
             throw mapError(err);
         }

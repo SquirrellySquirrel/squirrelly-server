@@ -63,6 +63,7 @@ export default class CollectionController implements Controller {
 
         try {
             await this.permissionService.verifyCollectionAction(req.user, id);
+
             await this.collectionService.updateCollection(
                 id, postIds, { name: name, description: descrption });
             res.sendStatus(204);

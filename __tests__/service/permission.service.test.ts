@@ -125,7 +125,7 @@ describe('verifies collection action', () => {
 
 describe('verifies comment action permission denied', () => {
     it('denies contributor user to create comments for other private post', async () => {
-        await expect(permissionService.verifyCommentCreateAction(requestUser, privatePostId))
+        await expect(permissionService.verifyPostAction(requestUser, privatePostId))
             .rejects.toThrow(PermissionDeniedException);
     });
 
@@ -140,28 +140,28 @@ describe('verifies comment action permission denied', () => {
     });
 
     it('denies viewer to read comments for private post', async () => {
-        await expect(permissionService.verifyCommentReadAction(privatePostId, undefined))
+        await expect(permissionService.verifyPostReadAction(privatePostId, undefined))
             .rejects.toThrow(PermissionDeniedException);
     });
 
     it('denies contributor to read comments for other private post', async () => {
-        await expect(permissionService.verifyCommentReadAction(privatePostId, requestUser))
+        await expect(permissionService.verifyPostReadAction(privatePostId, requestUser))
             .rejects.toThrow(PermissionDeniedException);
     });
 });
 
 describe('verifies comment action authorized', () => {
     it('allows viewr to read any public posts', async () => {
-        await expect(permissionService.verifyCommentReadAction(publicPostId, undefined)).resolves.toBeUndefined();
+        await expect(permissionService.verifyPostReadAction(publicPostId, undefined)).resolves.toBeUndefined();
     });
 
     it('allows contributor to read comments of his own private post', async () => {
-        await expect(permissionService.verifyCommentReadAction(privatePostId, postCreator)).resolves.toBeUndefined();
+        await expect(permissionService.verifyPostReadAction(privatePostId, postCreator)).resolves.toBeUndefined();
     });
 
     it('allows admin user to read comments of any private posts', async () => {
         requestUser.role = UserRole.ADMIN;
-        await expect(permissionService.verifyCommentReadAction(privatePostId, requestUser)).resolves.toBeUndefined();
+        await expect(permissionService.verifyPostReadAction(privatePostId, requestUser)).resolves.toBeUndefined();
     });
 
     it('allows users to create comments for any public posts', async () => {
@@ -181,7 +181,7 @@ describe('verifies comment action authorized', () => {
     });
 
     it('allows contributor user to create comments of his own private post', async () => {
-        await expect(permissionService.verifyCommentCreateAction(postCreator, privatePostId)).resolves.toBeUndefined();
+        await expect(permissionService.verifyPostAction(postCreator, privatePostId)).resolves.toBeUndefined();
     });
 
     it('allows contributor user to delete comments of his own private post', async () => {
@@ -197,7 +197,7 @@ describe('verifies comment action authorized', () => {
 
     it('allows admin user to create comments for any private posts', async () => {
         requestUser.role = UserRole.ADMIN;
-        await expect(permissionService.verifyCommentCreateAction(requestUser, privatePostId)).resolves.toBeUndefined();
+        await expect(permissionService.verifyPostAction(requestUser, privatePostId)).resolves.toBeUndefined();
     });
 
     it('allows admin user to delete comments of any private posts', async () => {
