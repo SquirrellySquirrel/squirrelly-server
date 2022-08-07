@@ -21,18 +21,30 @@ export default class CollectionService {
         private readonly postService: PostService
     ) { }
 
-    async getCollection(collectionId: string): Promise<Collection> {
+    async getCollection(collectionId: string, publicOnly: boolean): Promise<Collection> {
         const collection = await this.collectionRepository.findOneWithRelations(collectionId);
         if (!collection) {
             throw new NotFoundException(EntityType.COLLECTION, { key: 'id', value: collectionId });
         }
+        if (publicOnly) {
+            const publicPosts = collection.posts.filter((post) => post.public);
+            collection.posts = publicPosts;
+        }
         return collection;
     }
 
-    async getCollectionsByUser(userId: string): Promise<Collection[]> {
+    async getCollectionsByUser(userId: string, publicOnly: boolean): Promise<Collection[]> {
         await this.verifyUser(userId);
 
-        return await this.collectionRepository.findByUser(userId);
+        const collections = await this.collectionRepository.findByUser(userId);
+        if (publicOnly) {
+            collections.map((collection) => {
+                const publicPosts = collection.posts.filter((post) => post.public);
+                collection.posts = publicPosts;
+                return collection;
+            });
+        }
+        return collections;
     }
 
     async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams):

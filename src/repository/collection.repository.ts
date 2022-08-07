@@ -14,6 +14,6 @@ export default class CollectionRepository extends Repository<Collection> {
     }
 
     findByUser(userId: string): Promise<Collection[]> {
-        return this.find({ where: { creator: { id: userId } } });
+        return this.find({ where: { creator: { id: userId } }, relations: ['creator'] });
     }
 }

@@ -8,6 +8,6 @@ export default class CreateCollectionDTO {
     @Length(1, 50)
     public name!: string;
 
-    @Length(250)
+    @Length(0, 250)
     public description?: string;
 }

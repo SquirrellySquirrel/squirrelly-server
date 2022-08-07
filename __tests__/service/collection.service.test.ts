@@ -38,7 +38,7 @@ afterAll(async () => {
 describe('creates a collection', () => {
     it('creates an empty collection', async () => {
         const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection', description: 'empty squirrel' })).id;
-        const newCollection = await collectionService.getCollection(collectionId) as Collection;
+        const newCollection = await collectionService.getCollection(collectionId, false) as Collection;
 
         expect(newCollection.name).toEqual('my empty collection');
         expect(newCollection.description).toEqual('empty squirrel');
@@ -53,7 +53,7 @@ describe('creates a collection', () => {
         const post2 = await postService.savePost(userId, location2, true, new Date(), '');
 
         const collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
-        const newCollection = await collectionService.getCollection(collectionId) as Collection;
+        const newCollection = await collectionService.getCollection(collectionId, false) as Collection;
 
         expect(newCollection.name).toEqual('my cool collection');
         expect(newCollection.description).toEqual('cool squirrel');
@@ -66,7 +66,7 @@ describe('updates a collection', () => {
     it('updates name and description', async () => {
         const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
         await collectionService.updateCollection(collectionId, [], { name: 'my cooler collection', description: 'cooler squirrel' });
-        const updatedCollection = await collectionService.getCollection(collectionId) as Collection;
+        const updatedCollection = await collectionService.getCollection(collectionId, false) as Collection;
 
         expect(updatedCollection.name).toEqual('my cooler collection');
         expect(updatedCollection.description).toEqual('cooler squirrel');
@@ -82,7 +82,7 @@ describe('updates a collection', () => {
 
         const collectionId = (await collectionService.createCollection([post1.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
         await collectionService.updateCollection(collectionId, [post2.id], { name: 'my cooler collection', description: 'cooler squirrel' });
-        const updatedCollection = await collectionService.getCollection(collectionId) as Collection;
+        const updatedCollection = await collectionService.getCollection(collectionId, false) as Collection;
 
         expect(updatedCollection.name).toEqual('my cooler collection');
         expect(updatedCollection.description).toEqual('cooler squirrel');
@@ -92,10 +92,38 @@ describe('updates a collection', () => {
     });
 });
 
+describe('gets a collection by id', () => {
+    it('includes all posts', async () => {
+        const location1 = MockData.location1();
+        const location2 = MockData.location2();
+        const post1 = await postService.savePost(userId, location1, true, new Date(), '');
+        const post2 = await postService.savePost(userId, location2, false, new Date(), '');
+
+        const collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
+        const collection = await collectionService.getCollection(collectionId, false);
+
+        expect(collection.posts).toHaveLength(2);
+    });
+
+    it('includes public posts only', async () => {
+        const location1 = MockData.location1();
+        const location2 = MockData.location2();
+        const post1 = await postService.savePost(userId, location1, true, new Date(), '');
+        const post2 = await postService.savePost(userId, location2, false, new Date(), '');
+
+        const collectionId = (await collectionService.createCollection([post1.id, post2.id], userId, { name: 'my cool collection', description: 'cool squirrel' })).id;
+        const collection = await collectionService.getCollection(collectionId, true);
+
+        expect(collection.posts).toHaveLength(1);
+        expect(collection.posts[0].id).toEqual(post1.id);
+    });
+});
+
+
 it('gets all collections by user', async () => {
     await collectionService.createCollection([], userId, { name: 'collection-1' });
     await collectionService.createCollection([], userId, { name: 'collection-2' });
-    const collections = await collectionService.getCollectionsByUser(userId);
+    const collections = await collectionService.getCollectionsByUser(userId, false);
 
     expect(collections).toHaveLength(2);
 });
@@ -104,5 +132,5 @@ it('deletes a collection', async () => {
     const collectionId = (await collectionService.createCollection([], userId, { name: 'my empty collection' })).id;
     await collectionService.deleteCollection(collectionId);
 
-    await expect(collectionService.getCollection(collectionId)).rejects.toThrow(NotFoundException);
+    await expect(collectionService.getCollection(collectionId, false)).rejects.toThrow(NotFoundException);
 });
