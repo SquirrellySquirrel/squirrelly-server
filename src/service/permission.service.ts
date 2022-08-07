@@ -49,27 +49,18 @@ export default class PermissionService {
     }
 
     /**
-     * Verify if a user can perform actions on a post
+     * Verify if a user can perform actions on a post (either admin or post creator)
      */
-    async verifyPostAction(user: User, postId: string) {
+    async verifyOwnPostAction(user: User, postId: string) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
         this.verifyUserOwnership(user, post!.creator.id);
     }
 
     /**
-     * Verify if a user can perform actions on a collection
+     * Verify if a user can perform actions on a public post (any user) or a private post (either admin or post creator)
      */
-    async verifyCollectionAction(user: User, collectionId: string) {
-        const collection = await this.collectionRepository.findOneWithCreator(collectionId);
-        this.verifyCollection(collectionId, collection);
-        this.verifyUserOwnership(user, collection!.creator.id);
-    }
-
-    /**
-    * Verify if a user can create a comment
-    */
-    async verifyCommentCreateAction(user: User, postId: string) {
+    async verifyAllPostAction(user: User, postId: string) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
 
@@ -79,9 +70,19 @@ export default class PermissionService {
     }
 
     /**
-    * Verify if a user can delete a comment
+     * Verify if a user can perform actions on a collection (either admin or collection creator)
+     */
+    async verifyCollectionAction(user: User, collectionId: string) {
+        const collection = await this.collectionRepository.findOneWithCreator(collectionId);
+        this.verifyCollection(collectionId, collection);
+        this.verifyUserOwnership(user, collection!.creator.id);
+    }
+
+    /**
+    * Verify if a user can perform actions on a comment of a public post (admin, post creator or comment creator)
+    * or a private post (admin, post creator)
     */
-    async verifyCommentDeleteAction(user: User, commentId: string, postId: string) {
+    async verifyCommentAction(user: User, commentId: string, postId: string) {
         const post = await this.postRepository.findOneWithCreator(postId);
         this.verifyPost(postId, post);
 

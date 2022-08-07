@@ -128,7 +128,7 @@ export default class PostController implements Controller {
         if (!file) {
             next(new HttpException(400, 'Photo file required but not provided'));
         } else {
-            await this.permissionService.verifyPostAction(req.user, postId);
+            await this.permissionService.verifyOwnPostAction(req.user, postId);
 
             const photo = new Photo();
             photo.id = req.body['id'];
@@ -148,7 +148,7 @@ export default class PostController implements Controller {
     private updatePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            await this.permissionService.verifyPostAction(req.user, id);
+            await this.permissionService.verifyOwnPostAction(req.user, id);
 
             await this.postService.updatePost(
                 id,
@@ -169,7 +169,7 @@ export default class PostController implements Controller {
         const photoId = req.params.photoId;
         const order = req.body['order'];
         try {
-            await this.permissionService.verifyPostAction(req.user, postId);
+            await this.permissionService.verifyOwnPostAction(req.user, postId);
 
             await this.photoService.updatePhoto(postId, photoId, order);
 
@@ -183,7 +183,7 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const photoId = req.params.photoId;
         try {
-            await this.permissionService.verifyPostAction(req.user, postId);
+            await this.permissionService.verifyOwnPostAction(req.user, postId);
 
             await this.photoService.deletePhoto(postId, photoId);
 
@@ -196,7 +196,7 @@ export default class PostController implements Controller {
     private deletePost = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            await this.permissionService.verifyPostAction(req.user, id);
+            await this.permissionService.verifyOwnPostAction(req.user, id);
 
             await this.postService.deletePostAndPhotos(id);
 
@@ -224,7 +224,7 @@ export default class PostController implements Controller {
     private createComment = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         try {
-            await this.permissionService.verifyCommentCreateAction(req.user, postId);
+            await this.permissionService.verifyAllPostAction(req.user, postId);
 
             res.status(201)
                 .json(await this.commentService.addComment(postId, req.body['userId'], req.body['content']));
@@ -237,7 +237,7 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const commentId = req.params.commentId;
         try {
-            await this.permissionService.verifyCommentDeleteAction(req.user, commentId, postId);
+            await this.permissionService.verifyCommentAction(req.user, commentId, postId);
 
             await this.commentService.deleteComment(commentId);
             res.sendStatus(204);
@@ -261,7 +261,7 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const userId = req.body['userId'];
         try {
-            await this.permissionService.verifyPostAction(req.user, postId);
+            await this.permissionService.verifyOwnPostAction(req.user, postId);
 
             await this.postLikeService.addPostLike(postId, userId);
             res.sendStatus(201);

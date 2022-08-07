@@ -4,6 +4,7 @@ import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
 import requestValidationMiddleware from '../middleware/request-validation.middleware';
+import userIdResolverMiddleware from '../middleware/user-id-resolver.middleware';
 import CollectionService from '../service/collection.service';
 import PermissionService from '../service/permission.service';
 import PostService from '../service/post.service';
@@ -28,8 +29,8 @@ export default class UserController implements Controller {
 
     private initRoutes() {
         this.router.get(`${this.path}/:id`, this.getUser);
-        this.router.get(`${this.path}/:id/posts`, this.getUserPosts);
-        this.router.get(`${this.path}/:id/collections`, this.getUserCollections);
+        this.router.get(`${this.path}/:id/posts`, userIdResolverMiddleware, this.getUserPosts);
+        this.router.get(`${this.path}/:id/collections`, userIdResolverMiddleware, this.getUserCollections);
         this.router.post(`${this.path}/login`, this.login);
         this.router.post(`${this.path}/:id/logout`, authenticationMiddleware, this.logout);
         this.router.post(this.path, requestValidationMiddleware(CreateUserDTO), this.register);
@@ -133,8 +134,29 @@ export default class UserController implements Controller {
         }
     }
 
-    private getUserCollections = async (req: Request, res: Response) => {
+    /**
+     * All collections are public, the private posts are not included when publicOnly is true
+     */
+    private getUserCollections = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
-        res.json(await this.collectionService.getCollectionsByUser(id));
+        const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
+        try {
+            const collections = await this.collectionService.getCollectionsByUser(id, publicOnly);
+            if (!publicOnly) {
+                collections.forEach((collection) => {
+                    console.log(collection.creator);
+                    this.permissionService.verifyUserAction(req.user, collection.creator.id);
+                });
+            }
+
+            putCache(req.url, collections, 30);
+
+            res.json(collections);
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                next(new HttpException(400, 'Invalid request parameter'));
+            }
+            next(err);
+        }
     }
 }
