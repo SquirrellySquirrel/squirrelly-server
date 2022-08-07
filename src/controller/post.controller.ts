@@ -74,9 +74,9 @@ export default class PostController implements Controller {
 
             const posts = await this.postService.getPosts({ userId, locationId, count, withCover, publicOnly });
             if (!publicOnly) {
-                posts.forEach((post) => {
-                    this.permissionService.verifyPostReadAction(post.id, req.user);
-                });
+                for (const post of posts) {
+                    await this.permissionService.verifyPostReadAction(post.id, req.user);
+                }
             }
 
             putCache(req.url, posts, 30);
@@ -274,7 +274,7 @@ export default class PostController implements Controller {
         const postId = req.params.id;
         const userId = req.body['userId'];
         try {
-            this.permissionService.verifyUserAction(req.user, userId);
+            await this.permissionService.verifyUserAction(req.user, userId);
 
             await this.postLikeService.deletePostLike(postId, userId);
             res.sendStatus(204);

@@ -74,7 +74,7 @@ export default class UserController implements Controller {
     private logout = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            this.permissionService.verifyUserAction(req.user, id);
+            await this.permissionService.verifyUserAction(req.user, id);
 
             await this.userService.getUserById(id);
             res.clearCookie('Authorization').sendStatus(204);
@@ -87,7 +87,7 @@ export default class UserController implements Controller {
         const id = req.params.id;
         const displayName = req.body['displayName'];
         try {
-            this.permissionService.verifyUserAction(req.user, id);
+            await this.permissionService.verifyUserAction(req.user, id);
 
             await this.userService.updateUser(id, displayName);
             res.sendStatus(204);
@@ -99,7 +99,7 @@ export default class UserController implements Controller {
     private deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         const id = req.params.id;
         try {
-            this.permissionService.verifyUserAction(req.user, id);
+            await this.permissionService.verifyUserAction(req.user, id);
 
             await this.userService.deleteUser(id);
             res.sendStatus(204);
@@ -115,12 +115,11 @@ export default class UserController implements Controller {
             const withCover = stringAsBoolean(req.query.withCover as string | undefined, true);
             const publicOnly = stringAsBoolean(req.query.publicOnly as string | undefined, false);
 
-            const posts = await this.postService.getPosts(
-                { userId: userId, count: count, withCover: withCover, publicOnly: publicOnly });
+            const posts = await this.postService.getPosts({ userId, count, withCover, publicOnly });
             if (!publicOnly) {
-                posts.forEach((post) => {
-                    this.permissionService.verifyPostReadAction(post.id, req.user);
-                });
+                for (const post of posts) {
+                    await this.permissionService.verifyPostReadAction(post.id, req.user);
+                }
             }
 
             putCache(req.url, posts, 30);
@@ -143,10 +142,9 @@ export default class UserController implements Controller {
         try {
             const collections = await this.collectionService.getCollectionsByUser(id, publicOnly);
             if (!publicOnly) {
-                collections.forEach((collection) => {
-                    console.log(collection.creator);
-                    this.permissionService.verifyUserAction(req.user, collection.creator.id);
-                });
+                for (const collection of collections) {
+                    await this.permissionService.verifyUserAction(req.user, collection.creator.id);
+                }
             }
 
             putCache(req.url, collections, 30);

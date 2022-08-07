@@ -36,7 +36,7 @@ export default class CollectionController implements Controller {
         try {
             const collection = await this.collectionService.getCollection(id, publicOnly);
             if (!publicOnly) {
-                this.permissionService.verifyUserAction(req.user, collection.creator.id);
+                await this.permissionService.verifyUserAction(req.user, collection.creator.id);
             }
 
             putCache(req.url, collection, 60);
@@ -57,7 +57,7 @@ export default class CollectionController implements Controller {
         const descrption = req.body['description'];
 
         try {
-            this.permissionService.verifyUserAction(req.user, userId);
+            await this.permissionService.verifyUserAction(req.user, userId);
 
             res.status(201)
                 .json(await this.collectionService.createCollection(

@@ -3,7 +3,7 @@ import { NextFunction, Request, Response } from 'express';
 import Exception from '../exception/exception';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function errorHandlingMiddleware(error: Exception, request: Request, response: Response, _next: NextFunction) {
+function errorHandlingMiddleware(error: Exception, _request: Request, response: Response, _next: NextFunction) {
     const status = error.status || 500;
     const message = error.message || 'Something went wrong';
     response
