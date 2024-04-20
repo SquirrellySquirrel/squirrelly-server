@@ -4,8 +4,8 @@
 
 ## Local Development
 
-- node: v16.x
-- npm: 7.x
+- node: v18.16.0
+- npm: 9.5.1
 - mysql: 8.x
 - (optional) docker and docker-compose
 
