@@ -1,30 +1,25 @@
-import { Service } from 'typedi';
-import { DeleteResult } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
-import Collection from '../entity/collection';
-import { EntityType } from '../entity/entity-type';
+import { Inject, Service } from 'typedi';
+import CollectionDao from '../db/dao/collection.dao';
 import NotFoundException from '../exception/not-found.exception';
-import CollectionRepository from '../repository/collection.repository';
+import { CollectionParams, CollectionWithPosts } from './model/collection';
+import { ExtendedPost } from './model/post';
 import PostService from './post.service';
 import { mapError } from './service-error-handler';
 import UserService from './user.service';
 
-type CollectionParams = Pick<Collection, 'name' | 'description'>;
-type CollectionId = Pick<Collection, 'id'>;
-
 @Service()
 export default class CollectionService {
     constructor(
-        @InjectRepository()
-        private readonly collectionRepository: CollectionRepository,
+        @Inject()
+        private readonly collectionDao: CollectionDao,
         private readonly userService: UserService,
         private readonly postService: PostService
     ) { }
 
-    async getCollection(collectionId: string, publicOnly: boolean): Promise<Collection> {
-        const collection = await this.collectionRepository.findOneWithRelations(collectionId);
+    async getCollection(collectionId: string, publicOnly: boolean): Promise<CollectionWithPosts> {
+        const collection = await this.collectionDao.findByIdWithPosts(collectionId);
         if (!collection) {
-            throw new NotFoundException(EntityType.COLLECTION, { key: 'id', value: collectionId });
+            throw new NotFoundException('COLLECTION', { key: 'id', value: collectionId });
         }
         if (publicOnly) {
             const publicPosts = collection.posts.filter((post) => post.public);
@@ -33,10 +28,10 @@ export default class CollectionService {
         return collection;
     }
 
-    async getCollectionsByUser(userId: string, publicOnly: boolean): Promise<Collection[]> {
+    async getCollectionsByUser(userId: string, publicOnly: boolean): Promise<CollectionWithPosts[]> {
         await this.verifyUser(userId);
 
-        const collections = await this.collectionRepository.findByUser(userId);
+        const collections = await this.collectionDao.findByUserWithPosts(userId);
         if (publicOnly) {
             collections.map((collection) => {
                 const publicPosts = collection.posts.filter((post) => post.public);
@@ -47,18 +42,13 @@ export default class CollectionService {
         return collections;
     }
 
-    async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams):
-        Promise<CollectionId> {
+    async createCollection(postIds: string[], userId: string, collectionParams: CollectionParams) {
         await this.verifyUser(userId);
-        await this.verifyPosts(postIds);
+        const posts = await (Promise.all((await this.getPosts(postIds))));
 
         try {
-            const collection = await this.collectionRepository.save({
-                creator: { id: userId },
-                posts: postIds.map((id) => ({ id: id })),
-                name: collectionParams.name,
-                description: collectionParams.description,
-            });
+            const collection = await this.collectionDao.create(userId, posts, collectionParams.name,
+                collectionParams.description);
             return { id: collection.id };
         } catch (err) {
             throw mapError(err);
@@ -66,32 +56,31 @@ export default class CollectionService {
     }
 
     async updateCollection(collectionId: string, postIds: string[], collectionParams: CollectionParams) {
-        await this.verifyPosts(postIds);
+        const posts = await (Promise.all((await this.getPosts(postIds))));
 
         try {
-            await this.collectionRepository.save({
-                id: collectionId,
-                posts: postIds.map((id) => ({ id: id })),
-                name: collectionParams.name,
-                description: collectionParams.description,
-            });
+            await this.collectionDao.update(collectionId, posts, collectionParams.name, collectionParams.description);
         } catch (err) {
             throw mapError(err);
         }
     }
 
-    // ignore if collection does not exist
-    async deleteCollection(collectionId: string): Promise<DeleteResult> {
-        return this.collectionRepository.delete(collectionId);
+    async deleteCollection(collectionId: string) {
+        const collection = this.collectionDao.findById(collectionId);
+        if (!collection) {
+            return;
+        }
+
+        await this.collectionDao.delete(collectionId);
     }
 
     private async verifyUser(userId: string) {
         await this.userService.getUserById(userId);
     }
 
-    private async verifyPosts(postIds: string[]) {
-        postIds.forEach(async (id) => {
-            await this.postService.getPost(id);
+    private async getPosts(postIds: string[]): Promise<Promise<ExtendedPost>[]> {
+        return postIds.map(async (id) => {
+            return this.postService.getPost(id);
         });
     }
 }

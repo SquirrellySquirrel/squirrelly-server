@@ -51,7 +51,7 @@ export default class UserController implements Controller {
         const email = req.body['email'];
         const password = req.body['password'];
         try {
-            const userToken = await this.userService.authenticate(email, password);
+            const userToken = await this.userService.authenticate({ email, password });
             const token = userToken.token;
             res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000 }).status(200).json({ id: userToken.id });
         } catch (err) {
@@ -63,7 +63,7 @@ export default class UserController implements Controller {
         const email = req.body['email'];
         const password = req.body['password'];
         try {
-            const userToken = await this.userService.createUser(email, password);
+            const userToken = await this.userService.createUser({ email, password });
             const token = userToken.token;
             res.cookie('Authorization', token.token, { maxAge: token.ttl * 1000 }).status(201).json({ id: userToken.id });
         } catch (err) {
@@ -143,7 +143,7 @@ export default class UserController implements Controller {
             const collections = await this.collectionService.getCollectionsByUser(id, publicOnly);
             if (!publicOnly) {
                 for (const collection of collections) {
-                    await this.permissionService.verifyUserAction(req.user, collection.creator.id);
+                    await this.permissionService.verifyUserAction(req.user, collection.creatorId);
                 }
             }
 

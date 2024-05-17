@@ -1,6 +1,5 @@
-import { Service } from 'typedi';
-import { InjectRepository } from 'typeorm-typedi-extensions';
-import PostLikeRepository from '../repository/post-like.repository';
+import { Inject, Service } from 'typedi';
+import PostLikeDao from '../db/dao/post-like.dao';
 import { mapError } from './service-error-handler';
 
 type PostLikes = {
@@ -11,25 +10,22 @@ type PostLikes = {
 @Service()
 export default class PostLikeService {
     constructor(
-        @InjectRepository()
-        private readonly postLikeRepository: PostLikeRepository
+        @Inject()
+        private readonly postLikeDao: PostLikeDao
     ) { }
 
     async getPostLikes(postId: string): Promise<PostLikes> {
-        const postLikes = await this.postLikeRepository.find({ where: { post: { id: postId } }, relations: ['post', 'user'] });
+        const postLikes = await this.postLikeDao.findByPost(postId);
         return {
             likes: postLikes.length,
-            likers: postLikes.map((postLike) => postLike.user.id),
+            likers: postLikes.map((postLike) => postLike.userId),
         };
     }
 
     async addPostLike(postId: string, userId: string) {
         try {
             if (!(await this.getPostLikes(postId)).likers.includes(userId)) {
-                await this.postLikeRepository.save({
-                    user: { id: userId },
-                    post: { id: postId },
-                });
+                await this.postLikeDao.create(postId, userId);
             }
         } catch (err) {
             throw mapError(err);
@@ -39,10 +35,7 @@ export default class PostLikeService {
     async deletePostLike(postId: string, userId: string) {
         try {
             if ((await this.getPostLikes(postId)).likers.includes(userId)) {
-                await this.postLikeRepository.delete({
-                    user: { id: userId },
-                    post: { id: postId },
-                });
+                await this.postLikeDao.delete(postId, userId);
             }
         } catch (err) {
             throw mapError(err);

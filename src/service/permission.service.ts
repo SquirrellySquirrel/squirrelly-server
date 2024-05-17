@@ -1,23 +1,20 @@
-import { Service } from 'typedi';
-import { InjectRepository } from 'typeorm-typedi-extensions';
-import Collection from '../entity/collection';
-import Comment from '../entity/comment';
-import Post from '../entity/post';
-import User, { UserRole } from '../entity/user';
+import { Collection, Comment, Post, User } from '@prisma/client';
+import { Inject, Service } from 'typedi';
+import CollectionDao from '../db/dao/collection.dao';
+import CommentDao from '../db/dao/comment.dao';
+import PostDao from '../db/dao/post.dao';
 import PermissionDeniedException from '../exception/permission-denied.exception';
 import UnprocessableEntityException from '../exception/unprocessable-entity.exception';
-import CollectionRepository from '../repository/collection.repository';
-import CommentRepository from '../repository/comment.repository';
-import PostRepository from '../repository/post.repository';
+import { UserRole } from './model/user';
 import UserService from './user.service';
 
 @Service()
 export default class PermissionService {
     constructor(
-        @InjectRepository() private readonly postRepository: PostRepository,
-        @InjectRepository() private readonly commentRepository: CommentRepository,
-        @InjectRepository() private readonly collectionRepository: CollectionRepository,
-        private readonly userService: UserService,
+        @Inject() private readonly postDao: PostDao,
+        @Inject() private readonly commentDao: CommentDao,
+        @Inject() private readonly collectionDao: CollectionDao,
+        @Inject() private readonly userService: UserService,
     ) { }
 
     /**
@@ -35,8 +32,8 @@ export default class PermissionService {
     /**
      * Verify if a post is accessible to any user based on its visibility
      */
-    async verifyPostReadAction(postId: string, user?: User) {
-        const post = await this.postRepository.findOneWithCreator(postId);
+    async verifyPostReadAction(postId: string, user: User | null) {
+        const post = await this.postDao.findById(postId);
         this.verifyPost(postId, post);
 
         if (!post!.public) {
@@ -44,7 +41,7 @@ export default class PermissionService {
                 throw new PermissionDeniedException();
             }
 
-            this.verifyUserOwnership(user, post!.creator.id);
+            this.verifyUserOwnership(user, post!.creatorId);
         }
     }
 
@@ -52,20 +49,20 @@ export default class PermissionService {
      * Verify if a user can perform actions on a post (either admin or post creator)
      */
     async verifyOwnPostAction(user: User, postId: string) {
-        const post = await this.postRepository.findOneWithCreator(postId);
+        const post = await this.postDao.findById(postId);
         this.verifyPost(postId, post);
-        this.verifyUserOwnership(user, post!.creator.id);
+        this.verifyUserOwnership(user, post!.creatorId);
     }
 
     /**
      * Verify if a user can perform actions on a public post (any user) or a private post (either admin or post creator)
      */
     async verifyAllPostAction(user: User, postId: string) {
-        const post = await this.postRepository.findOneWithCreator(postId);
+        const post = await this.postDao.findById(postId);
         this.verifyPost(postId, post);
 
         if (!post!.public) {
-            this.verifyUserOwnership(user, post!.creator.id);
+            this.verifyUserOwnership(user, post!.creatorId);
         }
     }
 
@@ -73,9 +70,9 @@ export default class PermissionService {
      * Verify if a user can perform actions on a collection (either admin or collection creator)
      */
     async verifyCollectionAction(user: User, collectionId: string) {
-        const collection = await this.collectionRepository.findOneWithCreator(collectionId);
+        const collection = await this.collectionDao.findById(collectionId);
         this.verifyCollection(collectionId, collection);
-        this.verifyUserOwnership(user, collection!.creator.id);
+        this.verifyUserOwnership(user, collection!.creatorId);
     }
 
     /**
@@ -83,54 +80,54 @@ export default class PermissionService {
     * or a private post (admin, post creator)
     */
     async verifyCommentAction(user: User, commentId: string, postId: string) {
-        const post = await this.postRepository.findOneWithCreator(postId);
+        const post = await this.postDao.findById(postId);
         this.verifyPost(postId, post);
 
         if (!post!.public) {
-            this.verifyUserOwnership(user, post!.creator.id);
+            this.verifyUserOwnership(user, post!.creatorId);
         }
 
-        const comment = await this.commentRepository.findOneWithCreator(commentId);
+        const comment = await this.commentDao.findById(commentId);
         this.verifyComment(commentId, comment);
 
         if (user.role == UserRole.ADMIN) return;
-        if (user.role == UserRole.CONTRIBUTOR && (user.id == post!.creator.id || user.id == comment!.creator.id)) return;
+        if (user.role == UserRole.USER && (user.id == post!.creatorId || user.id == comment!.creatorId)) return;
 
         throw new PermissionDeniedException(user.id);
     }
 
-    private verifyPost(postId: string, post?: Post) {
+    private verifyPost(postId: string, post: Post | null) {
         if (!post) {
             throw new UnprocessableEntityException(`Post ${postId} does not exist`);
         }
 
-        if (!post.creator) {
+        if (!post.creatorId) {
             throw new UnprocessableEntityException(`Post ${postId} has no creator - something was broken!`);
         }
     }
 
-    private verifyComment(commentId: string, comment?: Comment) {
+    private verifyComment(commentId: string, comment: Comment | null) {
         if (!comment) {
             throw new UnprocessableEntityException(`Comment ${commentId} does not exist`);
         }
 
-        if (!comment.creator) {
+        if (!comment.creatorId) {
             throw new UnprocessableEntityException(`Comment ${commentId} has no creator - something was broken!`);
         }
     }
 
-    private verifyCollection(collectionId: string, collection?: Collection) {
+    private verifyCollection(collectionId: string, collection: Collection | null) {
         if (!collection) {
             throw new UnprocessableEntityException(`Collection ${collectionId} does not exist`);
         }
 
-        if (!collection.creator) {
+        if (!collection.creatorId) {
             throw new UnprocessableEntityException(`Collection ${collectionId} has no creator - something was broken!`);
         }
     }
 
     private verifyUserOwnership(user: User, ownerId: string) {
-        if (user.role == UserRole.ADMIN || (user.role == UserRole.CONTRIBUTOR && user.id == ownerId)) {
+        if (user.role == UserRole.ADMIN || (user.role == UserRole.USER && user.id == ownerId)) {
             return;
         }
 

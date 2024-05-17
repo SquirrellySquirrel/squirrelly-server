@@ -2,7 +2,6 @@ import { NextFunction, Request, Response, Router } from 'express';
 import multer from 'multer';
 import { Service } from 'typedi';
 import { TMP_DIR } from '../config';
-import Photo from '../entity/photo';
 import HttpException from '../exception/http.exception';
 import Controller from '../interfaces/controller.interface';
 import authenticationMiddleware from '../middleware/authentication.middleware';
@@ -50,6 +49,7 @@ export default class PostController implements Controller {
     private initRoutes() {
         this.router.get(`${this.path}`, userIdResolverMiddleware, cacheMiddleware, this.getPosts)
             .get(`${this.path}/:id`, userIdResolverMiddleware, cacheMiddleware, this.getPost)
+            .get(`${this.path}/:id/photos`, userIdResolverMiddleware, this.getPostPhotos)
             .get(`${this.path}/:id/comments`, userIdResolverMiddleware, cacheMiddleware, this.getPostComments)
             .get(`${this.path}/:id/likes`, userIdResolverMiddleware, this.getPostLikes)
             .post(this.path, authenticationMiddleware, requestValidationMiddleware(CreatePostDTO), this.createPost)
@@ -113,9 +113,11 @@ export default class PostController implements Controller {
             const postId = await this.postService.savePost(
                 userId,
                 req.body['location'],
-                req.body['isPublic'],
-                req.body['created'],
-                req.body['description']);
+                {
+                    occurred: req.body['occurred'],
+                    public: req.body['isPublic'],
+                    description: req.body['description'],
+                });
             res.status(201).json(postId);
         } catch (err) {
             next(err);
@@ -125,16 +127,20 @@ export default class PostController implements Controller {
     private addPhoto = async (req: Request, res: Response, next: NextFunction) => {
         const postId = req.params.id;
         const file = req.file;
+        const order = stringAsNumber(req.body['order']);
         if (!file) {
             next(new HttpException(400, 'Photo file required but not provided'));
+        } else if (order === null || order === undefined) {
+            next(new HttpException(400, 'Order required but not provided'));
         } else {
             await this.permissionService.verifyOwnPostAction(req.user, postId);
 
-            const photo = new Photo();
-            photo.id = req.body['id'];
-            photo.name = file['filename'];
-            photo.type = file['mimetype'];
-            photo.order = req.body['order'];
+            const photo = {
+                name: file['filename'],
+                type: file['mimetype'],
+                order,
+                postId,
+            };
             try {
                 const photoId = await this.photoService.addPhotoToPost(postId, photo);
                 res.status(201).json(photoId);
@@ -153,9 +159,11 @@ export default class PostController implements Controller {
             await this.postService.updatePost(
                 id,
                 req.body['location'],
-                req.body['isPublic'],
-                req.body['created'],
-                req.body['description'],
+                {
+                    occurred: req.body['occurred'],
+                    public: req.body['isPublic'],
+                    description: req.body['description'],
+                }
             );
 
             res.sendStatus(204);
@@ -165,9 +173,10 @@ export default class PostController implements Controller {
     }
 
     private updatePhoto = async (req: Request, res: Response, next: NextFunction) => {
-        const postId = req.params.postId;
+        const postId = req.params.id;
         const photoId = req.params.photoId;
         const order = req.body['order'];
+
         try {
             await this.permissionService.verifyOwnPostAction(req.user, postId);
 
@@ -278,6 +287,17 @@ export default class PostController implements Controller {
 
             await this.postLikeService.deletePostLike(postId, userId);
             res.sendStatus(204);
+        } catch (err) {
+            next(err);
+        }
+    }
+
+    private getPostPhotos = async (req: Request, res: Response, next: NextFunction) => {
+        const postId = req.params.id;
+        try {
+            await this.permissionService.verifyPostReadAction(postId, req.user);
+
+            res.json(await this.photoService.getPhotosByPost(postId));
         } catch (err) {
             next(err);
         }

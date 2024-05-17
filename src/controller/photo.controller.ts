@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response, Router } from 'express';
 import fs from 'fs';
-import Sharp from 'sharp';
+import Sharp, { FitEnum, FormatEnum } from 'sharp';
 import { Service } from 'typedi';
 import Controller from '../interfaces/controller.interface';
 import PhotoService from '../service/photo.service';
@@ -23,8 +23,8 @@ export default class PhotoController implements Controller {
         const photoId = req.params.id;
         const width = stringAsNumber(req.query.w as string | undefined);
         const height = stringAsNumber(req.query.h as string | undefined);
-        const format = req.query.format ? req.query.format : 'webp';
-        const fit = req.query.fit ? req.query.fit : 'cover';
+        const format = req.query.format ? req.query.format as keyof FormatEnum : 'webp';
+        const fit = req.query.fit ? req.query.fit as keyof FitEnum : 'cover';
         try {
             // cache for 3d
             res.set('Cache-Control', 'public, max-age=259200');
@@ -33,7 +33,7 @@ export default class PhotoController implements Controller {
 
             const stream = fs.createReadStream(photoPath);
             const transform = Sharp().resize(width, height, {
-                fit: fit,
+                fit,
             }).toFormat(format, {
                 quality: 100,
             });

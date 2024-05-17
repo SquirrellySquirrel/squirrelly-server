@@ -1,40 +1,31 @@
-import { Service } from 'typedi';
-import { DeleteResult, Double, getConnection } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
-import Location from '../entity/location';
-import TypeORMException from '../exception/typeorm.exception';
-import LocationRepository from '../repository/location.repository';
-
-type SaveLocationParams = Omit<Location, 'id' | 'posts'>;
+import { Location } from '@prisma/client';
+import { Inject, Service } from 'typedi';
+import LocationDao from '../db/dao/location.dao';
+import { LocationParams } from './model/location';
 
 @Service()
 export default class LocationService {
     constructor(
-        @InjectRepository()
-        private readonly locationRepository: LocationRepository
+        @Inject()
+        private readonly locationDao: LocationDao
     ) { }
 
-    getLocationByCoordinate(latitude: Double, longitude: Double): Promise<Location | undefined> {
-        return this.locationRepository.findByLatAndLong(latitude, longitude);
+
+    async getLocationByCoordinate(latitude: number, longitude: number): Promise<Location | null> {
+        return await this.locationDao.findByLatAndLong(latitude, longitude);
     }
 
-    async saveLocation(params: SaveLocationParams): Promise<Location> {
-        const result = await getConnection().createQueryBuilder()
-            .insert()
-            .into(Location)
-            .values({
-                latitude: params.latitude,
-                longitude: params.longitude,
-                address: params.address,
-            })
-            .onConflict('("latitude","longitude") DO NOTHING') // ignore duplicate entry
-            .execute()
-            .catch((err: Error) => { throw new TypeORMException(err.message); });
-        return result.generatedMaps[0] as Location;
+    async saveLocationIfNotExists(location: LocationParams): Promise<Location> {
+        return (await this.locationDao.findByLatAndLong(location.latitude, location.longitude))
+            ?? this.locationDao.create(location.latitude, location.longitude, location.address);
     }
 
-    // ignore if location does not exist
-    async deleteLocation(id: string): Promise<DeleteResult> {
-        return this.locationRepository.delete(id);
+    async deleteLocationIfExists(id: string) {
+        const location = await this.locationDao.findById(id);
+        if (!location) {
+            return;
+        }
+
+        this.locationDao.delete(id);
     }
 }

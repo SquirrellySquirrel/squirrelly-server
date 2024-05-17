@@ -1,30 +1,22 @@
-import { Service } from 'typedi';
-import { InjectRepository } from 'typeorm-typedi-extensions';
-import Comment from '../entity/comment';
-import CommentRepository from '../repository/comment.repository';
+import { Comment } from '@prisma/client';
+import { Inject, Service } from 'typedi';
+import CommentDao from '../db/dao/comment.dao';
 import { mapError } from './service-error-handler';
-
-type CommentId = Pick<Comment, 'id'>;
 
 @Service()
 export default class CommentService {
     constructor(
-        @InjectRepository()
-        private readonly commentRepository: CommentRepository
+        @Inject()
+        private readonly commentDao: CommentDao
     ) { }
 
     async getComments(postId: string): Promise<Comment[]> {
-        return await this.commentRepository.findByPostId(postId);
+        return await this.commentDao.findByPostId(postId);
     }
 
-    async addComment(postId: string, userId: string, content: string): Promise<CommentId> {
+    async addComment(postId: string, userId: string, content: string) {
         try {
-            const comment = await this.commentRepository.save({
-                post: { id: postId },
-                creator: { id: userId },
-                created: new Date(),
-                content: content,
-            });
+            const comment = await this.commentDao.create(postId, userId, content);
             return { id: comment.id };
         } catch (err) {
             throw mapError(err);
@@ -33,7 +25,7 @@ export default class CommentService {
 
     async deleteComment(commentId: string) {
         try {
-            await this.commentRepository.delete(commentId);
+            await this.commentDao.delete(commentId);
         } catch (err) {
             throw mapError(err);
         }

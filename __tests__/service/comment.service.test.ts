@@ -1,13 +1,12 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
-import { useContainer } from 'typeorm';
-import { Container } from 'typeorm-typedi-extensions';
-import connection from '../../src/database';
-import Post from '../../src/entity/post';
+import { Post } from '@prisma/client';
+import Container from 'typedi';
+import { MockData } from '../../__mocks__/mock-data';
 import CommentService from '../../src/service/comment.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
-import { MockData } from '../../__mocks__/mock-data';
+import resetDb from '../reset-db';
 
 let commentService: CommentService;
 let userService: UserService;
@@ -17,28 +16,20 @@ let post: Post;
 let commentId: string;
 
 beforeAll(async () => {
-    useContainer(Container);
-
-    await connection.create();
-
     commentService = Container.get(CommentService);
     userService = Container.get(UserService);
     postService = Container.get(PostService);
 });
 
 beforeEach(async () => {
-    await connection.clear();
+    await resetDb();
 
-    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
+    userId = (await userService.createUser({ email: MockData.DEFAULT_EMAIL, password: MockData.DEFAULT_PASSWORD })).id!;
 
     const location = MockData.location1();
-    const postId = await postService.savePost(userId, location, true, new Date(), '');
+    const postId = await postService.savePost(userId, location, { occurred: new Date(), public: true, description: '' });
     post = await postService.getPost(postId.id);
     commentId = (await commentService.addComment(post.id, userId, 'sweet squirrel')).id;
-});
-
-afterAll(async () => {
-    await connection.close();
 });
 
 it('adds a comment', async () => {
@@ -72,12 +63,14 @@ it('gets all comments of a post ordered by created descendingly', async () => {
         expect.objectContaining({
             id: comment2Id,
             content: 'another sweet squirrel',
-            creator: expect.objectContaining({ id: userId }),
+            creatorId: userId,
+            postId: post.id,
         }));
     expect(comments[1]).toEqual(
         expect.objectContaining({
             id: commentId,
             content: 'sweet squirrel',
-            creator: expect.objectContaining({ id: userId }),
+            creatorId: userId,
+            postId: post.id,
         }));
 });

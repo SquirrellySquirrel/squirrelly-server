@@ -1,12 +1,11 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
-import { useContainer } from 'typeorm';
-import { Container } from 'typeorm-typedi-extensions';
-import connection from '../../src/database';
+import Container from 'typedi';
+import { MockData } from '../../__mocks__/mock-data';
 import PostLikeService from '../../src/service/post-like.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
-import { MockData } from '../../__mocks__/mock-data';
+import resetDb from '../reset-db';
 
 let postLikeService: PostLikeService;
 let userService: UserService;
@@ -15,31 +14,23 @@ let userId: string;
 let postId: string;
 
 beforeAll(async () => {
-    useContainer(Container);
-
-    await connection.create();
-
     postLikeService = Container.get(PostLikeService);
     userService = Container.get(UserService);
     postService = Container.get(PostService);
 });
 
 beforeEach(async () => {
-    await connection.clear();
+    await resetDb();
 
-    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
+    userId = (await userService.createUser({ email: MockData.DEFAULT_EMAIL, password: MockData.DEFAULT_PASSWORD })).id!;
 
     const location = MockData.location1();
-    postId = (await postService.savePost(userId, location, true, new Date(), '')).id;
-});
-
-afterAll(async () => {
-    await connection.close();
+    postId = (await postService.savePost(userId, location, { occurred: new Date(), public: true, description: '' })).id;
 });
 
 it('gets post likes', async () => {
     await postLikeService.addPostLike(postId, userId);
-    const user2Id = (await userService.createUser(MockData.EMAIL_2, MockData.DEFAULT_PASSWORD)).id!;
+    const user2Id = (await userService.createUser({ email: MockData.EMAIL_2, password: MockData.DEFAULT_PASSWORD })).id!;
     await postLikeService.addPostLike(postId, user2Id);
 
     const postLikes = await postLikeService.getPostLikes(postId);

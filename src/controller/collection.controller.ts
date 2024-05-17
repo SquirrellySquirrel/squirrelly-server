@@ -36,7 +36,7 @@ export default class CollectionController implements Controller {
         try {
             const collection = await this.collectionService.getCollection(id, publicOnly);
             if (!publicOnly) {
-                await this.permissionService.verifyUserAction(req.user, collection.creator.id);
+                await this.permissionService.verifyUserAction(req.user, collection.creatorId);
             }
 
             putCache(req.url, collection, 60);
@@ -54,14 +54,13 @@ export default class CollectionController implements Controller {
         const postIds = req.body['postIds'] as string[];
         const userId = req.body['userId'];
         const name = req.body['name'];
-        const descrption = req.body['description'];
+        const description = req.body['description'];
 
         try {
             await this.permissionService.verifyUserAction(req.user, userId);
 
             res.status(201)
-                .json(await this.collectionService.createCollection(
-                    postIds, userId, { name: name, description: descrption }));
+                .json(await this.collectionService.createCollection(postIds, userId, { name, description }));
         } catch (err) {
             next(err);
         }
@@ -71,13 +70,12 @@ export default class CollectionController implements Controller {
         const id = req.params.id;
         const postIds = req.body['postIds'] as string[];
         const name = req.body['name'];
-        const descrption = req.body['description'];
+        const description = req.body['description'];
 
         try {
             await this.permissionService.verifyCollectionAction(req.user, id);
 
-            await this.collectionService.updateCollection(
-                id, postIds, { name: name, description: descrption });
+            await this.collectionService.updateCollection(id, postIds, { name, description });
             res.sendStatus(204);
         } catch (err) {
             next(err);
