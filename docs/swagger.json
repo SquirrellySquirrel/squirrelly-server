@@ -1083,6 +1083,34 @@
           }
         }
       }
+    },
+    "/locations/{locationId}": {
+      "get": {
+        "description": "Get a location by id",
+        "tags": ["locations"],
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

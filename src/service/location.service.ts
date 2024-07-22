@@ -10,6 +10,9 @@ export default class LocationService {
         private readonly locationDao: LocationDao
     ) { }
 
+    async getLocationById(id: string): Promise<Location | null> {
+        return await this.locationDao.findById(id);
+    }
 
     async getLocationByCoordinate(latitude: number, longitude: number): Promise<Location | null> {
         return await this.locationDao.findByLatAndLong(latitude, longitude);
