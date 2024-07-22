@@ -122,7 +122,7 @@ export default class UserController implements Controller {
                 }
             }
 
-            putCache(req.url, posts, 30);
+            putCache(req.url, posts, 5);
 
             res.json(posts);
         } catch (err) {
