@@ -16,7 +16,7 @@ import UserController from './controller/user.controller';
             Container.get(PostController),
             Container.get(PhotoController),
             Container.get(CollectionController),
-            Container.get(LocationController)
+            Container.get(LocationController),
         ]
     );
 
