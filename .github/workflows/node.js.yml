@@ -30,7 +30,7 @@ jobs:
           -e CI=true
           --entrypoint sh
           mysql:8
-          -c "exec docker-entrypoint.sh mysqld --default-authentication-plugin=mysql_native_password"
+          -c "exec docker-entrypoint.sh mysqld --mysql-native-password=ON"
 
     steps:
       - uses: actions/checkout@v2
