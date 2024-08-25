@@ -36,6 +36,13 @@ $ npm run start
 $ npm run start:dev
 ```
 
+- Run migrations:
+
+```console
+$ npm migration
+$ npm migration:test
+```
+
 - Run tests:
 
 ```console
