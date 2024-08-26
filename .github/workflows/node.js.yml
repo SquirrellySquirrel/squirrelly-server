@@ -42,5 +42,5 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
-      - run: npm run migration:test
+      - run: npm run migration:ci
       - run: npm run test:ci

@@ -13,7 +13,8 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "migration": "dotenv -e .env.dev -- npx prisma migrate dev",
-    "migration:test": "dotenv -e .env.test -- npx prisma migrate dev --name init"
+    "migration:test": "dotenv -e .env.test -- npx prisma migrate dev --name init",
+    "migration:ci": "dotenv -e .env.ci -- npx prisma migrate dev --name init"
   },
   "keywords": [],
   "author": "",
