@@ -1,34 +1,40 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
-import { useContainer } from 'typeorm';
-import { Container } from 'typeorm-typedi-extensions';
-import connection from '../../src/database';
-import Location from '../../src/entity/location';
-import LocationService from '../../src/service/location.service';
+import Container from 'typedi';
 import { MockData } from '../../__mocks__/mock-data';
-
+import LocationService from '../../src/service/location.service';
+import { LocationParams } from '../../src/service/model/location';
+import resetDb from '../reset-db';
 let locationService: LocationService;
-let location: Location;
+let location: LocationParams;
 
 beforeAll(async () => {
-    useContainer(Container);
-
-    await connection.create();
-
     locationService = Container.get(LocationService);
 });
 
 beforeEach(async () => {
-    await connection.clear();
+    await resetDb();
 
     location = MockData.location1();
-    location.id = (await locationService.saveLocation(location)).id;
 });
 
-afterAll(async () => {
-    await connection.close();
+it('saves a location if it doesn\'t exist', async () => {
+    const savedLocation = await locationService.saveLocationIfNotExists(location);
+    expect(savedLocation.id).toBeDefined();
+    expect(savedLocation).toEqual(
+        expect.objectContaining({
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: location.address,
+        }));
 });
 
-it('gets an exiting location by coordinate', async () => {
-    expect((await locationService.getLocationByCoordinate(1.2, -2.3))).toEqual(location);
+it('gets an existing location by coordinate', async () => {
+    await locationService.saveLocationIfNotExists(location);
+    expect((await locationService.getLocationByCoordinate(location.latitude, location.longitude))).toEqual(
+        expect.objectContaining({
+            latitude: location.latitude,
+            longitude: location.longitude,
+            address: location.address,
+        }));
 });

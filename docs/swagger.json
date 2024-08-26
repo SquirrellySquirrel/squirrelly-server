@@ -20,9 +20,104 @@
     }
   ],
   "paths": {
+    "/users": {
+      "post": {
+        "description": "Create a user",
+        "tags": ["users"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["email", "password"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "User id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User email already exists"
+          }
+        }
+      }
+    },
+    "/users/login": {
+      "post": {
+        "description": "Authenticate a user",
+        "tags": ["users"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                },
+                "required": ["email", "password"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "User id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid user credentials"
+          }
+        }
+      }
+    },
     "/users/{userIdOrEmail}": {
       "get": {
         "description": "Get a user by id or email",
+        "tags": ["users"],
         "parameters": [
           {
             "name": "userIdOrEmail",
@@ -53,11 +148,11 @@
     "/users/{userId}/posts": {
       "get": {
         "description": "Get all posts of a user by filter parameters",
+        "tags": ["users", "posts"],
         "parameters": [
           {
             "name": "userId",
             "in": "path",
-            "description": "user id",
             "required": true,
             "schema": {
               "type": "string",
@@ -93,15 +188,133 @@
         }
       }
     },
+    "/users/{userId}/collections": {
+      "get": {
+        "description": "Get all collections of a user",
+        "tags": ["users", "collections"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Collection"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}": {
+      "put": {
+        "description": "Update a user",
+        "tags": ["users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Updated the user successfully"
+          },
+          "404": {
+            "description": "User not found by id"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a user",
+        "tags": ["users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted the user successfully"
+          },
+          "404": {
+            "description": "User not found by id"
+          }
+        }
+      }
+    },
+    "/users/{userId}/logout": {
+      "post": {
+        "description": "Logout a user (invalidate token)",
+        "tags": ["users"],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "User logged out successfully"
+          },
+          "404": {
+            "description": "User not found by id"
+          }
+        }
+      }
+    },
     "/posts": {
       "get": {
         "description": "Get all posts (of a user) by filter parameters",
+        "tags": ["posts"],
         "parameters": [
           {
             "name": "userId",
             "in": "query",
             "description": "user id",
-            "required": false,
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -134,15 +347,73 @@
             }
           }
         }
+      },
+      "post": {
+        "description": "Create a new post",
+        "tags": ["posts"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "location": {
+                    "$ref": "#/components/schemas/Location"
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "occurred": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["userId", "location", "isPublic", "occurred"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "Post id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/posts/{postId}": {
       "get": {
         "description": "Get a post by id",
+        "tags": ["posts"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -159,15 +430,95 @@
             "description": "Post not found by id"
           }
         }
-      }
-    },
-    "/posts/{postId}/comments": {
-      "get": {
-        "description": "Get comments of a post",
+      },
+      "put": {
+        "description": "Update a post by id",
+        "tags": ["posts"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "location": {
+                    "schema": {
+                      "$ref": "#/components/schemas/Location"
+                    }
+                  },
+                  "isPublic": {
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "occurred": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["location", "isPublic", "occurred"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Updated the post successfully"
+          },
+          "422": {
+            "description": "Post doesn't exist"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a post by id",
+        "tags": ["posts"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted the post successfully"
+          },
+          "422": {
+            "description": "Post doesn't exist"
+          }
+        }
+      }
+    },
+    "/posts/{postId}/photos": {
+      "get": {
+        "description": "Get photos of a post",
+        "tags": ["posts", "photos"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -177,7 +528,170 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Comment"
+                    "$ref": "#/components/schemas/Photo"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "Add a photo to a post",
+        "tags": ["posts", "photos"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "photo": {
+                    "type": "string",
+                    "description": "The photo file",
+                    "format": "binary"
+                  },
+                  "order": {
+                    "type": "integer",
+                    "description": "The order of the photo among all the photos of a post. Allowed values: [0-9]."
+                  }
+                },
+                "required": ["photo", "order"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "New photo id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/posts/{postId}/photos/{photoId}": {
+      "put": {
+        "description": "Update a photo of a post",
+        "tags": ["posts", "photos"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "order": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Updated a photo for the post successfully"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a photo of a post",
+        "tags": ["posts", "photos"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted a photo for the post successfully"
+          }
+        }
+      }
+    },
+    "/posts/{postId}/comments": {
+      "get": {
+        "description": "Get comments of a post",
+        "tags": ["posts", "comments"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/Comment"
+                    }
                   }
                 }
               }
@@ -187,10 +701,16 @@
       },
       "post": {
         "description": "Add a comment for a post",
+        "tags": ["posts", "comments"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -206,7 +726,9 @@
                   "content": {
                     "type": "string"
                   }
-                }
+                },
+                "required": ["userId", "content"],
+                "additionalProperties": false
               }
             }
           }
@@ -231,13 +753,50 @@
         }
       }
     },
-    "/posts/{postId}/likes": {
-      "get": {
-        "description": "Get likes of a post",
+    "/posts/{postId}/comments/{commentId}": {
+      "delete": {
+        "description": "Delete a comment of a post",
+        "tags": ["posts", "comments"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted the comment successfully"
+          }
+        }
+      }
+    },
+    "/posts/{postId}/likes": {
+      "get": {
+        "description": "Get likes of a post",
+        "tags": ["posts", "likes"],
+        "parameters": [
+          {
+            "name": "postId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -253,6 +812,7 @@
                     "likers": {
                       "type": "array",
                       "items": {
+                        "description": "User id",
                         "type": "string",
                         "format": "uuid"
                       }
@@ -266,10 +826,16 @@
       },
       "post": {
         "description": "Add a like for a post",
+        "tags": ["posts", "likes"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -280,7 +846,8 @@
                 "properties": {
                   "userId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "required": true
                   }
                 }
               }
@@ -295,10 +862,16 @@
       },
       "delete": {
         "description": "Remove a like for a post",
+        "tags": ["posts", "likes"],
         "parameters": [
           {
             "name": "postId",
-            "$ref": "#/components/parameters/postId"
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -309,7 +882,8 @@
                 "properties": {
                   "userId": {
                     "type": "string",
-                    "format": "uuid"
+                    "format": "uuid",
+                    "required": true
                   }
                 }
               }
@@ -323,13 +897,216 @@
         }
       }
     },
-    "/collections": {
+    "/photos/{photoId}": {
       "get": {
-        "description": "Get all collections (of a user) by filter parameters",
+        "description": "Get a photo by id",
+        "tags": ["photos"],
+        "parameters": [
+          {
+            "name": "photoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "w",
+            "in": "query",
+            "description": "Expected photo width. If not provided the photo will be auto-scaled to match the height.",
+            "type": "integer"
+          },
+          {
+            "name": "h",
+            "in": "query",
+            "description": "Expected photo height. If not provided the photo will be auto-scaled to match the width.",
+            "type": "integer"
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "description": "Expected photo format",
+            "type": "string",
+            "default": "webp"
+          },
+          {
+            "name": "fit",
+            "in": "query",
+            "description": "How should the photo be resized/croped to fit the target dimension.",
+            "type": "string",
+            "enum": ["cover", "contain", "fill", "inside", "outside"],
+            "default": "cover"
+          }
+        ],
         "responses": {
           "200": {
-            "examples": {
-              "application/json": "{}"
+            "content": {
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Photo not found by id"
+          }
+        }
+      }
+    },
+    "/collections": {
+      "post": {
+        "description": "Create a new collection",
+        "tags": ["collections"],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "userId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "postIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": ["userId", "name"],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "description": "New collection id",
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/collections/{collectionId}": {
+      "get": {
+        "description": "Get a collection by id",
+        "tags": ["collections"],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Collection"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "Update a collection by id",
+        "tags": ["collections"],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Updated a collection successfully"
+          },
+          "422": {
+            "description": "Collection doesn't exist"
+          }
+        }
+      },
+      "delete": {
+        "description": "Delete a collection by id",
+        "tags": ["collections"],
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted a collection successfully"
+          },
+          "422": {
+            "description": "Collection doesn't exist"
+          }
+        }
+      }
+    },
+    "/locations/{locationId}": {
+      "get": {
+        "description": "Get a location by id",
+        "tags": ["locations"],
+        "parameters": [
+          {
+            "name": "locationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Location"
+                }
+              }
             }
           }
         }
@@ -341,9 +1118,6 @@
       "User": {
         "type": "object",
         "properties": {
-          "validated": {
-            "type": "boolean"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -351,6 +1125,9 @@
           "email": {
             "type": "string",
             "format": "email"
+          },
+          "password": {
+            "type": "string"
           },
           "created": {
             "type": "string",
@@ -360,24 +1137,31 @@
             "type": "string",
             "format": "date-time"
           },
+          "validated": {
+            "type": "boolean"
+          },
           "displayName": {
             "type": "string"
           },
           "role": {
             "type": "string",
-            "enum": ["contributor", "admin"]
+            "enum": ["USER", "ADMIN"]
           }
-        }
+        },
+        "required": [
+          "id",
+          "email",
+          "password",
+          "created",
+          "lastLogin",
+          "validated",
+          "displayName",
+          "role"
+        ]
       },
       "Post": {
         "type": "object",
         "properties": {
-          "public": {
-            "type": "boolean"
-          },
-          "likes": {
-            "type": "integer"
-          },
           "id": {
             "type": "string",
             "format": "uuid"
@@ -390,15 +1174,43 @@
             "type": "string",
             "format": "date-time"
           },
+          "occurred": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "public": {
+            "type": "boolean"
+          },
           "description": {
             "type": "string"
           },
+          "creatorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "likes": {
+            "type": "integer"
+          },
           "cover": {
-            "$ref": "#/components/schemas/Cover"
+            "$ref": "#/components/schemas/Photo"
           }
-        }
+        },
+        "required": [
+          "id",
+          "created",
+          "updated",
+          "occurred",
+          "public",
+          "creatorId",
+          "locationId",
+          "likes"
+        ]
       },
-      "Cover": {
+      "Photo": {
         "type": "object",
         "properties": {
           "id": {
@@ -412,9 +1224,31 @@
             "type": "string"
           },
           "order": {
-            "type": "integer"
+            "type": "number"
+          },
+          "postId": {
+            "type": "string",
+            "format": "uuid"
           }
-        }
+        },
+        "required": ["id", "name", "type", "order", "postId"]
+      },
+      "Location": {
+        "type": "object",
+        "properties": {
+          "latitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double"
+          },
+          "address": {
+            "type": "string"
+          }
+        },
+        "required": ["latitude", "longitude"]
       },
       "Comment": {
         "type": "object",
@@ -430,28 +1264,57 @@
             "type": "string",
             "format": "date-time"
           },
-          "creator": {
-            "$ref": "#/components/schemas/User"
+          "creatorId": {
+            "type": "string",
+            "format": "uuid"
           }
-        }
+        },
+        "required": ["id", "content", "created", "creatorId"]
+      },
+      "Collection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "created": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "creatorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Post"
+            }
+          }
+        },
+        "required": ["id", "name", "created", "creatorId"]
       }
     },
     "parameters": {
-      "postId": {
-        "name": "postId",
-        "in": "path",
-        "description": "post id",
-        "required": true,
+      "email": {
+        "name": "email",
+        "description": "user email",
         "schema": {
           "type": "string",
-          "format": "uuid"
+          "format": "email"
         }
       },
       "publicOnly": {
         "name": "publicOnly",
         "in": "query",
         "description": "If only public posts should be fetched",
-        "required": false,
         "schema": {
           "type": "boolean",
           "default": false
@@ -461,7 +1324,6 @@
         "name": "withCover",
         "in": "query",
         "description": "If posts should be fetched with covers",
-        "required": false,
         "schema": {
           "type": "boolean",
           "default": true
@@ -471,7 +1333,6 @@
         "name": "count",
         "in": "query",
         "description": "How many posts should be fetched",
-        "required": false,
         "schema": {
           "type": "integer"
         }

@@ -1,0 +1,111 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique @db.VarChar(255)
+  password    String       @db.VarChar(255)
+  created     DateTime     @default(now())
+  lastLogin   DateTime?    @map("last_login")
+  validated   Boolean      @default(false)
+  displayName String       @unique @map("display_name") @db.VarChar(50)
+  role        Role         @default(USER)
+  posts       Post[]
+  likes       PostLike[]
+  comments    Comment[]
+  collections Collection[]
+
+  @@map("users")
+}
+
+model Location {
+  id        String  @id @default(uuid())
+  latitude  Float   @db.Double
+  longitude Float   @db.Double
+  address   String? @db.Text
+  posts     Post[]
+
+  @@unique([latitude, longitude], name: "location_coordinate")
+  @@map("locations")
+}
+
+model Post {
+  id          String       @id @default(uuid())
+  created     DateTime     @default(now())
+  updated     DateTime     @updatedAt
+  occurred    DateTime
+  public      Boolean      @default(true)
+  description String?      @db.Text
+  creator     User         @relation(fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creatorId   String       @map("creator_id")
+  location    Location     @relation(fields: [locationId], references: [id])
+  locationId  String       @map("location_id")
+  photos      Photo[]
+  likes       PostLike[]
+  comments    Comment[]
+  collections Collection[]
+
+  @@map("posts")
+}
+
+model Photo {
+  id     String @id @default(uuid())
+  name   String @db.Text
+  type   String @db.VarChar(255)
+  order  Int
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String @map("post_id")
+
+  @@map("photos")
+}
+
+model PostLike {
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @map("user_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String @map("post_id")
+
+  @@id([userId, postId])
+  @@map("post_likes")
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  created   DateTime @default(now())
+  creator   User     @relation(fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creatorId String   @map("creator_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String   @map("post_id")
+
+  @@map("comments")
+}
+
+model Collection {
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  created     DateTime @default(now())
+  creator     User     @relation(fields: [creatorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creatorId   String   @map("creator_id")
+  posts       Post[]
+
+  @@map("collections")
+}
+
+enum Role {
+  USER
+  ADMIN
+}

@@ -1,30 +1,24 @@
+import { User } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import ms from 'ms';
-import { Service } from 'typedi';
-import { InjectRepository } from 'typeorm-typedi-extensions';
+import { Inject, Service } from 'typedi';
 import { JWT_SECRET, TOKEN_TTL } from '../config';
-import { EntityType } from '../entity/entity-type';
-import User from '../entity/user';
+import UserDao from '../db/dao/user.dao';
 import ConflictingDataException from '../exception/conflicting-data.exception';
 import InvalidCredentialsException from '../exception/invalid-credentials.exception';
 import NotFoundException from '../exception/not-found.exception';
 import TokenData from '../interfaces/token-data.interface';
 import Token from '../interfaces/token.interface';
-import UserRepository from '../repository/user.repository';
+import { UserParams, UserToken } from './model/user';
 import { mapError } from './service-error-handler';
 
 const bcrypt = require('bcrypt');
 
-export type UserToken = {
-    id: string,
-    token: Token
-};
-
 @Service()
 export default class UserService {
     constructor(
-        @InjectRepository()
-        private readonly userRepository: UserRepository
+        @Inject()
+        private readonly userDao: UserDao
     ) { }
 
     async getUserByIdOrEmail(idOrEmail: string): Promise<User> {
@@ -36,27 +30,29 @@ export default class UserService {
     }
 
     async getUserById(userId: string): Promise<User> {
-        const user = await this.userRepository.findOne(userId);
+        const user = await this.userDao.findById(userId);
         if (!user) {
-            throw new NotFoundException(EntityType.USER, { key: 'id', value: userId });
+            throw new NotFoundException('USER', { key: 'id', value: userId });
         }
         return user;
     }
 
-    async getUserByIdUnsafe(userId: string): Promise<Partial<User> | undefined> {
-        return await this.userRepository.findOne(userId);
+    async getUserByIdUnsafe(userId: string): Promise<User | null> {
+        return await this.userDao.findById(userId);
     }
 
     async getUserByEmail(email: string): Promise<User> {
-        const user = await this.userRepository.findOne({ where: { email: email } });
+        const user = await this.userDao.findByEmail(email);
         if (!user) {
-            throw new NotFoundException(EntityType.USER, { key: 'email', value: email });
+            throw new NotFoundException('USER', { key: 'email', value: email });
         }
         return user;
     }
 
-    async authenticate(email: string, pass: string): Promise<UserToken> {
-        const user = await this.userRepository.findByEmailForAuthentication(email);
+    async authenticate(userParams: UserParams): Promise<UserToken> {
+        const email = userParams.email;
+        const pass = userParams.password;
+        const user = await this.userDao.findByEmail(email);
         if (!user) {
             throw new InvalidCredentialsException();
         }
@@ -64,10 +60,7 @@ export default class UserService {
         const matching = await bcrypt.compare(pass, user.password);
         if (matching) {
             try {
-                await this.userRepository.save({
-                    id: user.id,
-                    lastLogin: new Date(),
-                });
+                await this.userDao.updateLastLogin(user.id);
             } catch (err) {
                 mapError(err);
             }
@@ -79,22 +72,21 @@ export default class UserService {
         }
     }
 
-    async createUser(email: string, pass: string): Promise<UserToken> {
-        const userByEmail = await this.userRepository.findByEmail(email);
+    async createUser(userParams: UserParams): Promise<UserToken> {
+        const email = userParams.email;
+        const pass = userParams.password;
+        const userByEmail = await this.userDao.findByEmail(email);
         if (userByEmail) {
-            throw new ConflictingDataException(EntityType.USER, { key: 'email', value: email });
+            throw new ConflictingDataException('USER', { key: 'email', value: email });
         }
 
         const encryptedPassword = await bcrypt.hash(pass, 10);
         try {
-            const savedUser = await this.userRepository.save({
-                email: email,
-                password: encryptedPassword,
-                created: new Date(),
-                displayName: this.generateDisplayName(email),
-                role: 'contributor',
-
-            });
+            const savedUser = await this.userDao.create(
+                email,
+                encryptedPassword,
+                this.generateDisplayName(email),
+            );
             const token = this.createToken(savedUser);
             return { id: savedUser.id, token };
         } catch (err) {
@@ -108,16 +100,13 @@ export default class UserService {
 
     async updateUser(userId: string, displayName: string) {
         await this.getUserById(userId);
-        const user = await this.userRepository.findByDisplayName(displayName);
+        const user = await this.userDao.findByDisplayName(displayName);
         if (user && user.id != userId) {
-            throw new ConflictingDataException(EntityType.USER, { key: 'displayName', value: displayName });
+            throw new ConflictingDataException('USER', { key: 'displayName', value: displayName });
         }
 
         try {
-            await this.userRepository.save({
-                id: userId,
-                displayName: displayName,
-            });
+            await this.userDao.updateDisplayName(userId, displayName);
         } catch (err) {
             throw mapError(err);
         }
@@ -126,7 +115,7 @@ export default class UserService {
     // ignore if user does not exist
     async deleteUser(userId: string) {
         try {
-            await this.userRepository.delete(userId);
+            await this.userDao.delete(userId);
         } catch (err) {
             mapError(err);
         }

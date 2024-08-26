@@ -4,8 +4,8 @@
 
 ## Local Development
 
-- node: v18.16.0
-- npm: 9.5.1
+- node: v18.20.x
+- npm: 10.5.x
 - mysql: 8.x
 - (optional) docker and docker-compose
 
@@ -36,6 +36,13 @@ $ npm run start
 $ npm run start:dev
 ```
 
+- Run migrations:
+
+```console
+$ npm migration
+$ npm migration:test
+```
+
 - Run tests:
 
 ```console
@@ -47,3 +54,7 @@ $ npm test
 ```console
 $ npm run lint
 ```
+
+### API doc
+
+After starting the server, the Swagger UI can be found at `http://localhost:8000/api-docs`.

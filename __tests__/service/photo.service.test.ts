@@ -1,56 +1,47 @@
 require('dotenv').config({ path: `./.env.${process.env.NODE_ENV}` });
 require('reflect-metadata');
 import path from 'path';
-import { useContainer } from 'typeorm';
-import { Container } from 'typeorm-typedi-extensions';
-import connection from '../../src/database';
-import Photo from '../../src/entity/photo';
+import Container from 'typedi';
+import { MockData } from '../../__mocks__/mock-data';
 import UnprocessableEntityException from '../../src/exception/unprocessable-entity.exception';
+import { PhotoParams } from '../../src/service/model/photo';
 import PhotoService from '../../src/service/photo.service';
 import PostService from '../../src/service/post.service';
 import UserService from '../../src/service/user.service';
-import { MockData } from '../../__mocks__/mock-data';
 import { FILE_DIR } from '../config';
+import resetDb from '../reset-db';
 
 let photoService: PhotoService;
 let userService: UserService;
 let postService: PostService;
 let userId: string;
 let postId: string;
-let photo: Photo;
+let photo: PhotoParams;
 let photoId: string;
 
 beforeAll(async () => {
-    useContainer(Container);
-
-    await connection.create();
-
     photoService = Container.get(PhotoService);
     userService = Container.get(UserService);
     postService = Container.get(PostService);
 });
 
 beforeEach(async () => {
-    await connection.clear();
+    await resetDb();
 
     jest.spyOn(PhotoService.prototype as any, 'savePhotoToStorage').mockImplementation(() => { console.log('Mocking saving photo to disk'); });
 
-    userId = (await userService.createUser(MockData.DEFAULT_EMAIL, MockData.DEFAULT_PASSWORD)).id!;
+    userId = (await userService.createUser({ email: MockData.DEFAULT_EMAIL, password: MockData.DEFAULT_PASSWORD })).id!;
 
-    postId = (await postService.savePost(userId, MockData.location1(), true, new Date(), 'Default post')).id;
+    postId = (await postService.savePost(userId, MockData.location1(), { occurred: new Date(), public: true, description: 'Default post' })).id;
 
     photo = MockData.photo1();
     photoId = (await photoService.addPhotoToPost(postId, photo)).id;
 });
 
-afterAll(async () => {
-    await connection.close();
-});
-
-it('adds a photo for a post', async () => {
-    const postWithPhoto = await postService.getPost(postId);
-    expect(postWithPhoto!.photos!.length).toEqual(1);
-    expect(postWithPhoto!.photos![0].name).toEqual(photo.name);
+it('added a photo for a post', async () => {
+    const photosByPost = await photoService.getPhotosByPost(postId);
+    expect(photosByPost.length).toEqual(1);
+    expect(photosByPost[0].name).toEqual(photo.name);
 });
 
 it('fetches photo path by id', async () => {
@@ -67,7 +58,7 @@ it('fetches all photos of a post', async () => {
 it('chooses the photo with the lowest order as cover for a post ', async () => {
     await photoService.addPhotoToPost(postId, MockData.photo2());
 
-    const cover = await photoService.getPostCover(postId) as Photo;
+    const cover = await photoService.getPostCover(postId);
     expect(cover).toEqual(
         expect.objectContaining({
             id: photoId,
@@ -82,8 +73,8 @@ describe('updates a photo', () => {
     it('updates photo by id successfully', async () => {
         await photoService.updatePhoto(postId, photoId, 1);
 
-        const postWithUpdatedPhoto = await postService.getPost(postId);
-        expect(postWithUpdatedPhoto!.photos![0]).toEqual(
+        const photosByPost = await photoService.getPhotosByPost(postId);
+        expect(photosByPost[0]).toEqual(
             expect.objectContaining({
                 id: photoId,
                 name: photo.name,
@@ -102,8 +93,8 @@ describe('deletes a photo', () => {
     it('deletes photo by id successfully', async () => {
         await photoService.deletePhoto(postId, photoId);
 
-        const postWithoutPhoto = await postService.getPost(postId);
-        expect(postWithoutPhoto!.photos!.length).toEqual(0);
+        const photosByPost = await photoService.getPhotosByPost(postId);
+        expect(photosByPost.length).toEqual(0);
     });
 
     it('photo does not match post id', async () => {

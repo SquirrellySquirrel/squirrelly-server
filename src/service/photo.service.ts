@@ -1,49 +1,47 @@
+import { Photo } from '@prisma/client';
 import fs, { promises as fsPromises } from 'fs';
 import path from 'path';
-import { Service } from 'typedi';
-import { InjectRepository } from 'typeorm-typedi-extensions';
+import { Inject, Service } from 'typedi';
 import { FILE_DIR, TMP_DIR } from '../config';
-import { EntityType } from '../entity/entity-type';
-import Photo from '../entity/photo';
+import PhotoDao from '../db/dao/photo.dao';
 import NotFoundException from '../exception/not-found.exception';
+import PreconditionFailedException from '../exception/precondition-failed.exception';
 import UnprocessableEntityException from '../exception/unprocessable-entity.exception';
-import PhotoRepository from '../repository/photo.repository';
-
-type PhotoId = Pick<Photo, 'id'>;
+import { PhotoParams } from './model/photo';
 
 @Service()
 export default class PhotoService {
     constructor(
-        @InjectRepository()
-        private readonly photoRepository: PhotoRepository
+        @Inject()
+        private readonly photoDao: PhotoDao
     ) { }
 
     async getPhotoPath(id: string): Promise<string> {
         const photo = await this.getPhoto(id);
         if (!photo) {
-            throw new NotFoundException(EntityType.PHOTO, { key: 'id', value: id });
+            throw new NotFoundException('PHOTO', { key: 'id', value: id });
         }
         return path.join(FILE_DIR, photo.name);
     }
 
     async getPhotosByPost(postId: string): Promise<Photo[]> {
-        return await this.photoRepository.findByPost(postId);
+        return this.photoDao.findByPost(postId);
     }
 
-    async addPhotoToPost(postId: string, photo: Photo): Promise<PhotoId> {
-        const savedPhoto = await this.photoRepository.save({
-            id: photo.id,
-            name: photo.name,
-            type: photo.type,
-            order: photo.order,
-            post: { id: postId },
-        });
+    async addPhotoToPost(postId: string, photo: PhotoParams) {
+        const postPhotos = await this.getPhotosByPost(postId);
+        if (postPhotos.length == 10) {
+            throw new PreconditionFailedException('Cannot add more than 10 photos to the post');
+        }
+
+        const savedPhoto = await this.photoDao.create(
+            postId, { name: photo.name, type: photo.type, order: photo.order });
 
         try {
             await this.savePhotoToStorage(photo.name);
         } catch (err) {
             console.error(err);
-            await this.photoRepository.delete(savedPhoto.id);
+            this.photoDao.delete(savedPhoto.id);
             this.removeTempPhoto(photo.name);
             throw err;
         }
@@ -52,37 +50,34 @@ export default class PhotoService {
     }
 
     async updatePhoto(postId: string, photoId: string, order: number) {
-        const photo = await this.photoRepository.findOneWithPost(photoId);
+        const photo = await this.photoDao.findById(photoId);
         if (!photo) {
-            throw new NotFoundException(EntityType.PHOTO, { key: 'id', value: photoId });
+            throw new NotFoundException('PHOTO', { key: 'id', value: photoId });
         }
 
-        if (photo.post.id != postId) {
+        if (photo.postId != postId) {
             throw new UnprocessableEntityException(`Photo ${photoId} doesn't belong to post ${postId}`);
         }
 
-        return await this.photoRepository.save({
-            id: photoId,
-            order: order,
-        });
+        return this.photoDao.updateOrder(photoId, order);
     }
 
     async deletePhoto(postId: string, photoId: string) {
-        const photo = await this.photoRepository.findOneWithPost(photoId);
+        const photo = await this.photoDao.findById(photoId);
         if (!photo) return;
 
-        if (photo.post.id != postId) {
+        if (photo.postId != postId) {
             throw new UnprocessableEntityException(`Photo ${photoId} doesn't belong to post ${postId}`);
         }
 
-        await this.photoRepository.delete(photoId);
+        await this.photoDao.delete(photoId);
         this.removePhotoFromStorage(photo.name);
     }
 
-    async getPostCover(postId: string): Promise<Photo | undefined> {
+    async getPostCover(postId: string): Promise<Photo | null> {
         const photos = await this.getPhotosByPost(postId);
         if (photos.length < 1) {
-            return undefined;
+            return null;
         }
         return photos[0];
     }
@@ -91,8 +86,8 @@ export default class PhotoService {
         return names.forEach((name) => this.removePhotoFromStorage(name));
     }
 
-    private async getPhoto(id: string): Promise<Photo | undefined> {
-        return await this.photoRepository.findOne(id);
+    private async getPhoto(id: string) {
+        return this.photoDao.findById(id);
     }
 
     private async savePhotoToStorage(name: string): Promise<void> {

@@ -1,10 +1,10 @@
-import TypeORMException from '../exception/typeorm.exception';
+import DBException from '../exception/db.exception';
 
 export function mapError(err: any) {
     if (typeof err === 'string') {
-        return new TypeORMException(err);
+        return new DBException(err);
     } else if (err instanceof Error) {
-        return new TypeORMException(err.message);
+        return new DBException(err.message);
     } else {
         return err;
     }
